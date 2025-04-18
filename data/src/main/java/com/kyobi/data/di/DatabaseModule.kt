@@ -2,11 +2,8 @@ package com.kyobi.data.di
 
 import android.content.Context
 import androidx.room.Room
-import com.kyobi.core.storage.TokenStorage
 import com.kyobi.data.database.AppDatabase
 import com.kyobi.data.database.dao.TokenDao
-import com.kyobi.data.storage.TokenStorageImpl
-import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,12 +31,4 @@ object DatabaseModule {
     fun provideTokenDao(database: AppDatabase): TokenDao {
         return database.tokenDao()
     }
-}
-
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class StorageModule {
-    @Binds
-    @Singleton
-    abstract fun bindTokenStorage(impl: TokenStorageImpl): TokenStorage
 }

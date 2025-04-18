@@ -33,6 +33,7 @@ data class UserMetadata(
     val email: String?,
     @Json(name = "email_verified") val emailVerified: Boolean?,
     @Json(name = "phone_verified") val phoneVerified: Boolean?,
+    val phone: String?,
     val sub: String?
 )
 

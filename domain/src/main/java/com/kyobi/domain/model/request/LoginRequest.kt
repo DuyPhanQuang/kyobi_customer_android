@@ -1,4 +1,4 @@
-package com.kyobi.data.model.request
+package com.kyobi.domain.model.request
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
