@@ -5,13 +5,13 @@ import baseDependencies
 import composeDependencies
 import testDependencies
 
-
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.parcelize")
     id("com.google.dagger.hilt.android")
-    kotlin("kapt")
+    id("com.google.devtools.ksp")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -45,7 +45,6 @@ android {
         unitTests {
             isIncludeAndroidResources = true
         }
-        targetSdk = AppConfig.targetSdk
     }
 
     compileOptions {
@@ -64,28 +63,19 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = AppConfig.KotlinCompilerExtension
-    }
-
     packaging  {
-        resources.excludes.apply {
-            add("META-INF/AL2.0")
-            add("META-INF/LGPL2.1")
-        }
+        resources.excludes.add("META-INF/**/*")
     }
 
     libraryVariants.all {
         kotlin.sourceSets {
             getByName(name) {
-                kotlin.srcDir(File("build/generated/kapt/$name/kotlin"))
+                kotlin.srcDir(File("build/generated/ksp/$name/kotlin"))
             }
         }
     }
 }
-kapt {
-    correctErrorTypes = true
-}
+
 dependencies {
     baseDependencies()
     composeDependencies()

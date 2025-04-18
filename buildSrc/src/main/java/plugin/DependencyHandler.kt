@@ -13,8 +13,8 @@ fun DependencyHandler.testImplementation(dependencyNotation: Any): Dependency? =
 fun DependencyHandler.androidTestImplementation(dependencyNotation: Any): Dependency? =
     add("androidTestImplementation", dependencyNotation)
 
-fun DependencyHandler.kapt(dependencyNotation: Any): Dependency? =
-    add("kapt", dependencyNotation)
+fun DependencyHandler.ksp(dependencyNotation: Any): Dependency? =
+    add("ksp", dependencyNotation)
 
 fun DependencyHandler.composeDependencies() {
     implementation(platform(Libraries.Compose.composeBom))
@@ -25,7 +25,7 @@ fun DependencyHandler.composeDependencies() {
     implementation(Libraries.Compose.composeFoundation)
     implementation(Libraries.Compose.composeRuntime)
     implementation(Libraries.Compose.composeMaterial3)
-
+    implementation(Libraries.Compose.composeMaterial)
     //navigation
     implementation(Libraries.Navigation.navigationCompose)
 
@@ -44,21 +44,6 @@ fun DependencyHandler.composeDependencies() {
     //timber
     implementation(Libraries.Timber.timber)
 
-    //okhttp
-    implementation(Libraries.SquareUp.okhttp3)
-    implementation(Libraries.SquareUp.okhttp3LoggingInterceptor)
-
-    //retrofit
-    implementation(Libraries.SquareUp.retrofit2)
-    implementation(Libraries.SquareUp.converterGson)
-
-    //coroutines
-    implementation(Libraries.Coroutine.android)
-    implementation(Libraries.Coroutine.core)
-
-    //kotlinreflect
-    implementation(Libraries.KotlinReflect.reflect)
-
     //Firebase
     implementation(platform(Libraries.Google.Firebase.bom))
     implementation(Libraries.Google.Firebase.crashlytics)
@@ -73,7 +58,10 @@ fun DependencyHandler.composeDependencies() {
     implementation(Libraries.Room.runtime)
     implementation(Libraries.Room.ktx)
     annotationProcessor(Libraries.Room.compiler)
-    kapt(Libraries.Room.compiler)
+    ksp(Libraries.Room.compiler)
+
+    // Security
+    implementation(Libraries.AndroidX.security)
 }
 
 fun DependencyHandler.accompanistDependencies() {
@@ -112,8 +100,35 @@ fun DependencyHandler.baseDependencies() {
     implementation(Libraries.Google.gson)
     implementation(Libraries.Hilt.hiltAndroid)
     implementation(Libraries.Hilt.hiltWork)
-    kapt(Libraries.Hilt.hiltAndroidCompiler)
+    ksp(Libraries.Hilt.hiltAndroidCompiler)
+
     implementation(Libraries.Google.guava)
+
+    //okhttp
+    implementation(Libraries.SquareUp.okhttp3)
+    implementation(Libraries.SquareUp.okhttp3LoggingInterceptor)
+
+    //retrofit
+    implementation(Libraries.SquareUp.retrofit2)
+    implementation(Libraries.SquareUp.converterGson)
+
+    //moshi
+    implementation(Libraries.SquareUp.moshi)
+    implementation(Libraries.SquareUp.converterMoshi)
+    ksp(Libraries.SquareUp.moshiCodegen)
+
+    //apollo
+    implementation(Libraries.Apollo.apollo3)
+
+    //supabase
+//    implementation(Libraries.Supabase.auth)
+
+    //coroutines
+    implementation(Libraries.Coroutine.android)
+    implementation(Libraries.Coroutine.core)
+
+    //kotlinreflect
+    implementation(Libraries.KotlinReflect.reflect)
 }
 
 fun DependencyHandler.testDependencies() {

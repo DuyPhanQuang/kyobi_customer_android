@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
 }
+
 android {
     namespace = "com.kyobi.core"
 }

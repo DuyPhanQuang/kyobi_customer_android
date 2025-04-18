@@ -5,7 +5,6 @@ plugins {
 
 dependencies {
     CORE
-    DATA
 }
 android {
     namespace = "com.kyobi.domain"

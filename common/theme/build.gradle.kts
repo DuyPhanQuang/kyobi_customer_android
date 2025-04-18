@@ -4,7 +4,7 @@ plugins {
 
 
 dependencies {
-
+    CORE
 }
 android {
     namespace = "com.kyobi.theme"

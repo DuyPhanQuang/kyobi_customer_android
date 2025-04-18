@@ -5,8 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
-import com.kyobi.core.Contraction.Type.INSTAGRAM
-import com.kyobi.core.Contraction.Type.YOUTUBE
 
 object IntentUtils {
     fun Context.share(
@@ -26,8 +24,8 @@ object IntentUtils {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
         try {
             when (type) {
-                YOUTUBE -> intent.setPackage("com.google.android.youtube")
-                INSTAGRAM -> intent.setPackage("com.instagram.android")
+                "type_youtube" -> intent.setPackage("com.google.android.youtube")
+                "type_instagram" -> intent.setPackage("com.instagram.android")
             }
             startActivity(intent)
         } catch (e: Exception) {
