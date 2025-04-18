@@ -2,7 +2,7 @@ package com.kyobi.data.di
 
 import com.kyobi.data.network.KyobiApiService
 import com.kyobi.data.network.ShopifyApiService
-import com.kyobi.data.network.ShopifyApiServiceImpl
+import com.kyobi.data.network.impl.ShopifyApiServiceImpl
 import com.kyobi.data.network.impl.KyobiApiServiceImpl
 import dagger.Binds
 import dagger.Module
