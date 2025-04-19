@@ -14,7 +14,7 @@ import javax.inject.Inject
 class LoginUsecaseImpl @Inject constructor(
     private val authRepository: AuthRepository
 ): LoginUseCase {
-    override suspend fun login(email: String, password: String): Flow<DomainNetworkResult<LoggedInUser>> {
+    override suspend operator fun invoke(email: String, password: String): Flow<DomainNetworkResult<LoggedInUser>> {
         return flow {
             emit(DomainNetworkResult.Loading)
             val request = LoginRequest(email = email, password = password)

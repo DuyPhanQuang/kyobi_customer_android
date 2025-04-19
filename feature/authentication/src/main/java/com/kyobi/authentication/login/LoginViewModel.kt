@@ -40,7 +40,7 @@ class LoginViewModel @Inject constructor(
             return
         }
         viewModelScope.launchOnIO {
-            loginUseCase.login(loginUiState.email, loginUiState.password)
+            loginUseCase.invoke(loginUiState.email, loginUiState.password)
                 .withLoading {
                     loginUiState = loginUiState.copy(
                         isLoading = true,
@@ -58,6 +58,26 @@ class LoginViewModel @Inject constructor(
                             authStateProvider.updateAuthState(
                                 result.data,
                                 isAnonymous = false)
+                            // Sau khi login thành công, lấy thông tin user
+                            loginUseCase.getCurrentUser().collect { userResult ->
+                                when (userResult) {
+                                    is DomainNetworkResult.Success -> {
+                                        authStateProvider.updateAuthState(
+                                            user = userResult.data,
+                                            isAnonymous = false
+                                        )
+                                    }
+                                    is DomainNetworkResult.Error -> {
+                                        loginUiState = loginUiState.copy(
+                                            isLoading = false,
+                                            error = userResult.exception.message
+                                        )
+                                    }
+                                    is DomainNetworkResult.Loading -> {
+                                        loginUiState = loginUiState.copy(isLoading = true)
+                                    }
+                                }
+                            }
                         }
                         is DomainNetworkResult.Error -> {
                             loginUiState = loginUiState.copy(

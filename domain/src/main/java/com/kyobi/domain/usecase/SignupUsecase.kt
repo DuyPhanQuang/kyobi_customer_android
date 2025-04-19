@@ -5,5 +5,5 @@ import com.kyobi.domain.model.LoggedInUser
 import kotlinx.coroutines.flow.Flow
 
 interface SignUpUseCase {
-    suspend fun signUp(email: String, password: String, phone: String?): Flow<DomainNetworkResult<LoggedInUser>>
+    suspend fun signUp(email: String, password: String, phone: String?): Flow<DomainNetworkResult<Boolean>>
 }

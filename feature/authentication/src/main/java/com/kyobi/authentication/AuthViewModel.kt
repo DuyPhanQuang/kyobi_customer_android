@@ -7,21 +7,25 @@ import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.LoggedInUser
 import com.kyobi.domain.provider.auth.AuthStateProvider
-import com.kyobi.domain.provider.auth.AuthUiState
 import com.kyobi.domain.usecase.LoginUseCase
 import com.kyobi.domain.usecase.LogoutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
-    private val logoutUseCase: LogoutUseCase
-): ViewModel(), AuthStateProvider {
-    private val _authUiState = MutableStateFlow(AuthUiState())
-    override val authUiState = _authUiState.asStateFlow()
+    private val logoutUseCase: LogoutUseCase,
+    private val authStateProvider: AuthStateProvider
+): ViewModel(), AuthStateProvider by authStateProvider {
+    private val _loginState = MutableStateFlow<DomainNetworkResult<LoggedInUser>>(DomainNetworkResult.Loading)
+    val loginState: StateFlow<DomainNetworkResult<LoggedInUser>> = _loginState.asStateFlow()
+
+    private val _anonymousLoginState = MutableStateFlow<DomainNetworkResult<LoggedInUser>>(DomainNetworkResult.Loading)
+    val anonymousLoginState: StateFlow<DomainNetworkResult<LoggedInUser>> = _anonymousLoginState.asStateFlow()
 
     init {
         initializeSession()
@@ -31,60 +35,61 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launchOnIO {
             loginUseCase.loginAnonymously()
                 .handleErrors {
-                    _authUiState.value = _authUiState.value.copy(
+                    authStateProvider.authUiState.value.copy(
                         isLoading = false,
                         error = it.message)
                 }.collect { result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
-                            _authUiState.value = _authUiState.value.copy(
-                                isLoading = false,
-                                isLoggedIn = true,
-                                isAnonymous = true,
-                                currentUser = result.data,
-                                error = null)
+                            authStateProvider.updateAuthState(
+                                user = null,
+                                isAnonymous = true
+                            )
+                            getLatestCurrentUser()
                         }
                         is DomainNetworkResult.Error -> {
-                            _authUiState.value = _authUiState.value.copy(
+                            authStateProvider.authUiState.value.copy(
                                 isLoading = false,
-                                error = result.exception.message)
+                                error = result.exception.message
+                            )
                         }
                         is DomainNetworkResult.Loading -> {
-                            _authUiState.value = _authUiState.value.copy(
-                                isLoading = true)
+                            authStateProvider.authUiState.value.copy(
+                                isLoading = true
+                            )
                         }
                     }
+                    _anonymousLoginState.value = result
                 }
         }
-        checkCurrentUser()
     }
 
-    private fun checkCurrentUser() {
+    private fun getLatestCurrentUser() {
         viewModelScope.launchOnIO {
             loginUseCase.getCurrentUser()
                 .handleErrors {
-                    _authUiState.value = _authUiState.value.copy(
+                    authStateProvider.authUiState.value.copy(
                         isLoading = false,
-                        error = null)
+                        error = it.message)
                 }.collect { result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
                             val isAnonymous = result.data.userType == com.kyobi.domain.model.UserType.ANONYMOUS
-                            _authUiState.value = _authUiState.value.copy(
-                                isLoading = false,
-                                isLoggedIn = true,
-                                isAnonymous = isAnonymous,
-                                currentUser = result.data,
-                                error = null)
+                            authStateProvider.updateAuthState(
+                                user = result.data,
+                                isAnonymous = isAnonymous
+                            )
                         }
                         is DomainNetworkResult.Error -> {
-                            _authUiState.value = _authUiState.value.copy(
+                            authStateProvider.authUiState.value.copy(
                                 isLoading = false,
-                                error = result.exception.message)
+                                error = result.exception.message
+                            )
                         }
                         is DomainNetworkResult.Loading -> {
-                            _authUiState.value = _authUiState.value.copy(
-                                isLoading = false)
+                            authStateProvider.authUiState.value.copy(
+                                isLoading = true
+                            )
                         }
                     }
                 }
@@ -95,30 +100,26 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launchOnIO {
             logoutUseCase.logout()
                 .handleErrors {
-                    _authUiState.value = _authUiState.value.copy(
-                        isLoading = false, error = it.message)
+                    authStateProvider.authUiState.value.copy(
+                        isLoading = false,
+                        error = it.message)
                 }.collect{ result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
-                            _authUiState.value = _authUiState.value.copy(
-                                isLoading = false,
-                                isLoggedIn = false,
-                                isAnonymous = false,
-                                currentUser = null,
-                                error = null
-                            )
-                            // login anonymously tro lai sau khi logout
+                            authStateProvider.logout()
+                            // Sau khi logout, login anonymously lại
                             initializeSession()
                         }
                         is DomainNetworkResult.Error -> {
-                            _authUiState.value = _authUiState.value.copy(
+                            authStateProvider.authUiState.value.copy(
                                 isLoading = false,
                                 error = result.exception.message
                             )
                         }
                         is DomainNetworkResult.Loading -> {
-                            _authUiState.value = _authUiState.value.copy(
-                                isLoading = true)
+                            authStateProvider.authUiState.value.copy(
+                                isLoading = true
+                            )
                         }
                     }
                 }
@@ -127,13 +128,7 @@ class AuthViewModel @Inject constructor(
 
     /* Sau khi login success, sign up success se call lai ham nay
     * */
-    override fun updateAuthState(user: LoggedInUser, isAnonymous: Boolean) {
-        _authUiState.value = _authUiState.value.copy(
-            isLoading = false,
-            isLoggedIn = true,
-            isAnonymous = isAnonymous,
-            currentUser = user,
-            error = null
-        )
+    override fun updateAuthState(user: LoggedInUser?, isAnonymous: Boolean) {
+        authStateProvider.updateAuthState(user, isAnonymous)
     }
 }

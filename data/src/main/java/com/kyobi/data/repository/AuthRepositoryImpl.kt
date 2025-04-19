@@ -7,6 +7,7 @@ import com.kyobi.domain.model.LoggedInUser
 import com.kyobi.domain.model.UserInfo
 import com.kyobi.domain.model.UserType
 import com.kyobi.domain.model.request.LoginRequest
+import com.kyobi.domain.model.request.SignupRequest
 import com.kyobi.domain.repository.AuthRepository
 import javax.inject.Inject
 
@@ -74,6 +75,29 @@ class AuthRepositoryImpl @Inject constructor(
                         )
                     )
                 )
+            }
+            is RestNetworkResult.Error -> RestNetworkResult.Error(result.message, result.code)
+            is RestNetworkResult.Loading -> RestNetworkResult.Loading
+        }
+    }
+
+    override suspend fun logout(): RestNetworkResult<Unit> {
+        return when (val result = apiService.logout()) {
+            is RestNetworkResult.Success -> {
+                tokenStorage.clearTokens()
+                RestNetworkResult.Success(Unit)
+            }
+            is RestNetworkResult.Error -> RestNetworkResult.Error(result.message, result.code)
+            is RestNetworkResult.Loading -> RestNetworkResult.Loading
+        }
+    }
+
+    override suspend fun signup(request: SignupRequest): RestNetworkResult<Boolean> {
+        return when (val result = apiService.signup(request)) {
+            is RestNetworkResult.Success -> {
+                val response = result.data
+                val isSuccess = response.data == null || !response.data.user.isAnonymous
+                RestNetworkResult.Success(isSuccess)
             }
             is RestNetworkResult.Error -> RestNetworkResult.Error(result.message, result.code)
             is RestNetworkResult.Loading -> RestNetworkResult.Loading

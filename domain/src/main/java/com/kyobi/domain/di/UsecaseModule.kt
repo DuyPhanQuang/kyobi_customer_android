@@ -2,8 +2,12 @@ package com.kyobi.domain.di
 
 import com.kyobi.domain.usecase.GetProductsUseCase
 import com.kyobi.domain.usecase.LoginUseCase
+import com.kyobi.domain.usecase.LogoutUseCase
+import com.kyobi.domain.usecase.SignUpUseCase
 import com.kyobi.domain.usecase.impl.GetProductsUseCaseImpl
 import com.kyobi.domain.usecase.impl.LoginUsecaseImpl
+import com.kyobi.domain.usecase.impl.LogoutUsecaseImpl
+import com.kyobi.domain.usecase.impl.SignupUsecaseImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -20,4 +24,12 @@ abstract class UseCaseModule {
     @Binds
     @Singleton
     abstract fun bindLoginUseCase(impl: LoginUsecaseImpl): LoginUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindLogoutUseCase(impl: LogoutUsecaseImpl): LogoutUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindSignupUseCase(impl: SignupUsecaseImpl): SignUpUseCase
 }

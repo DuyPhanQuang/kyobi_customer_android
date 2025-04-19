@@ -60,9 +60,7 @@ class SignupViewModel @Inject constructor(
                             signUpUiState = signUpUiState.copy(
                                 isLoading = false,
                                 error = null)
-                            authStateProvider.updateAuthState(
-                                result.data,
-                                isAnonymous = false)
+                            // show dialog open gmail app here to activated account via link in email
                         }
                         is DomainNetworkResult.Error -> {
                             signUpUiState = signUpUiState.copy(
