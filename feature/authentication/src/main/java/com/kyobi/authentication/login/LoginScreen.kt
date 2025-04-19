@@ -12,13 +12,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kyobi.featurecommon.auth.AuthViewModel
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = hiltViewModel()
+    viewModel: LoginViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val loginUiState = viewModel.loginUiState
-    val authUiState by viewModel.authUiState.collectAsStateWithLifecycle()
+    val authUiState by authViewModel.authUiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -88,7 +90,11 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { viewModel.submitLogin() },
+            onClick = {
+                viewModel.submitLogin { user, isAnonymous ->
+                    authViewModel.updateAuthState(user, isAnonymous)
+                }
+            },
             enabled = !loginUiState.isLoading,
             modifier = Modifier.fillMaxWidth()
         ) {

@@ -2,7 +2,7 @@ package com.kyobi.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kyobi.domain.usecase.impl.GetProductsUseCaseImpl
+import com.kyobi.domain.usecase.GetProductsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeTabViewModel @Inject constructor(
-    private val getProductsUseCase: GetProductsUseCaseImpl
+    private val getProductsUseCase: GetProductsUseCase
 ): ViewModel() {
     private val _uiState = MutableStateFlow(HomeTabUiState())
     val uiState = _uiState.asStateFlow()

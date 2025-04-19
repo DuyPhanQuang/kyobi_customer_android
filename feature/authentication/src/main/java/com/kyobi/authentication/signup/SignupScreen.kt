@@ -12,13 +12,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kyobi.featurecommon.auth.AuthViewModel
 
 @Composable
 fun SignUpScreen(
-    viewModel: SignupViewModel = hiltViewModel()
+    viewModel: SignupViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState = viewModel.signUpUiState
-    val authUiState by viewModel.authUiState.collectAsStateWithLifecycle()
+    val authUiState by authViewModel.authUiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier

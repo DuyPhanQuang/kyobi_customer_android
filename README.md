@@ -23,6 +23,7 @@ Dự án được chia thành các module sau:
 - **:core**: Chứa các thành phần chung như coroutines extensions, network clients, token storage.
 - **:domain**: Định nghĩa các use case, repository interfaces, domain models.
 - **:data**: Implement repository, xử lý dữ liệu từ API và local database.
+- **:featurecommon:auth**: Chứa logic xác thực chung như `AuthViewModel`, `AuthStateProvider`, dùng để chia sẻ trạng thái xác thực giữa các feature module.
 - **:feature:authentication**: Chứa logic và UI cho xác thực (đăng nhập, đăng ký, đăng xuất).
 - **:feature:home**: Chứa logic và UI cho trang chủ (hiển thị sản phẩm).
 - **:feature:profile**: Chứa logic và UI cho trang hồ sơ người dùng.
@@ -36,6 +37,11 @@ Dự án được chia thành các module sau:
           |                      |                      |
           |                      |                      |
           v                      v                      v
++-------------------------+-----------------------------|
+| :featurecommon:auth |   :featurecommon:x    ...etc    |
++-------------------------+-----------------------------|
+          |                                             |
+          v                                             v
 +----------------+     +----------------+     +----------------+
 |    :domain     |<----|    :data       |<----|    :core       |
 +----------------+     +----------------+     +----------------+
@@ -55,8 +61,8 @@ Dự án được chia thành các module sau:
 - **:core** cung cấp các thành phần chung như network clients, coroutines extensions, được **:data**, **:domain**, và các feature module phụ thuộc.
 - **:domain** phụ thuộc vào **:core**, định nghĩa use cases, repository interfaces, và domain models.
 - **:data** phụ thuộc vào **:core** và **:domain**, implement các repository và xử lý dữ liệu.
-- Các feature module (**:home**, **:profile**, **:authentication**) phụ thuộc vào **:domain**, **:data**, và **:core**, nhưng **không phụ thuộc lẫn nhau**. Chúng tương tác thông qua `AuthStateProvider` (định nghĩa trong **:domain**, implement trong **:feature:authentication**) để chia sẻ trạng thái xác thực.
-
+- **:featurecommon:auth** phụ thuộc vào **:domain**, chứa logic xác thực chung như `AuthViewModel` và `AuthStateProvider`, được các feature module sử dụng để chia sẻ trạng thái xác thực.
+- Các feature module (**:home**, **:profile**, **:authentication**) phụ thuộc vào **:featurecommon:auth**, **:domain**, **:data**, và **:core**, nhưng **không phụ thuộc lẫn nhau**. Chúng lấy trạng thái xác thực thông qua `AuthViewModel` từ **:featurecommon:auth**.
 ---
 
 ## 3. Cấu trúc Folder và File của từng Module
@@ -154,10 +160,6 @@ fun <T> Flow<T>.handleErrors(action: (Throwable) -> Unit): Flow<T> {
                 │   └── request/
                 │       ├── LoginRequest.kt
                 │       └── SignUpRequest.kt
-                ├── provider/
-                │   └── auth/
-                │       ├── AuthState.kt
-                │       └── AuthStateProvider.kt
                 ├── repository/
                 │   ├── AuthRepository.kt
                 │   └── ProductRepository.kt
@@ -175,7 +177,6 @@ fun <T> Flow<T>.handleErrors(action: (Throwable) -> Unit): Flow<T> {
 
 - **build.gradle.kts**: Phụ thuộc `:core`, namespace `com.kyobi.domain`.
 - **UsecaseModule.kt**: Bind các implementation của use cases thông qua Hilt.
-- **AuthStateProvider.kt**: Interface cung cấp `StateFlow<AuthUiState>` để chia sẻ trạng thái xác thực.
 
 **Ví dụ từ `GetProductsUseCaseImpl.kt`:**
 ```kotlin
@@ -258,7 +259,31 @@ class TokenStorageImpl @Inject constructor(
 }
 ```
 
-### 3.5. Module: feature/authentication
+### 3.5. Module: featurecommon/auth
+
+**Cấu trúc folder:**
+
+```
+:featurecommon:auth/
+├── build.gradle.kts
+└── src/
+└── main/
+└── java/
+└── com/kyobi/featurecommon/auth/
+├── di/
+│   └── AuthStateModule.kt
+├── AuthState.kt
+├── AuthStateProvider.kt
+└── AuthViewModel.kt
+```
+
+- **build.gradle.kts**: Phụ thuộc `:core`, `:domain`, namespace `com.kyobi.featurecommon.auth`.
+- **AuthStateModule.kt**: Bind implementation của `AuthStateProvider` thông qua Hilt.
+- **AuthState.kt**: Định nghĩa `AuthUiState` để lưu trữ trạng thái xác thực (isLoading, isLoggedIn, isAnonymous, currentUser, error).
+- **AuthStateProvider.kt**: Interface cung cấp `StateFlow<AuthUiState>` và các phương thức để cập nhật trạng thái xác thực (`updateAuthState`, `logout`, `setLoading`, `setError`).
+- **AuthViewModel.kt**: Quản lý trạng thái xác thực toàn cục, khởi tạo session ẩn danh khi app khởi động, và cung cấp `authUiState` cho các feature module khác.
+
+### 3.6. Module: feature/authentication
 
 **Cấu trúc folder:**
 ```
@@ -268,8 +293,6 @@ class TokenStorageImpl @Inject constructor(
     └── main/
         └── java/
             └── com/kyobi/feature/authentication/
-                ├── di/
-                │   └── AuthenticationModule.kt
                 ├── login/
                 │   ├── LoginScreen.kt
                 │   ├── LoginState.kt
@@ -281,26 +304,32 @@ class TokenStorageImpl @Inject constructor(
                 └── AuthViewModel.kt
 ```
 
-- **build.gradle.kts**: Phụ thuộc `:core`, `:data`, `:domain`, `COMMON_THEME`, `COMMON_COMPOSABLE`, namespace `com.kyobi.feature.authentication`.
-- **AuthViewModel.kt**: Implement `AuthStateProvider`, quản lý trạng thái xác thực toàn cục.
+- **build.gradle.kts**: Phụ thuộc `:core`, `:data`, `:domain`, `:featurecommon:auth`, `COMMON_THEME`, `COMMON_COMPOSABLE`, namespace `com.kyobi.feature.authentication`.
+- **LoginViewModel.kt**: Quản lý logic đăng nhập, lấy trạng thái xác thực từ `AuthViewModel` trong Composable.
 
-**Ví dụ từ `AuthViewModel.kt`:**
+- **Ví dụ từ `LoginScreen.kt`:**
 ```kotlin
-@HiltViewModel
-class AuthViewModel @Inject constructor(
-    private val loginUseCase: LoginUseCase,
-    private val logoutUseCase: LogoutUseCase
-): ViewModel(), AuthStateProvider {
-    private val _authUiState = MutableStateFlow(AuthUiState())
-    override val authUiState = _authUiState.asStateFlow()
+@Composable
+fun LoginScreen(
+    loginViewModel: LoginViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
+    val authUiState by authViewModel.authUiState.collectAsStateWithLifecycle()
+    val loginUiState by loginViewModel.loginUiState
 
-    init {
-        initializeSession() // Khởi tạo session ẩn danh
+    Button(
+        onClick = {
+            loginViewModel.submitLogin { user, isAnonymous ->
+                authViewModel.updateAuthState(user, isAnonymous)
+            }
+        }
+    ) {
+        Text("Đăng nhập")
     }
 }
 ```
 
-### 3.6. Module: feature/home
+### 3.7. Module: feature/home
 
 **Cấu trúc folder:**
 ```
@@ -315,33 +344,45 @@ class AuthViewModel @Inject constructor(
                 └── HomeTabViewModel.kt
 ```
 
-- **build.gradle.kts**: Phụ thuộc `:core`, `:data`, `:domain`, `COMMON_THEME`, `COMMON_COMPOSABLE`, namespace `com.kyobi.feature.home`.
+- **build.gradle.kts**: Phụ thuộc `:core`, `:data`, `:domain`, `:featurecommon:auth`, `COMMON_THEME`, `COMMON_COMPOSABLE`, namespace `com.kyobi.feature.home`.
 - **HomeTabViewModel.kt**: Quản lý logic lấy danh sách sản phẩm.
 
-**Ví dụ từ `HomeTabViewModel.kt`:**
+**Ví dụ từ `HomeTab.kt`:**
 ```kotlin
-@HiltViewModel
-class HomeTabViewModel @Inject constructor(
-    private val getProductsUseCase: GetProductsUseCaseImpl
-): ViewModel() {
-    private val _uiState = MutableStateFlow(HomeTabUiState())
-    val uiState = _uiState.asStateFlow()
+@Composable
+fun HomeTab(
+    viewModel: HomeTabViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
+    val authUiState by authViewModel.authUiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    init {
-        fetchProducts()
-    }
-
-    private fun fetchProducts() {
-        viewModelScope.launch {
-            getProductsUseCase().collect { result ->
-                _uiState.value = _uiState.value.copy(productsResult = result)
+    if (authUiState.isLoggedIn) {
+        // Hiển thị danh sách sản phẩm
+        uiState.productsResult?.let { result ->
+            when (result) {
+                is DomainNetworkResult.Success -> {
+                    LazyColumn {
+                        items(result.data) { product ->
+                            Text(text = product.name)
+                        }
+                    }
+                }
+                is DomainNetworkResult.Error -> {
+                    Text(text = result.message ?: "Error loading products")
+                }
+                is DomainNetworkResult.Loading -> {
+                    CircularProgressIndicator()
+                }
             }
         }
+    } else {
+        Text(text = "Vui lòng đăng nhập để xem sản phẩm")
     }
 }
 ```
 
-### 3.7. Module: feature/profile
+### 3.8. Module: feature/profile
 
 **Cấu trúc folder:**
 ```
@@ -356,7 +397,7 @@ class HomeTabViewModel @Inject constructor(
                 └── ProfileTabViewModel.kt
 ```
 
-- **build.gradle.kts**: Phụ thuộc `:core`, `:data`, `:domain`, `COMMON_THEME`, `COMMON_COMPOSABLE`, namespace `com.kyobi.feature.profile`.
+- **build.gradle.kts**: Phụ thuộc `:core`, `:data`, `:domain`, `:featurecommon:auth`, `COMMON_THEME`, `COMMON_COMPOSABLE`, namespace `com.kyobi.feature.profile`.
 - **ProfileTab.kt**: Hiển thị thông tin người dùng hoặc nút đăng nhập/đăng ký.
 
 **Ví dụ từ `ProfileTab.kt`:**
@@ -421,14 +462,22 @@ override suspend operator fun invoke(): Flow<DomainNetworkResult<List<Product>>>
 ```
 
 **Tương tác giữa các Feature Module:**
-- Các feature module không phụ thuộc lẫn nhau mà sử dụng `AuthStateProvider` từ **:domain** để chia sẻ trạng thái xác thực.
-- Ví dụ: `ProfileTabViewModel` và `HomeTabViewModel` inject `AuthStateProvider` để truy cập `authUiState`:
+- Các feature module không phụ thuộc lẫn nhau mà sử dụng `AuthViewModel` từ **:featurecommon:auth** để chia sẻ trạng thái xác thực.
+- `AuthViewModel` là nơi duy nhất giao tiếp với `AuthStateProvider`. Các feature module lấy trạng thái xác thực (`authUiState`) thông qua `AuthViewModel` trong Composable bằng cách sử dụng `hiltViewModel()`.
+- Ví dụ: `ProfileTab` và `HomeTab` lấy `authUiState` từ `AuthViewModel`:
 ```kotlin
-@HiltViewModel
-class ProfileTabViewModel @Inject constructor(
-    private val authStateProvider: AuthStateProvider
-) : ViewModel() {
-    val authUiState = authStateProvider.authUiState
+@Composable
+fun ProfileTab(
+    navController: NavController,
+    viewModel: ProfileTabViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
+    val authUiState by authViewModel.authUiState.collectAsStateWithLifecycle()
+    if (authUiState.isLoggedIn) {
+        authUiState.currentUser?.let { user ->
+            Text(text = "ID: ${user.id}")
+        }
+    }
 }
 ```
 
@@ -440,24 +489,38 @@ Mỗi feature module sử dụng **MVVM**:
 - **Model**: Domain models (ví dụ: `Product`, `LoggedInUser`).
 
 **Ví dụ từ `:feature:authentication`:**
-- `LoginScreen` tương tác với `LoginViewModel`:
+- `LoginScreen` tương tác với `LoginViewModel` và `AuthViewModel`:
 ```kotlin
 @Composable
-fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
-    Button(onClick = { viewModel.submitLogin() }) {
+fun LoginScreen(
+    loginViewModel: LoginViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
+    val authUiState by authViewModel.authUiState.collectAsStateWithLifecycle()
+    Button(
+        onClick = {
+            loginViewModel.submitLogin { user, isAnonymous ->
+                authViewModel.updateAuthState(user, isAnonymous)
+            }
+        }
+    ) {
         Text("Đăng nhập")
     }
 }
 ```
-- `LoginViewModel` gọi `LoginUseCase`:
+- `LoginViewModel` gọi `LoginUseCase` và cập nhật trạng thái xác thực thông qua AuthViewModel:
 ```kotlin
-fun submitLogin() {
+fun submitLogin(onUpdateAuthState: (LoggedInUser?, Boolean) -> Unit) {
     viewModelScope.launchOnIO {
-        loginUseCase.login(loginUiState.email, loginUiState.password)
+        loginUseCase(loginUiState.email, loginUiState.password)
             .collect { result ->
                 when (result) {
                     is DomainNetworkResult.Success -> {
-                        authStateProvider.updateAuthState(result.data, isAnonymous = false)
+                        loginUseCase.getCurrentUser().collect { userResult ->
+                            if (userResult is DomainNetworkResult.Success) {
+                                onUpdateAuthState(userResult.data, false)
+                            }
+                        }
                     }
                 }
             }

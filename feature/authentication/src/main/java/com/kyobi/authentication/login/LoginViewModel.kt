@@ -5,11 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.core.coroutines.handleErrors
 import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.core.coroutines.withLoading
 import com.kyobi.domain.model.DomainNetworkResult
-import com.kyobi.domain.provider.auth.AuthStateProvider
+import com.kyobi.domain.model.LoggedInUser
 import com.kyobi.domain.usecase.LoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -17,10 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
-    private val authStateProvider: AuthStateProvider
 ): ViewModel() {
-
-    val authUiState = authStateProvider.authUiState
 
     var loginUiState by mutableStateOf(LoginUiState())
         private set
@@ -33,14 +31,16 @@ class LoginViewModel @Inject constructor(
         loginUiState = loginUiState.copy(password = password, error = null)
     }
 
-    fun submitLogin() {
+    fun submitLogin(
+        onUpdateAuthState: (LoggedInUser?, Boolean) -> Unit
+    ) {
         if (loginUiState.email.isBlank() ||
             loginUiState.password.isBlank()) {
             loginUiState = loginUiState.copy(error = "Vui lòng nhập email và mật khẩu")
             return
         }
         viewModelScope.launchOnIO {
-            loginUseCase.invoke(loginUiState.email, loginUiState.password)
+            loginUseCase(loginUiState.email, loginUiState.password)
                 .withLoading {
                     loginUiState = loginUiState.copy(
                         isLoading = true,
@@ -55,17 +55,12 @@ class LoginViewModel @Inject constructor(
                             loginUiState = loginUiState.copy(
                                 isLoading = false,
                                 error = null)
-                            authStateProvider.updateAuthState(
-                                result.data,
-                                isAnonymous = false)
+                            onUpdateAuthState(result.data, false)
                             // Sau khi login thành công, lấy thông tin user
                             loginUseCase.getCurrentUser().collect { userResult ->
                                 when (userResult) {
                                     is DomainNetworkResult.Success -> {
-                                        authStateProvider.updateAuthState(
-                                            user = userResult.data,
-                                            isAnonymous = false
-                                        )
+                                        onUpdateAuthState(userResult.data, false)
                                     }
                                     is DomainNetworkResult.Error -> {
                                         loginUiState = loginUiState.copy(

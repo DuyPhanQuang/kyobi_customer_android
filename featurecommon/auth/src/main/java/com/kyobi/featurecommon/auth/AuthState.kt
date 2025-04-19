@@ -1,4 +1,4 @@
-package com.kyobi.domain.provider.auth
+package com.kyobi.featurecommon.auth
 
 import com.kyobi.domain.model.LoggedInUser
 

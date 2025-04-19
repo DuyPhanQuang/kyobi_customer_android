@@ -148,6 +148,7 @@ fun DependencyHandler.moduleDependencies() {
     DOMAIN
     COMMON_THEME
     COMMON_COMPOSABLE
+    FEATURECOMMON_AUTH
     FEATURE_HOME
     FEATURE_PROFILE
     FEATURE_AUTHENTICATION
@@ -167,6 +168,9 @@ val DependencyHandler.DATA
 
 val DependencyHandler.DOMAIN
     get() = implementation(project(mapOf("path" to ":domain")))
+
+val DependencyHandler.FEATURECOMMON_AUTH
+    get() = implementation(project(mapOf("path" to ":featurecommon:auth")))
 
 val DependencyHandler.FEATURE_HOME
     get() = implementation(project(mapOf("path" to ":feature:home")))

@@ -1,4 +1,4 @@
-package com.kyobi.domain.provider.auth
+package com.kyobi.featurecommon.auth
 
 import com.kyobi.domain.model.LoggedInUser
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,6 +11,17 @@ import javax.inject.Singleton
 class AuthStateProviderImpl @Inject constructor() : AuthStateProvider {
     private val _authUiState = MutableStateFlow(AuthUiState())
     override val authUiState: StateFlow<AuthUiState> = _authUiState.asStateFlow()
+
+    override fun setLoading(isLoading: Boolean) {
+        _authUiState.value = _authUiState.value.copy(isLoading = isLoading)
+    }
+
+    override fun setError(error: String?) {
+        _authUiState.value = _authUiState.value.copy(
+            isLoading = false,
+            error = error
+        )
+    }
 
     override fun updateAuthState(user: LoggedInUser?, isAnonymous: Boolean) {
         _authUiState.value = _authUiState.value.copy(

@@ -9,7 +9,6 @@ import com.kyobi.core.coroutines.handleErrors
 import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.core.coroutines.withLoading
 import com.kyobi.domain.model.DomainNetworkResult
-import com.kyobi.domain.provider.auth.AuthStateProvider
 import com.kyobi.domain.usecase.SignUpUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -17,10 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SignupViewModel @Inject constructor(
     private val signUpUseCase: SignUpUseCase,
-    private val authStateProvider: AuthStateProvider
 ): ViewModel() {
-
-    val authUiState = authStateProvider.authUiState
 
     var signUpUiState by mutableStateOf(SignUpUiState())
         private set

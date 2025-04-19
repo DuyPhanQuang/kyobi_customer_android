@@ -7,10 +7,7 @@ dependencies {
     CORE
     DATA
     DOMAIN
-    COMMON_THEME
-    COMMON_COMPOSABLE
-    FEATURECOMMON_AUTH
 }
 android {
-    namespace = "com.kyobi.feature.home"
+    namespace = "com.kyobi.featurecommon.auth"
 }

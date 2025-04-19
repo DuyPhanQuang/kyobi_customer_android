@@ -1,7 +1,7 @@
-package com.kyobi.domain.di
+package com.kyobi.featurecommon.auth.di
 
-import com.kyobi.domain.provider.auth.AuthStateProvider
-import com.kyobi.domain.provider.auth.AuthStateProviderImpl
+import com.kyobi.featurecommon.auth.AuthStateProvider
+import com.kyobi.featurecommon.auth.AuthStateProviderImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

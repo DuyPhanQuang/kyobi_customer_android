@@ -1,4 +1,4 @@
-package com.kyobi.authentication
+package com.kyobi.featurecommon.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -6,13 +6,9 @@ import com.kyobi.core.coroutines.handleErrors
 import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.LoggedInUser
-import com.kyobi.domain.provider.auth.AuthStateProvider
 import com.kyobi.domain.usecase.LoginUseCase
 import com.kyobi.domain.usecase.LogoutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 @HiltViewModel
@@ -21,12 +17,6 @@ class AuthViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
     private val authStateProvider: AuthStateProvider
 ): ViewModel(), AuthStateProvider by authStateProvider {
-    private val _loginState = MutableStateFlow<DomainNetworkResult<LoggedInUser>>(DomainNetworkResult.Loading)
-    val loginState: StateFlow<DomainNetworkResult<LoggedInUser>> = _loginState.asStateFlow()
-
-    private val _anonymousLoginState = MutableStateFlow<DomainNetworkResult<LoggedInUser>>(DomainNetworkResult.Loading)
-    val anonymousLoginState: StateFlow<DomainNetworkResult<LoggedInUser>> = _anonymousLoginState.asStateFlow()
-
     init {
         initializeSession()
     }
@@ -35,9 +25,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launchOnIO {
             loginUseCase.loginAnonymously()
                 .handleErrors {
-                    authStateProvider.authUiState.value.copy(
-                        isLoading = false,
-                        error = it.message)
+                    authStateProvider.setError(it.message)
                 }.collect { result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
@@ -48,18 +36,12 @@ class AuthViewModel @Inject constructor(
                             getLatestCurrentUser()
                         }
                         is DomainNetworkResult.Error -> {
-                            authStateProvider.authUiState.value.copy(
-                                isLoading = false,
-                                error = result.exception.message
-                            )
+                            authStateProvider.setError(result.exception.message)
                         }
                         is DomainNetworkResult.Loading -> {
-                            authStateProvider.authUiState.value.copy(
-                                isLoading = true
-                            )
+                            authStateProvider.setLoading(true)
                         }
                     }
-                    _anonymousLoginState.value = result
                 }
         }
     }
@@ -68,9 +50,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launchOnIO {
             loginUseCase.getCurrentUser()
                 .handleErrors {
-                    authStateProvider.authUiState.value.copy(
-                        isLoading = false,
-                        error = it.message)
+                    authStateProvider.setError(it.message)
                 }.collect { result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
@@ -81,15 +61,10 @@ class AuthViewModel @Inject constructor(
                             )
                         }
                         is DomainNetworkResult.Error -> {
-                            authStateProvider.authUiState.value.copy(
-                                isLoading = false,
-                                error = result.exception.message
-                            )
+                            authStateProvider.setError(result.exception.message)
                         }
                         is DomainNetworkResult.Loading -> {
-                            authStateProvider.authUiState.value.copy(
-                                isLoading = true
-                            )
+                            authStateProvider.setLoading(true)
                         }
                     }
                 }
@@ -100,9 +75,7 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launchOnIO {
             logoutUseCase.logout()
                 .handleErrors {
-                    authStateProvider.authUiState.value.copy(
-                        isLoading = false,
-                        error = it.message)
+                    authStateProvider.setError(it.message)
                 }.collect{ result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
@@ -111,15 +84,10 @@ class AuthViewModel @Inject constructor(
                             initializeSession()
                         }
                         is DomainNetworkResult.Error -> {
-                            authStateProvider.authUiState.value.copy(
-                                isLoading = false,
-                                error = result.exception.message
-                            )
+                            authStateProvider.setError(result.exception.message)
                         }
                         is DomainNetworkResult.Loading -> {
-                            authStateProvider.authUiState.value.copy(
-                                isLoading = true
-                            )
+                            authStateProvider.setLoading(true)
                         }
                     }
                 }

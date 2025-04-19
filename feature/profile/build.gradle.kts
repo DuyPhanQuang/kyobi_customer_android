@@ -9,6 +9,7 @@ dependencies {
     DOMAIN
     COMMON_THEME
     COMMON_COMPOSABLE
+    FEATURECOMMON_AUTH
 }
 android {
     namespace = "com.kyobi.feature.profile"
