@@ -37,9 +37,9 @@ Dự án được chia thành các module sau:
           |                      |                      |
           |                      |                      |
           v                      v                      v
-+-------------------------+-----------------------------|
-| :featurecommon:auth |   :featurecommon:x    ...etc    |
-+-------------------------+-----------------------------|
++----------------+                                      |
+| :featurecommon:auth |                                 |
++----------------+                                      |
           |                                             |
           v                                             v
 +----------------+     +----------------+     +----------------+
@@ -63,6 +63,7 @@ Dự án được chia thành các module sau:
 - **:data** phụ thuộc vào **:core** và **:domain**, implement các repository và xử lý dữ liệu.
 - **:featurecommon:auth** phụ thuộc vào **:domain**, chứa logic xác thực chung như `AuthViewModel` và `AuthStateProvider`, được các feature module sử dụng để chia sẻ trạng thái xác thực.
 - Các feature module (**:home**, **:profile**, **:authentication**) phụ thuộc vào **:featurecommon:auth**, **:domain**, **:data**, và **:core**, nhưng **không phụ thuộc lẫn nhau**. Chúng lấy trạng thái xác thực thông qua `AuthViewModel` từ **:featurecommon:auth**.
+
 ---
 
 ## 3. Cấu trúc Folder và File của từng Module
@@ -262,19 +263,18 @@ class TokenStorageImpl @Inject constructor(
 ### 3.5. Module: featurecommon/auth
 
 **Cấu trúc folder:**
-
 ```
 :featurecommon:auth/
 ├── build.gradle.kts
 └── src/
-└── main/
-└── java/
-└── com/kyobi/featurecommon/auth/
-├── di/
-│   └── AuthStateModule.kt
-├── AuthState.kt
-├── AuthStateProvider.kt
-└── AuthViewModel.kt
+    └── main/
+        └── java/
+            └── com/kyobi/featurecommon/auth/
+                ├── di/
+                │   └── AuthStateModule.kt
+                ├── AuthState.kt
+                ├── AuthStateProvider.kt
+                └── AuthViewModel.kt
 ```
 
 - **build.gradle.kts**: Phụ thuộc `:core`, `:domain`, namespace `com.kyobi.featurecommon.auth`.
@@ -301,13 +301,12 @@ class TokenStorageImpl @Inject constructor(
                 │   ├── SignupScreen.kt
                 │   ├── SignupState.kt
                 │   └── SignupViewModel.kt
-                └── AuthViewModel.kt
 ```
 
 - **build.gradle.kts**: Phụ thuộc `:core`, `:data`, `:domain`, `:featurecommon:auth`, `COMMON_THEME`, `COMMON_COMPOSABLE`, namespace `com.kyobi.feature.authentication`.
 - **LoginViewModel.kt**: Quản lý logic đăng nhập, lấy trạng thái xác thực từ `AuthViewModel` trong Composable.
 
-- **Ví dụ từ `LoginScreen.kt`:**
+**Ví dụ từ `LoginScreen.kt`:**
 ```kotlin
 @Composable
 fun LoginScreen(
@@ -405,13 +404,14 @@ fun HomeTab(
 @Composable
 fun ProfileTab(
     navController: NavController,
-    viewModel: ProfileTabViewModel = hiltViewModel()
+    viewModel: ProfileTabViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
-    val authUiState by viewModel.authUiState.collectAsStateWithLifecycle()
+    val authUiState by authViewModel.authUiState.collectAsStateWithLifecycle()
     if (authUiState.isLoggedIn) {
         authUiState.currentUser?.let { user ->
             Text(text = "ID: ${user.id}")
-            Button(onClick = { viewModel.submitLogout }) {
+            Button(onClick = { viewModel.submitLogout { authViewModel.logout() } }) {
                 Text("Đăng xuất")
             }
         }
@@ -508,19 +508,44 @@ fun LoginScreen(
     }
 }
 ```
-- `LoginViewModel` gọi `LoginUseCase` và cập nhật trạng thái xác thực thông qua AuthViewModel:
+- `LoginViewModel` gọi `LoginUseCase` và cập nhật trạng thái xác thực thông qua `AuthViewModel`:
 ```kotlin
 fun submitLogin(onUpdateAuthState: (LoggedInUser?, Boolean) -> Unit) {
     viewModelScope.launchOnIO {
         loginUseCase(loginUiState.email, loginUiState.password)
-            .collect { result ->
+            .withLoading {
+                loginUiState = loginUiState.copy(isLoading = true, error = null)
+            }.handleErrors { throwable ->
+                loginUiState = loginUiState.copy(isLoading = false, error = throwable.message)
+            }.collect { result ->
                 when (result) {
                     is DomainNetworkResult.Success -> {
+                        loginUiState = loginUiState.copy(isLoading = false, error = null)
                         loginUseCase.getCurrentUser().collect { userResult ->
-                            if (userResult is DomainNetworkResult.Success) {
-                                onUpdateAuthState(userResult.data, false)
+                            when (userResult) {
+                                is DomainNetworkResult.Success -> {
+                                    onUpdateAuthState(userResult.data, false)
+                                }
+                                is DomainNetworkResult.Error -> {
+                                    loginUiState = loginUiState.copy(
+                                        isLoading = false,
+                                        error = userResult.message
+                                    )
+                                }
+                                is DomainNetworkResult.Loading -> {
+                                    loginUiState = loginUiState.copy(isLoading = true)
+                                }
                             }
                         }
+                    }
+                    is DomainNetworkResult.Error -> {
+                        loginUiState = loginUiState.copy(
+                            isLoading = false,
+                            error = result.message
+                        )
+                    }
+                    is DomainNetworkResult.Loading -> {
+                        loginUiState = loginUiState.copy(isLoading = true)
                     }
                 }
             }
@@ -565,10 +590,12 @@ dependencies {
 
 ---
 
-### 6. Theme
+## 6. Theme
+
 Module **common:theme** định nghĩa hệ thống theme cho ứng dụng Kyobi, lấy cảm hứng từ **Tailwind CSS** để đảm bảo tính nhất quán, dễ mở rộng, và tái sử dụng. Theme tích hợp với **Material Design 3** (`androidx.compose.material3`) và hỗ trợ cả **light** và **dark theme**. Các thành phần theme được tách thành các file riêng để dễ quản lý và bảo trì.
 
 ### Cấu trúc thư mục
+
 **Cấu trúc folder:**
 ```
 :common:theme/
@@ -585,64 +612,67 @@ Module **common:theme** định nghĩa hệ thống theme cho ứng dụng Kyobi
                 └── Theme.kt
                 └── Typography.kt
 ```
+
 ### Chi tiết các file
 
 1. **Color.kt**
    - **Mục đích**: Định nghĩa bảng màu, bao gồm màu text và màu hệ thống.
    - **Cấu trúc**:
-      - `Colors`: Data class chứa mã màu kiểu Tailwind CSS (ví dụ: `stone100`, `stone400`, `neutral50`, `red500`, `primary600`).
-      - `AppColors`: Data class ánh xạ màu cho Material Design 3 (`primary`, `onPrimary`, `background`, v.v.) và nhúng `text: Colors, bg: Colors, border: Colors`.
-      - `LightAppColors`: Bảng màu cho light theme (nền trắng, text tối).
-      - `DarkAppColors`: Bảng màu cho dark theme (nền đen, text sáng), reverse từ `LightAppColors`.
-      - `toColorScheme()` và `toDarkColorScheme()`: Ánh xạ `AppColors` sang `lightColorScheme`/`darkColorScheme`.
+     - `Colors`: Data class chứa mã màu kiểu Tailwind CSS (ví dụ: `stone100`, `stone400`, `neutral50`, `red500`, `primary600`).
+     - `AppColors`: Data class ánh xạ màu cho Material Design 3 (`primary`, `onPrimary`, `background`, v.v.) và nhúng `text: Colors, bg: Colors, border: Colors`.
+     - `LightAppColors`: Bảng màu cho light theme (nền trắng, text tối).
+     - `DarkAppColors`: Bảng màu cho dark theme (nền đen, text sáng), reverse từ `LightAppColors`.
+     - `toColorScheme()` và `toDarkColorScheme()`: Ánh xạ `AppColors` sang `lightColorScheme`/`darkColorScheme`.
    - **Ứng dụng**: Cung cấp màu cho `BottomNavigationBar`, `InputTextField`, v.v. (ví dụ: `primary` cho tab chọn, `secondary` cho tab không chọn).
 
 2. **Typography.kt**
    - **Mục đích**: Định nghĩa kiểu văn bản (text styles).
    - **Cấu trúc**:
-      - `KyobiTypography`: Instance của `androidx.compose.material3.Typography`, định nghĩa `displayLarge`, `bodyLarge`, `labelLarge`.
+     - `KyobiTypography`: Instance của `androidx.compose.material3.Typography`, định nghĩa `displayLarge`, `bodyLarge`, `labelLarge`.
    - **Ứng dụng**: Dùng cho text trong `BottomNavigationBar` (`labelLarge`), `KyobiTextField`, v.v.
 
 3. **Shape.kt**
    - **Mục đích**: Định nghĩa góc bo tròn cho UI.
    - **Cấu trúc**:
-      - `KyobiShapes`: Instance của `androidx.compose.material3.Shapes`, định nghĩa `extraSmall`, `small`, `medium`, `large`, `extraLarge`.
+     - `KyobiShapes`: Instance của `androidx.compose.material3.Shapes`, định nghĩa `extraSmall`, `small`, `medium`, `large`, `extraLarge`.
    - **Ứng dụng**: Dùng cho viền của `KyobiTextField`, `KyobiButton`, v.v.
 
 4. **Spacing.kt**
    - **Mục đích**: Định nghĩa khoảng cách (padding, margin) kiểu Tailwind CSS.
    - **Cấu trúc**:
-      - `Spacing`: Object chứa `space4` (4.dp), `space8` (8.dp), `space16` (16.dp), v.v.
+     - `Spacing`: Object chứa `space4` (4.dp), `space8` (8.dp), `space16` (16.dp), v.v.
    - **Ứng dụng**: Dùng cho padding/margin trong `KyobiButton`, `BottomNavigationBar`, v.v.
 
 5. **Icon.kt**
    - **Mục đích**: Định nghĩa kích thước icon kiểu Tailwind CSS.
    - **Cấu trúc**:
-      - `Icon`: Object chứa `xxs` (10.dp), `xs` (12.dp), `sm` (16.dp), `md` (20.dp), `lg` (24.dp), v.v.
+     - `Icon`: Object chứa `xxs` (10.dp), `xs` (12.dp), `sm` (16.dp), `md` (20.dp), `lg` (24.dp), v.v.
    - **Ứng dụng**: Dùng cho icon trong `BottomNavigationBar` (`lg` khi chọn, `md` khi không chọn), `InputSearchField`, v.v.
 
 6. **AppBar.kt**
    - **Mục đích**: Định nghĩa thuộc tính cho AppBar.
    - **Cấu trúc**:
-      - `AppBar`: Object chứa `elevation` (4.dp), `padding` (`Spacing.space16`), `height` (56.dp).
+     - `AppBar`: Object chứa `elevation` (4.dp), `padding` (`Spacing.space16`), `height` (56.dp).
    - **Ứng dụng**: Dùng cho `TopAppBar` trong các màn hình (chưa áp dụng trong `RootApp`).
 
 7. **Theme.kt**
    - **Mục đích**: Tổng hợp và cung cấp theme cho ứng dụng.
    - **Cấu trúc**:
-      - `AppThemeConfig`: Data class chứa `colors`, `typography`, `shapes`, `spacing`, `icon`, `appBar`.
-      - `LocalKyobiTheme`: `CompositionLocal` cung cấp `KyobiThemeConfig`.
-      - `LightThemeConfig` và `DarkThemeConfig`: Cấu hình theme cho light và dark mode.
-      - `KyobiTheme`: Composable áp dụng `MaterialTheme` với `colorScheme`, `typography`, `shapes`, hỗ trợ chuyển đổi light/dark qua `darkTheme`.
-      - Extension `MaterialTheme.kyobiTheme`: Truy cập `KyobiThemeConfig`.
+     - `AppThemeConfig`: Data class chứa `colors`, `typography`, `shapes`, `spacing`, `icon`, `appBar`.
+     - `LocalKyobiTheme`: `CompositionLocal` cung cấp `KyobiThemeConfig`.
+     - `LightThemeConfig` và `DarkThemeConfig`: Cấu hình theme cho light và dark mode.
+     - `KyobiTheme`: Composable áp dụng `MaterialTheme` với `colorScheme`, `typography`, `shapes`, hỗ trợ chuyển đổi light/dark qua `darkTheme`.
+     - Extension `MaterialTheme.kyobiTheme`: Truy cập `KyobiThemeConfig`.
    - **Ứng dụng**: Bao bọc `RootApp` để áp dụng theme.
 
 ### Tích hợp với ứng dụng
+
 - **BottomNavigationBar**: Dùng `primary` (tab chọn), `secondary` (tab không chọn) từ `AppColors.text`, `icon.lg`/`icon.lg` từ `Icon`, `typography.labelSmall` từ `Typography`.
 - **KyobiTheme**: Gọi trong `RootApp.kt` với `darkTheme` để chuyển đổi light/dark theme.
 - **Material Design 3**: Các field như `primary`, `surface`, `error` từ `AppColors` ánh xạ sang `MaterialTheme.colorScheme`.
 
 ### Hướng dẫn sử dụng
+
 1. **Truy cập theme**:
    - Trong composable: `MaterialTheme.kyobiTheme.colors.primary`, `MaterialTheme.kyobiTheme.spacing.space16`, v.v.
    - Ví dụ: `Text(color = MaterialTheme.kyobiTheme.colors.primary)`.
@@ -658,16 +688,16 @@ Module **common:theme** định nghĩa hệ thống theme cho ứng dụng Kyobi
    ```bash
    git clone https://github.com/DuyPhanQuang/kyobi_customer_android.git
    ```
-2. **Mở với Android Studio** (phiên bản Arctic Fox trở lên).
+2. **Mở với Android Studio** (phiên bản Iguana hoặc mới hơn).
 3. **Build dự án**:
    - Chọn `Build > Make Project` hoặc nhấn `Ctrl + F9`.
 4. **Chạy ứng dụng**:
    - Chọn thiết bị hoặc emulator và nhấn `Run` hoặc `Shift + F10`.
 
 **Yêu cầu:**
-- Android Studio Arctic Fox hoặc mới hơn.
-- Kotlin 2.1.10.
-- Gradle 8.3.2.
+- Android Studio Iguana (2023.2.1) hoặc mới hơn.
+- Kotlin 2.0.20 (hoặc phiên bản mới nhất được hỗ trợ bởi Jetpack Compose).
+- Gradle 8.5 (hoặc phiên bản mới nhất tương thích với Android Studio).
 
 ---
 
