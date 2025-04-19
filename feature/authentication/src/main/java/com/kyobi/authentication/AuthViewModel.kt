@@ -7,6 +7,7 @@ import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.LoggedInUser
 import com.kyobi.domain.provider.auth.AuthStateProvider
+import com.kyobi.domain.provider.auth.AuthUiState
 import com.kyobi.domain.usecase.LoginUseCase
 import com.kyobi.domain.usecase.LogoutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,7 +20,7 @@ class AuthViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val logoutUseCase: LogoutUseCase
 ): ViewModel(), AuthStateProvider {
-    private val _authUiState = MutableStateFlow(AuthStateProvider.AuthUiState())
+    private val _authUiState = MutableStateFlow(AuthUiState())
     override val authUiState = _authUiState.asStateFlow()
 
     init {
