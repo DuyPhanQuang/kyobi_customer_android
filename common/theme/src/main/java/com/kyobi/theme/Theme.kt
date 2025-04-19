@@ -54,7 +54,7 @@ fun AppTheme(
             colorScheme = colorScheme,
             typography = themeConfig.typography,
             shapes = themeConfig.shapes,
-            content = content
+            content = content,
         )
     }
 }

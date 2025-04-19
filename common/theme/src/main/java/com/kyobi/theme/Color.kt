@@ -59,7 +59,7 @@ val LightAppColors = AppColors(
     secondary = Colors().stone100,
     onSecondary = Colors().neutral950,
     tertiary = Color.Green,
-    onTertiary = Colors().white,
+    onTertiary = Colors().neutral50,
     background = Colors().white,
     onBackground = Colors().neutral950,
     surface = Colors().white,
@@ -104,7 +104,7 @@ fun AppColors.toColorScheme() = lightColorScheme(
     onSurface = onSurface,
     outline = outline,
     error = error,
-    onError = onError
+    onError = onError,
 )
 
 fun AppColors.toDarkColorScheme() = darkColorScheme(
