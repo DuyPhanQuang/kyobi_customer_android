@@ -502,7 +502,94 @@ dependencies {
 
 ---
 
-## 6. Hướng dẫn cài đặt và chạy dự án
+### 6. Theme
+Module **common:theme** định nghĩa hệ thống theme cho ứng dụng Kyobi, lấy cảm hứng từ **Tailwind CSS** để đảm bảo tính nhất quán, dễ mở rộng, và tái sử dụng. Theme tích hợp với **Material Design 3** (`androidx.compose.material3`) và hỗ trợ cả **light** và **dark theme**. Các thành phần theme được tách thành các file riêng để dễ quản lý và bảo trì.
+
+### Cấu trúc thư mục
+**Cấu trúc folder:**
+```
+:common:theme/
+├── build.gradle.kts
+└── src/
+    └── main/
+        └── java/
+            └── com/kyobi/common/theme/
+                ├── AppBar.kt
+                ├── Color.kt
+                └── Icon.kt
+                └── Shape.kt
+                └── Spacing.kt
+                └── Theme.kt
+                └── Typography.kt
+```
+### Chi tiết các file
+
+1. **Color.kt**
+   - **Mục đích**: Định nghĩa bảng màu, bao gồm màu text và màu hệ thống.
+   - **Cấu trúc**:
+      - `Colors`: Data class chứa mã màu kiểu Tailwind CSS (ví dụ: `stone100`, `stone400`, `neutral50`, `red500`, `primary600`).
+      - `AppColors`: Data class ánh xạ màu cho Material Design 3 (`primary`, `onPrimary`, `background`, v.v.) và nhúng `text: Colors, bg: Colors, border: Colors`.
+      - `LightAppColors`: Bảng màu cho light theme (nền trắng, text tối).
+      - `DarkAppColors`: Bảng màu cho dark theme (nền đen, text sáng), reverse từ `LightAppColors`.
+      - `toColorScheme()` và `toDarkColorScheme()`: Ánh xạ `AppColors` sang `lightColorScheme`/`darkColorScheme`.
+   - **Ứng dụng**: Cung cấp màu cho `BottomNavigationBar`, `InputTextField`, v.v. (ví dụ: `primary` cho tab chọn, `secondary` cho tab không chọn).
+
+2. **Typography.kt**
+   - **Mục đích**: Định nghĩa kiểu văn bản (text styles).
+   - **Cấu trúc**:
+      - `KyobiTypography`: Instance của `androidx.compose.material3.Typography`, định nghĩa `displayLarge`, `bodyLarge`, `labelLarge`.
+   - **Ứng dụng**: Dùng cho text trong `BottomNavigationBar` (`labelLarge`), `KyobiTextField`, v.v.
+
+3. **Shape.kt**
+   - **Mục đích**: Định nghĩa góc bo tròn cho UI.
+   - **Cấu trúc**:
+      - `KyobiShapes`: Instance của `androidx.compose.material3.Shapes`, định nghĩa `extraSmall`, `small`, `medium`, `large`, `extraLarge`.
+   - **Ứng dụng**: Dùng cho viền của `KyobiTextField`, `KyobiButton`, v.v.
+
+4. **Spacing.kt**
+   - **Mục đích**: Định nghĩa khoảng cách (padding, margin) kiểu Tailwind CSS.
+   - **Cấu trúc**:
+      - `Spacing`: Object chứa `space4` (4.dp), `space8` (8.dp), `space16` (16.dp), v.v.
+   - **Ứng dụng**: Dùng cho padding/margin trong `KyobiButton`, `BottomNavigationBar`, v.v.
+
+5. **Icon.kt**
+   - **Mục đích**: Định nghĩa kích thước icon kiểu Tailwind CSS.
+   - **Cấu trúc**:
+      - `Icon`: Object chứa `xxs` (10.dp), `xs` (12.dp), `sm` (16.dp), `md` (20.dp), `lg` (24.dp), v.v.
+   - **Ứng dụng**: Dùng cho icon trong `BottomNavigationBar` (`lg` khi chọn, `md` khi không chọn), `InputSearchField`, v.v.
+
+6. **AppBar.kt**
+   - **Mục đích**: Định nghĩa thuộc tính cho AppBar.
+   - **Cấu trúc**:
+      - `AppBar`: Object chứa `elevation` (4.dp), `padding` (`Spacing.space16`), `height` (56.dp).
+   - **Ứng dụng**: Dùng cho `TopAppBar` trong các màn hình (chưa áp dụng trong `RootApp`).
+
+7. **Theme.kt**
+   - **Mục đích**: Tổng hợp và cung cấp theme cho ứng dụng.
+   - **Cấu trúc**:
+      - `AppThemeConfig`: Data class chứa `colors`, `typography`, `shapes`, `spacing`, `icon`, `appBar`.
+      - `LocalKyobiTheme`: `CompositionLocal` cung cấp `KyobiThemeConfig`.
+      - `LightThemeConfig` và `DarkThemeConfig`: Cấu hình theme cho light và dark mode.
+      - `KyobiTheme`: Composable áp dụng `MaterialTheme` với `colorScheme`, `typography`, `shapes`, hỗ trợ chuyển đổi light/dark qua `darkTheme`.
+      - Extension `MaterialTheme.kyobiTheme`: Truy cập `KyobiThemeConfig`.
+   - **Ứng dụng**: Bao bọc `RootApp` để áp dụng theme.
+
+### Tích hợp với ứng dụng
+- **BottomNavigationBar**: Dùng `primary` (tab chọn), `secondary` (tab không chọn) từ `AppColors.text`, `icon.lg`/`icon.lg` từ `Icon`, `typography.labelSmall` từ `Typography`.
+- **KyobiTheme**: Gọi trong `RootApp.kt` với `darkTheme` để chuyển đổi light/dark theme.
+- **Material Design 3**: Các field như `primary`, `surface`, `error` từ `AppColors` ánh xạ sang `MaterialTheme.colorScheme`.
+
+### Hướng dẫn sử dụng
+1. **Truy cập theme**:
+   - Trong composable: `MaterialTheme.kyobiTheme.colors.primary`, `MaterialTheme.kyobiTheme.spacing.space16`, v.v.
+   - Ví dụ: `Text(color = MaterialTheme.kyobiTheme.colors.primary)`.
+2. **Chuyển đổi theme**:
+   - Set `darkTheme = true` trong `KyobiTheme` để dùng `DarkAppColors`.
+3. **Mở rộng**:
+   - Thêm màu vào `Colors` (ví dụ: `blue200`).
+   - Thêm khoảng cách/kích thước vào `Spacing`/`Icon`.
+
+## 7. Hướng dẫn cài đặt và chạy dự án
 
 1. **Clone repository**:
    ```bash
@@ -521,7 +608,7 @@ dependencies {
 
 ---
 
-## 7. Tài liệu tham khảo
+## 8. Tài liệu tham khảo
 
 - [Jetpack Compose](https://developer.android.com/jetpack/compose)
 - [Hilt](https://dagger.dev/hilt/)
