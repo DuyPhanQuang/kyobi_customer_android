@@ -50,6 +50,9 @@ object Version {
     const val Moshi = "1.15.1"
     const val ConverterMoshi = "2.11.0"
     const val SupabaseAuth = "3.1.4"
+    const val RecycleView = "1.4.0"
+    const val ConstraintLayout = "2.2.1"
+    const val MediaPlayer = "1.6.1"
 }
 
 object Libraries {
@@ -69,6 +72,8 @@ object Libraries {
         const val splashScreen = "androidx.core:core-splashscreen:$SplashScreenApi"
         const val multiDex = "androidx.multidex:multidex:2.0.1"
         const val security = "androidx.security:security-crypto:1.1.0-alpha06"
+        const val recyclerView = "androidx.recyclerview:recyclerview:${Version.RecycleView}"
+        const val constraintLayout = "androidx.constraintlayout:constraintlayout:${Version.ConstraintLayout}"
     }
 
     object Compose {
@@ -140,6 +145,11 @@ object Libraries {
 
     object KotlinReflect {
         const val reflect = "org.jetbrains.kotlin:kotlin-reflect:${Version.KotlinReflect}"
+    }
+
+    object MediaPlayer {
+        const val media3ExoPlayer = "androidx.media3:media3-exoplayer:${Version.MediaPlayer}"
+        const val media3Ui = "androidx.media3:media3-ui:${Version.MediaPlayer}"
     }
 
     object Accompanist {

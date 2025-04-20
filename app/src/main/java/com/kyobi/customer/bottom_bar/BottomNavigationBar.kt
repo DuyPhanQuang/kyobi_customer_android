@@ -40,6 +40,11 @@ val bottomNavItems = listOf(
         label = "Home"
     ),
     BottomNavItem(
+        route = "trend",
+        iconResId = R.drawable.ic_category_tab,
+        label = "Trend"
+    ),
+    BottomNavItem(
         route = "profile",
         iconResId = R.drawable.ic_profile_tab,
         label = "Profile",

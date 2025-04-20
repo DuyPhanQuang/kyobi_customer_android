@@ -110,6 +110,7 @@ android {
 
 dependencies {
     baseDependencies()
+    viewDependencies()
     composeDependencies()
     moduleDependencies()
     testDependencies()

@@ -2,6 +2,7 @@ package plugin
 
 import AppConfig
 import baseDependencies
+import viewDependencies
 import composeDependencies
 import testDependencies
 
@@ -78,6 +79,7 @@ android {
 
 dependencies {
     baseDependencies()
+    viewDependencies()
     composeDependencies()
     testDependencies()
 

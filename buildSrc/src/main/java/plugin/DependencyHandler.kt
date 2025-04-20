@@ -16,6 +16,18 @@ fun DependencyHandler.androidTestImplementation(dependencyNotation: Any): Depend
 fun DependencyHandler.ksp(dependencyNotation: Any): Dependency? =
     add("ksp", dependencyNotation)
 
+fun DependencyHandler.viewDependencies() {
+    // RecyclerView
+    implementation(Libraries.AndroidX.recyclerView)
+
+    // ConstraintLayout
+    implementation(Libraries.AndroidX.constraintLayout)
+
+    // MediaPlayer
+    implementation(Libraries.MediaPlayer.media3ExoPlayer)
+    implementation(Libraries.MediaPlayer.media3Ui)
+}
+
 fun DependencyHandler.composeDependencies() {
     implementation(platform(Libraries.Compose.composeBom))
     implementation(Libraries.Compose.composeActivity)
@@ -59,9 +71,6 @@ fun DependencyHandler.composeDependencies() {
     implementation(Libraries.Room.ktx)
     annotationProcessor(Libraries.Room.compiler)
     ksp(Libraries.Room.compiler)
-
-    // Security
-    implementation(Libraries.AndroidX.security)
 }
 
 fun DependencyHandler.accompanistDependencies() {
@@ -121,7 +130,10 @@ fun DependencyHandler.baseDependencies() {
     implementation(Libraries.Apollo.apollo3)
 
     //supabase
-//    implementation(Libraries.Supabase.auth)
+    implementation(Libraries.Supabase.auth)
+
+    // Security
+    implementation(Libraries.AndroidX.security)
 
     //coroutines
     implementation(Libraries.Coroutine.android)
@@ -152,6 +164,7 @@ fun DependencyHandler.moduleDependencies() {
     FEATURE_HOME
     FEATURE_PROFILE
     FEATURE_AUTHENTICATION
+    FEATURE_TREND
 }
 
 val DependencyHandler.CORE
@@ -177,6 +190,9 @@ val DependencyHandler.FEATURE_HOME
 
 val DependencyHandler.FEATURE_PROFILE
     get() = implementation(project(mapOf("path" to ":feature:profile")))
+
+val DependencyHandler.FEATURE_TREND
+    get() = implementation(project(mapOf("path" to ":feature:trend")))
 
 val DependencyHandler.FEATURE_AUTHENTICATION
     get() = implementation(project(mapOf("path" to ":feature:authentication")))

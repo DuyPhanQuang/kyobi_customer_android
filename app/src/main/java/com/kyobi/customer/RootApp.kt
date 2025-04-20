@@ -14,6 +14,7 @@ import com.kyobi.customer.bottom_bar.BottomNavigationBar
 import com.kyobi.home.HomeTab
 import com.kyobi.profile.ProfileTab
 import com.kyobi.theme.AppTheme
+import com.kyobi.trend.TrendTab
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalAnimationApi::class)
@@ -37,6 +38,9 @@ fun RootApp(
             ) {
                 composable("home") {
                     HomeTab()
+                }
+                composable("trend") {
+                    TrendTab(navController = navController)
                 }
                 composable("profile") {
                     ProfileTab(navController = navController)
