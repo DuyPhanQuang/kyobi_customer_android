@@ -53,6 +53,7 @@ object Version {
     const val RecycleView = "1.4.0"
     const val ConstraintLayout = "2.2.1"
     const val MediaPlayer = "1.6.1"
+    const val Glide = "4.16.0"
 }
 
 object Libraries {
@@ -150,6 +151,10 @@ object Libraries {
     object MediaPlayer {
         const val media3ExoPlayer = "androidx.media3:media3-exoplayer:${Version.MediaPlayer}"
         const val media3Ui = "androidx.media3:media3-ui:${Version.MediaPlayer}"
+    }
+
+    object Glide {
+        const val glide = "com.github.bumptech.glide:glide:${Version.Glide}"
     }
 
     object Accompanist {

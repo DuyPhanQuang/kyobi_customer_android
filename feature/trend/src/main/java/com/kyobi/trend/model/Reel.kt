@@ -3,6 +3,7 @@ package com.kyobi.trend.model
 data class Reel(
     val id: String,
     val videoUrl: String,
+    val thumbnailUrl: String?,
     val status: String,
     val likeCount: Int,
     val commentCount: Int,

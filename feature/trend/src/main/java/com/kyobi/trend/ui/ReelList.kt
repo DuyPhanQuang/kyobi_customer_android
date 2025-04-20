@@ -36,12 +36,11 @@ fun ReelList(
                     false)
                 adapter = ReelAdapter(reels, context = context2, mediaCache, this)
                 setHasFixedSize(true)
-                // Tối ưu performance
+                // tối ưu performance
                 setItemViewCacheSize(3)
                 setRecycledViewPool(RecyclerView.RecycledViewPool().apply {
                     setMaxRecycledViews(0, 5)
                 })
-                // LinearSnapHelper for snap each video fullscreen
                 val snapHelper = PagerSnapHelper()
                 snapHelper.attachToRecyclerView(this)
                 // auto play video when snap

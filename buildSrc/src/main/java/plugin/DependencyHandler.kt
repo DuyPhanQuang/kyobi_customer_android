@@ -26,6 +26,7 @@ fun DependencyHandler.viewDependencies() {
     // MediaPlayer
     implementation(Libraries.MediaPlayer.media3ExoPlayer)
     implementation(Libraries.MediaPlayer.media3Ui)
+    implementation(Libraries.Glide.glide)
 }
 
 fun DependencyHandler.composeDependencies() {
