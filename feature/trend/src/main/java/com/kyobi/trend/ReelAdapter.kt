@@ -151,12 +151,6 @@ class ReelAdapter(
 
                     player.clearMediaItems()
                     player.repeatMode = Player.REPEAT_MODE_OFF
-
-                    // Xóa MediaSource cũ của position trước đó vì nó không còn hợp lệ
-                    if (currentPlayingPosition != -1) {
-                        mediaSources.remove(currentPlayingPosition)
-                        Timber.tag("ReelAdapter").d("Removed old MediaSource for position: $currentPlayingPosition")
-                    }
                 }
 
                 currentPlayingPosition = position
