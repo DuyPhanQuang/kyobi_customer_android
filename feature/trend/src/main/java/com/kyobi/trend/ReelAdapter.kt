@@ -48,8 +48,6 @@ class ReelAdapter(
     private val mediaSources = mutableMapOf<Int, MediaSource>() // Lưu MediaSource đã preload
     private val downloadLatches = mutableMapOf<Int, CountDownLatch>() // Lưu trạng thái tải file
     private val playLock = ReentrantLock() // Lock để đồng bộ playVideoAtPosition
-    private var lastPlayRequestTime = 0L // Thời gian gọi playVideoAtPosition cuối cùng
-    private val debounceInterval = 500L // Khoảng thời gian tối thiểu giữa các lần gọi
     private val dataSourceFactories = mutableMapOf<Int, DataSource.Factory>()
     private val mainHandler = Handler(Looper.getMainLooper()) // Thread để switch luồng phát
     private val activePlayers = mutableMapOf<Int, ExoPlayer>() // Lưu các player đang hoạt động
@@ -77,24 +75,25 @@ class ReelAdapter(
     }
 
     fun playVideoAtPosition(position: Int) {
-        // Debounce: Bỏ qua nếu thời gian giữa các lần gọi quá ngắn
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastPlayRequestTime < debounceInterval) {
-            Timber.tag("ReelAdapter").d("Debouncing playVideoAtPosition for position: $position")
-            return
-        }
-        lastPlayRequestTime = currentTime
-
         // Kiểm tra điều kiện cơ bản
         if (position < 0 || position >= reels.size) {
             Timber.tag("ReelAdapter").d("Invalid position: $position, skipping playVideoAtPosition")
             return
         }
 
+        // Kiểm tra nếu position hiện tại đang phát và không cần reset
+        if (position == currentPlayingPosition) {
+            val currentPlayer = activePlayers[position]
+            if (currentPlayer != null && currentPlayer.isPlaying) {
+                Timber.tag("ReelAdapter").d("Player at position $position is already playing, skipping")
+                return
+            }
+        }
+
         // Đồng bộ để tránh race condition khi scroll nhanh
         if (playLock.tryLock()) {
             try {
-                // trạng thái của activePlayers trước khi tạm dừng
+                // trạng thái activePlayers trước khi xử lý
                 Timber.tag("ReelAdapter").d("Before pausing other players, activePlayers: ${activePlayers.keys}")
 
                 // Tạm dừng tất cả ExoPlayer tại các position khác
@@ -112,9 +111,13 @@ class ReelAdapter(
                 val holder = recyclerView.findViewHolderForAdapterPosition(position) as? ReelViewHolder
                 if (holder != null) {
                     holder.player?.let { player ->
-                        // Đảm bảo player hiện tại được thêm vào activePlayers
+                        // Thêm player vào activePlayers khi phát
                         activePlayers[position] = player
-                        Timber.tag("ReelAdapter").d("Added current player to activePlayers at position $position, activePlayers size: ${activePlayers.size}")
+                        Timber.tag("ReelAdapter").d("Added player to activePlayers at position $position, activePlayers size: ${activePlayers.size}")
+
+                        // Reset player trước khi phát để tránh trạng thái cũ
+                        player.stop()
+                        player.clearMediaItems()
 
                         // Ban đầu luôn phát từ remote URL
                         val remoteMediaSource = ProgressiveMediaSource.Factory(DefaultHttpDataSource.Factory())
@@ -149,7 +152,7 @@ class ReelAdapter(
                                 player.play()
                                 Timber.tag("ReelAdapter").d("Switched to local file at position: $position localFile: ${downloadedFiles[position]?.path}")
                             } else {
-                                Timber.tag("ReelAdapter").d("Did not switch to local file at position $position: containsKey=${downloadedFiles.containsKey(position)}, playbackState=$playbackState")
+                                Timber.tag("ReelAdapter").d("Did not switch to local file at position $position: containsKey=${downloadedFiles.containsKey(position)}, isPlaying=${player.isPlaying}")
                                 // Kiểm tra lại sau x ms nếu chưa chuyển được
                                 if (downloadedFiles.containsKey(position)) {
                                     mainHandler.postDelayed({
@@ -392,7 +395,7 @@ class ReelAdapter(
             player = ExoPlayer.Builder(context)
                 .setLoadControl(
                     DefaultLoadControl.Builder()
-                        .setBufferDurationsMs(3000, 9000, 3000, 3000)
+                        .setBufferDurationsMs(3000, 30000, 3000, 3000)
                         .build()
                 )
                 .build()
@@ -405,7 +408,6 @@ class ReelAdapter(
                             Timber.tag("ReelAdapter").e("Error playing video at position $bindingAdapterPosition: ${error.message}")
                             Toast.makeText(context, "Error playing video at position $bindingAdapterPosition", Toast.LENGTH_SHORT).show()
 
-                            // Retry logic
                             if (retryCount < maxRetries && bindingAdapterPosition == currentPlayingPosition) {
                                 retryCount++
                                 Timber.tag("ReelAdapter").d("Retrying playback at position $bindingAdapterPosition, attempt $retryCount")
@@ -419,7 +421,6 @@ class ReelAdapter(
                                 }, 500)
                             } else {
                                 retryCount = 0
-                                // Fallback: hiển thị thumbnail
                                 Timber.tag("ReelAdapter").w("Max retries reached at position $bindingAdapterPosition, skipping")
                             }
                         }
@@ -437,12 +438,6 @@ class ReelAdapter(
 
         fun bind(reel: Reel, position: Int) {
             Timber.tag("ReelAdapter").d("Binding position: $position, player exists: ${player != null}")
-
-            // Thêm player vào activePlayers
-            if (position != RecyclerView.NO_POSITION && player != null) {
-                activePlayers[position] = player!!
-                Timber.tag("ReelAdapter").d("Added player to activePlayers at position $position, activePlayers size: ${activePlayers.size}")
-            }
 
             tvReelInfo.text = """
                 ID: ${reel.id}

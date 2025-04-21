@@ -5,17 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/transparent">
-    <!-- Thumbnail ImageView -->
-    <ImageView
-        android:id="@+id/thumbnail_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:contentDescription="thumbnail desc"
-        android:scaleType="centerCrop"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Video player -->
     <androidx.media3.ui.PlayerView
