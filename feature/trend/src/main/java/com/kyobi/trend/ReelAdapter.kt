@@ -131,21 +131,23 @@ class ReelAdapter(
                 Timber.tag("ReelAdapter")
                     .d("Playing video at position: $position, currentPlayingPosition: $currentPlayingPosition")
 
-                // Xóa player của tất cả PlayerView hiện tại, trừ position mới
+                // Không cần xóa player của tất cả PlayerView hiện tại
+                // Chỉ kiểm tra và log
                 for (i in 0 until recyclerView.childCount) {
                     val child = recyclerView.getChildAt(i)
                     val holder = recyclerView.getChildViewHolder(child) as? ReelViewHolder
                     val childPosition = recyclerView.getChildAdapterPosition(child)
                     if (holder != null && childPosition != position) {
                         Timber.tag("ReelAdapter").d("Clearing PlayerView at position: $childPosition")
-                        holder.playerView.player = null
-                        holder.player = null
+                        holder.playerView.setVisibility(View.INVISIBLE) // Ẩn PlayerView để giữ frame cuối
                     }
                 }
 
                 // Reset trạng thái ExoPlayer an toàn
                 currentPlayer?.let { player ->
                     if (player.playbackState != Player.STATE_IDLE) {
+                        // Tạm dừng player để các PlayerView cũ không phát tiếp
+                        player.pause()
                         player.stop()
                     }
 
@@ -186,16 +188,21 @@ class ReelAdapter(
                 val holder = recyclerView.findViewHolderForAdapterPosition(position) as? ReelViewHolder
                 if (holder != null) {
                     Timber.tag("ReelAdapter").d("Holder found at position: $position, updating PlayerView")
-                    // Làm mới surface của PlayerView bang cách
-                    // Reset PlayerView trước khi gắn lại player
+                    // đảm bảo surface của PlayerView được làm mới bang cách
+                    // Làm mới surface của PlayerView tại position mới
+                    holder.playerView.setVisibility(View.INVISIBLE)
+                    // Tạm thời set player = null để release surface cũ
                     holder.playerView.player = null
                     holder.player = null
-                    holder.playerView.setVisibility(View.INVISIBLE)
+                    // Gán lại currentPlayer để làm mới surface
                     holder.playerView.player = currentPlayer
                     holder.player = currentPlayer
                     holder.playerView.setVisibility(View.VISIBLE)
                     holder.playerView.requestLayout() // Làm mới surface của PlayerView
                     holder.playerView.invalidate() // Đảm bảo surface được vẽ lại
+
+                    // cấu hình lại PlayerView
+                    configPlayerView(holder.playerView)
                 } else {
                     Timber.tag("ReelAdapter").w("Holder not found at position: $position")
                 }
@@ -363,17 +370,21 @@ class ReelAdapter(
         }
     }
 
+    private fun configPlayerView(playerView: PlayerView) {
+        playerView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
+        playerView.setBackgroundColor(Color.TRANSPARENT)
+        playerView.setKeepContentOnPlayerReset(true)
+        playerView.setUseController(false)
+        playerView.setResizeMode(RESIZE_MODE_FILL)
+    }
+
     inner class ReelViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val playerView: PlayerView = itemView.findViewById(R.id.player_view)
         private val tvReelInfo: TextView = itemView.findViewById(R.id.tv_reel_info)
         var player: ExoPlayer? = null
 
         init {
-            playerView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
-            playerView.setBackgroundColor(Color.TRANSPARENT)
-            playerView.setKeepContentOnPlayerReset(true)
-            playerView.setUseController(false)
-            playerView.setResizeMode(RESIZE_MODE_FILL)
+            configPlayerView(playerView)
         }
 
         fun bind(reel: Reel, position: Int) {
@@ -395,7 +406,7 @@ class ReelAdapter(
 
         fun releasePlayer() {
             if (player != null && player != currentPlayer) {
-                Timber.tag("ReelAdapter").d("Releasing Player at position $adapterPosition")
+                Timber.tag("ReelAdapter").d("Releasing Player at position $bindingAdapterPosition")
                 playerView.setVisibility(View.INVISIBLE)
                 playerView.player = null
                 player = null
