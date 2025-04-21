@@ -1,13 +1,10 @@
 package com.kyobi.trend.ui
 
 import androidx.annotation.OptIn
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.MutableState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
@@ -24,12 +21,12 @@ import timber.log.Timber
 @Composable
 fun ReelList(
     reels: List<Reel>,
-    mediaCache: MediaCache
+    mediaCache: MediaCache,
+    recyclerViewRef: MutableState<RecyclerView?>? = null
 ) {
     val context = LocalContext.current
 
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
         factory = { context2 ->
             RecyclerView(context2).apply {
                 layoutManager = LinearLayoutManager(
@@ -45,15 +42,6 @@ fun ReelList(
                 })
                 val snapHelper = PagerSnapHelper()
                 snapHelper.attachToRecyclerView(this)
-
-                // window insets
-                ViewCompat.setOnApplyWindowInsetsListener(this) { view, insets ->
-                    val topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
-                    val bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
-                    view.setPadding(0, topInset, 0, bottomInset)
-                    insets
-                }
-                fitsSystemWindows = true
 
                 // auto play video when snap
                 addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -75,9 +63,10 @@ fun ReelList(
                         }
                     }
                 })
+
+                recyclerViewRef?.value = this
+
                 post {
-                    requestLayout()
-                    invalidate()
                     (adapter as? ReelAdapter)?.playVideoAtPosition(0)
                 }
             }
@@ -86,8 +75,6 @@ fun ReelList(
             (recyclerView.adapter as? ReelAdapter)?.let { _ ->
                 recyclerView.adapter = ReelAdapter(reels, context, mediaCache, recyclerView)
                 recyclerView.post {
-                    recyclerView.requestLayout()
-                    recyclerView.invalidate()
                     (recyclerView.adapter as? ReelAdapter)?.playVideoAtPosition(0)
                 }
             }
@@ -95,6 +82,7 @@ fun ReelList(
         onRelease = { recyclerView ->
             (recyclerView.adapter as? ReelAdapter)?.releaseAllPlayers()
             recyclerView.adapter = null
+            recyclerViewRef?.value = null
         },
     )
 }

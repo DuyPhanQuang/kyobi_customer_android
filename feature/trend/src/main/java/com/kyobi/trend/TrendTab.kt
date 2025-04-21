@@ -3,10 +3,13 @@ package com.kyobi.trend
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
 import androidx.navigation.NavController
+import androidx.recyclerview.widget.RecyclerView
 import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.trend.model.Reel
 import com.kyobi.trend.ui.ReelList
@@ -21,6 +24,7 @@ fun TrendTab(
     val authUiState by authViewModel.authUiState.collectAsStateWithLifecycle()
     val uiState = viewModel.trendTabUiState
     val mediaCache = viewModel.mediaCache
+    val recyclerViewRef = remember { mutableStateOf<RecyclerView?>(null) }
 
     val mockData = listOf(
         Reel(
@@ -72,8 +76,10 @@ fun TrendTab(
             tags = null
         ),
     )
+
     ReelList(
         reels = mockData,
-        mediaCache
+        mediaCache,
+        recyclerViewRef = recyclerViewRef
     )
 }

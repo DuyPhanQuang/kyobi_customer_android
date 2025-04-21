@@ -2,7 +2,7 @@ package com.kyobi.customer
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -15,6 +15,7 @@ import com.kyobi.home.HomeTab
 import com.kyobi.profile.ProfileTab
 import com.kyobi.theme.AppTheme
 import com.kyobi.trend.TrendTab
+import timber.log.Timber
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalAnimationApi::class)
@@ -29,12 +30,14 @@ fun RootApp(
                 BottomNavigationBar(
                     navController = navController,
                 )
-            }
+            },
         ) { innerPadding ->
+            Timber.tag("MainScreen").d("Inner padding: top=${innerPadding.calculateTopPadding()}, bottom=${innerPadding.calculateBottomPadding()}")
             NavHost(
                 navController = navController,
                 startDestination = "home",
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier
+                    .fillMaxSize()
             ) {
                 composable("home") {
                     HomeTab()
