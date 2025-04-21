@@ -6,6 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
@@ -43,6 +45,16 @@ fun ReelList(
                 })
                 val snapHelper = PagerSnapHelper()
                 snapHelper.attachToRecyclerView(this)
+
+                // window insets
+                ViewCompat.setOnApplyWindowInsetsListener(this) { view, insets ->
+                    val topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top
+                    val bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom
+                    view.setPadding(0, topInset, 0, bottomInset)
+                    insets
+                }
+                fitsSystemWindows = true
+
                 // auto play video when snap
                 addOnScrollListener(object : RecyclerView.OnScrollListener() {
                     override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
@@ -64,6 +76,8 @@ fun ReelList(
                     }
                 })
                 post {
+                    requestLayout()
+                    invalidate()
                     (adapter as? ReelAdapter)?.playVideoAtPosition(0)
                 }
             }
@@ -71,6 +85,11 @@ fun ReelList(
         update = { recyclerView ->
             (recyclerView.adapter as? ReelAdapter)?.let { _ ->
                 recyclerView.adapter = ReelAdapter(reels, context, mediaCache, recyclerView)
+                recyclerView.post {
+                    recyclerView.requestLayout()
+                    recyclerView.invalidate()
+                    (recyclerView.adapter as? ReelAdapter)?.playVideoAtPosition(0)
+                }
             }
         },
         onRelease = { recyclerView ->
