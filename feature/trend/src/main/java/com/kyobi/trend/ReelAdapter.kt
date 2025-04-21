@@ -51,6 +51,7 @@ class ReelAdapter(
     private val playLock = ReentrantLock() // Lock để đồng bộ playVideoAtPosition
     private var lastPlayRequestTime = 0L // Thời gian gọi playVideoAtPosition cuối cùng
     private val debounceInterval = 500L // Khoảng thời gian tối thiểu giữa các lần gọi (500ms)
+    private val dataSourceFactories = mutableMapOf<Int, DataSource.Factory>()
 
     init {
         currentPlayer = ExoPlayer.Builder(context)
@@ -61,7 +62,6 @@ class ReelAdapter(
             )
             .build()
             .apply {
-                repeatMode = Player.REPEAT_MODE_ONE
                 addListener(object : Player.Listener {
                     override fun onPlaybackStateChanged(state: Int) {
                         Timber.tag("ReelAdapter").d("Player state at position $currentPlayingPosition: $state")
@@ -148,7 +148,10 @@ class ReelAdapter(
                     if (player.playbackState != Player.STATE_IDLE) {
                         player.stop()
                     }
+
                     player.clearMediaItems()
+                    player.repeatMode = Player.REPEAT_MODE_OFF
+
                     // Xóa MediaSource cũ của position trước đó vì nó không còn hợp lệ
                     if (currentPlayingPosition != -1) {
                         mediaSources.remove(currentPlayingPosition)
@@ -177,6 +180,7 @@ class ReelAdapter(
                     setMediaSource(mediaSource)
                     playWhenReady = true
                     volume = 1f
+                    repeatMode = Player.REPEAT_MODE_ONE
                     prepare()
                     Timber.tag("ReelAdapter").d("Prepared player at position: $position")
                     seekTo(0)
@@ -218,27 +222,30 @@ class ReelAdapter(
         val localFile = downloadedFiles[position]
         val remoteUri = Uri.parse(reels[position].videoUrl)
 
+        if (localFile != null && localFile.exists()) {
+            Timber.tag("ReelAdapter").d("Using local file for first 5MB at position: $position")
+        } else {
+            Timber.tag("ReelAdapter").d("Using remote URL at position: $position")
+        }
+
         // Tạo DataSource cho file local (nếu có) và remote
-        val localDataSource = FileDataSource.Factory()
-        val remoteDataSource = DefaultHttpDataSource.Factory()
-        val dataSourceFactory = DataSource.Factory {
+        val dataSourceFactory = dataSourceFactories[position] ?: DataSource.Factory {
             if (localFile != null && localFile.exists()) {
-                Timber.tag("ReelAdapter").d("Using local file for first 5MB at position: $position")
                 CacheDataSource(
                     mediaCache.obtainCache(),
-                    remoteDataSource.createDataSource(),
-                    localDataSource.createDataSource(),
+                    DefaultHttpDataSource.Factory().createDataSource(),
+                    FileDataSource.Factory().createDataSource(),
                     null,
                     CacheDataSource.FLAG_BLOCK_ON_CACHE,
                     null
                 )
             } else {
-                Timber.tag("ReelAdapter").d("Using remote URL at position: $position")
-                remoteDataSource.createDataSource()
+                DefaultHttpDataSource.Factory().createDataSource()
             }
+        }.also {
+            dataSourceFactories[position] = it
         }
 
-        // Tạo MediaSource
         return ProgressiveMediaSource.Factory(dataSourceFactory)
             .createMediaSource(MediaItem.fromUri(remoteUri))
     }
@@ -335,7 +342,8 @@ class ReelAdapter(
                 val file = entry.value
                 file.delete()
                 iterator.remove()
-                mediaSources.remove(position) // Xóa MediaSource tương ứng
+                mediaSources.remove(position)
+                dataSourceFactories.remove(position)
                 Timber.tag("ReelAdapter").d("Deleted old partial video file for position $position")
             }
         }
@@ -354,6 +362,7 @@ class ReelAdapter(
             downloadedFiles.clear()
             mediaSources.clear()
             downloadLatches.clear()
+            dataSourceFactories.clear()
             Timber.tag("ReelAdapter").d("Cleared all downloaded partial files and media sources")
         } finally {
             playLock.unlock()
