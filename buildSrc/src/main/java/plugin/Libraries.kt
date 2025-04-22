@@ -195,7 +195,7 @@ object Libraries {
 
     object Hilt {
         const val hiltAndroid = "com.google.dagger:hilt-android:$HiltAndroidVersion"
-        const val hiltAndroidCompiler = "com.google.dagger:hilt-android-compiler:$HiltAndroidVersion"
+        const val daggerCompiler = "com.google.dagger:dagger-compiler:$HiltAndroidVersion"
         const val hiltWork =
             "androidx.hilt:hilt-work:$HiltNavigationCompose"
         const val hiltCompiler = "com.google.dagger:hilt-compiler:${HiltAndroidVersion}"

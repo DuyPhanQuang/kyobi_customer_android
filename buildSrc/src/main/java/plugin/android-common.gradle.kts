@@ -4,6 +4,7 @@ import AppConfig
 import baseDependencies
 import viewDependencies
 import composeDependencies
+import implementation
 import testDependencies
 
 plugins {
@@ -11,8 +12,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.parcelize")
-    id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -49,12 +50,12 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
         freeCompilerArgs = freeCompilerArgs.toMutableList().apply {
             add("-opt-in=kotlin.RequiresOptIn")
         }

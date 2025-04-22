@@ -111,9 +111,11 @@ fun DependencyHandler.baseDependencies() {
     implementation(Libraries.Lottie.lottie)
 
     implementation(Libraries.Google.gson)
+
+    // Dagger - Hilt
     implementation(Libraries.Hilt.hiltAndroid)
     implementation(Libraries.Hilt.hiltWork)
-    ksp(Libraries.Hilt.hiltAndroidCompiler)
+    ksp(Libraries.Hilt.daggerCompiler)
     ksp(Libraries.Hilt.hiltCompiler)
 
     implementation(Libraries.Google.guava)
