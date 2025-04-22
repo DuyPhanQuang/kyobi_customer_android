@@ -99,8 +99,6 @@ fun ReelList(
                     private var lastPlayedPosition = -1
                     private var lastVisiblePosition = -1 // Lưu visiblePosition để tránh xử lý lặp lại
                     private var isProgrammaticScroll = false // Biến để kiểm soát cuộn tự động
-                    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
-                    private val pendingPrefetchPositions = mutableSetOf<Int>() // Lưu các vị trí cần prefetch
 
                     override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                         super.onScrollStateChanged(recyclerView, newState)
@@ -177,34 +175,16 @@ fun ReelList(
 
                     override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                         super.onScrolled(recyclerView, dx, dy)
-//                        val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-//                        val firstVisiblePosition = layoutManager.findFirstVisibleItemPosition()
-//                        val lastVisiblePosition = layoutManager.findLastVisibleItemPosition()
-//                        if (firstVisiblePosition == RecyclerView.NO_POSITION ||
-//                            lastVisiblePosition == RecyclerView.NO_POSITION) {
-//                            return
-//                        }
-//
-//                        // Prefetch động: Tải trước các item(2) phía trước và phía sau
-//                        val prefetchCount = 2
-//                        val adapter = recyclerView.adapter ?: return
-//                        val itemCount = adapter.itemCount
-//
-//                        val prefetchStart = (firstVisiblePosition - prefetchCount).coerceAtLeast(0)
-//                        val prefetchEnd = (lastVisiblePosition + prefetchCount).coerceAtMost(itemCount - 1)
-//                        for (pos in prefetchStart..prefetchEnd) {
-//                            if (pos !in firstVisiblePosition..lastVisiblePosition) {
-//                                pendingPrefetchPositions.add(pos)
-//                            }
-//                        }
-//                        // Trì hoãn prefetch đến frame tiếp theo
-//                        handler.removeCallbacksAndMessages(null)
-//                        handler.post {
-//                            pendingPrefetchPositions.forEach { pos ->
-//                                recyclerView.adapter?.notifyItemChanged(pos)
-//                            }
-//                            pendingPrefetchPositions.clear()
-//                        }
+                        val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                        val firstVisiblePosition = layoutManager.findFirstVisibleItemPosition()
+                        val lastVisiblePosition = layoutManager.findLastVisibleItemPosition()
+                        if (firstVisiblePosition == RecyclerView.NO_POSITION ||
+                            lastVisiblePosition == RecyclerView.NO_POSITION) {
+                            return
+                        }
+
+                        // preload video
+                        (recyclerView.adapter as? ReelAdapter)?.preloadVideos(firstVisiblePosition, lastVisiblePosition)
                     }
                 })
 
