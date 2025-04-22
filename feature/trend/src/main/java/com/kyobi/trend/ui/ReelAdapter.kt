@@ -51,7 +51,12 @@ class ReelAdapter(
     private val mediaCache: MediaCache,
     private val recyclerView: RecyclerView
 ) : RecyclerView.Adapter<ReelAdapter.ReelViewHolder>() {
-    private var currentPlayingPosition = -1 // Theo dõi position đang phát
+    private var lastPlayTime = 0L
+    private val playDebounceDuration = 300L
+    private var lastPreloadTime = 0L
+    private val preloadDebounceDuration = 300L
+    var currentPlayingPosition: Int = RecyclerView.NO_POSITION // Theo dõi position đang phát
+        private set
     private val downloadedFiles = mutableMapOf<Int, File>() // Lưu file đã tải
     private val mediaSources = mutableMapOf<Int, MediaSource>() // Lưu MediaSource đã preload
     private val downloadLatches = mutableMapOf<Int, CountDownLatch>() // Lưu trạng thái tải file
@@ -129,9 +134,17 @@ class ReelAdapter(
                 return
             }
         }
+        // Thêm debounce: Bỏ qua nếu chưa qua playDebounceDuration kể từ lần phát trước
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastPlayTime < playDebounceDuration) {
+            Timber.tag("ReelAdapter").d("Skipped play at position $position due to debounce")
+            return
+        }
         // đảm bảo đồng bộ để tránh race condition khi scroll nhanh
         playLock.lock()
         try {
+            // Cập nhật thời gian phát cuối cùng ngay sau khi qua kiểm tra debounce
+            lastPlayTime = currentTime
             Timber.tag("ReelAdapter").d("Before pausing other players, activePlayers: ${activePlayers.keys}")
             val positionsToKeep = positionsToKeep(position)
             // Dừng tất cả player trong activePlayers
@@ -194,8 +207,9 @@ class ReelAdapter(
                     activePlayers[position] = player
                     Timber.tag("ReelAdapter").d("Added player to activePlayers at position $position, activePlayers size: ${activePlayers.size}")
 
-                    // Nếu player đã có trạng thái (đã phát trước đó), không reset mà tiếp tục phát
-                    if (player.playbackState == Player.STATE_ENDED || player.playbackState == Player.STATE_IDLE) {
+                    // Nếu player đã có trạng thái (đã phát trước đó), reset để phát mới
+                    if (player.playbackState == Player.STATE_ENDED || player.playbackState == Player.STATE_IDLE ||
+                        (player.playbackState == Player.STATE_READY && !player.isPlaying)) {
                         player.repeatMode = Player.REPEAT_MODE_OFF
                         player.stop()
                         player.clearMediaItems()
@@ -204,12 +218,12 @@ class ReelAdapter(
                             .createMediaSource(MediaItem.fromUri(reels[position].videoUrl))
                         player.setMediaSource(remoteMediaSource)
                     }
-
+                    Timber.tag("ReelAdapter").d("Before prepare - Player state at position $position: ${player.playbackState}, isPlaying: ${player.isPlaying}")
                     player.playWhenReady = true
                     player.volume = 1f
                     player.repeatMode = Player.REPEAT_MODE_ONE
                     player.prepare()
-                    Timber.tag("ReelAdapter").d("Played player at position: $position")
+                    Timber.tag("ReelAdapter").d("After prepare - Player state at position $position: ${player.playbackState}, isPlaying: ${player.isPlaying}")
 
                     // Kiểm tra và chuyển nguồn nếu file local đã tồn tại hoặc sau khi tải xong
                     val switchToLocalIfAvailable = {
@@ -275,6 +289,12 @@ class ReelAdapter(
     }
 
     fun preloadVideos(firstVisiblePosition: Int, lastVisiblePosition: Int) {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastPreloadTime < preloadDebounceDuration) {
+            return // Bỏ qua nếu chưa qua 300ms
+        }
+        lastPreloadTime = currentTime
+
         // Dựa trên currentPlayingPosition để xác định các vị trí cần preload
         val preloadCount = 2
         val preloadStart = (currentPlayingPosition - preloadCount).coerceAtLeast(0)
@@ -314,7 +334,7 @@ class ReelAdapter(
         }
         // Gộp danh sách các vị trí cần preload
         val finalPositionsToPreload = positionsToPreload + additionalPositions
-        // Trì hoãn preload 5MB để tránh làm nặng main thread
+        // debounce preload xMB để tránh làm nặng main thread
         preloadMainHandler.removeCallbacksAndMessages(null)
         preloadMainHandler.postDelayed({
             finalPositionsToPreload.forEach { pos ->
@@ -493,7 +513,7 @@ class ReelAdapter(
             downloadLatches.clear()
             dataSourceFactories.clear()
             activePlayers.clear()
-            Timber.tag("ReelAdapter").d("Cleared all downloaded partial files and media sources")
+            Timber.tag("ReelAdapter").d("Cleared all downloaded partial files, media sources,dataSourceFactories, activePlayers")
         } finally {
             playLock.unlock()
         }
@@ -545,7 +565,10 @@ class ReelAdapter(
                                             Timber.tag("ReelAdapter").w("Started switching to main thread")
                                             setMediaSource(mediaSource)
                                             playWhenReady = true
+                                            volume = 1f
+                                            repeatMode = Player.REPEAT_MODE_ONE
                                             prepare()
+                                            play() // đảm bảo play đc gọi. bình thường chỉ cần gọi playWhenReady -> prepare
                                         }
                                     }
                                 }, 500)

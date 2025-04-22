@@ -15,9 +15,6 @@ import com.kyobi.trend.model.Reel
 import timber.log.Timber
 import kotlin.math.abs
 
-/* Quản lý vòng đời:
-- Release tất cả ExoPlayer và adapter khi RecyclerView bị dispose:
- * */
 @OptIn(UnstableApi::class)
 @Composable
 fun ReelList(
@@ -30,29 +27,21 @@ fun ReelList(
     AndroidView(
         factory = { context2 ->
             RecyclerView(context2).apply {
-                layoutManager = object : LinearLayoutManager(
-                    context2,
-                    LinearLayoutManager.VERTICAL,
-                    false
-                ) {
+                layoutManager = object : LinearLayoutManager(context2, VERTICAL, false) {
                     override fun smoothScrollToPosition(
                         recyclerView: RecyclerView,
                         state: RecyclerView.State,
-                        position: Int
-                    ) {
+                        position: Int) {
                         val smoothScroller = object : LinearSmoothScroller(recyclerView.context) {
                             override fun calculateSpeedPerPixel(displayMetrics: android.util.DisplayMetrics): Float {
                                 return 90f / displayMetrics.densityDpi // Tốc độ cuộn chậm, mượt hơn
                             }
-
                             override fun calculateTimeForDeceleration(dx: Int): Int {
                                 return 80 // Thời gian giảm tốc cố định, tạo cảm giác mượt
                             }
-
                             override fun getVerticalSnapPreference(): Int {
                                 return SNAP_TO_START // Đảm bảo snap vào đầu view
                             }
-
                             override fun calculateDtToFit(
                                 viewStart: Int,
                                 viewEnd: Int,
@@ -67,22 +56,15 @@ fun ReelList(
                         smoothScroller.targetPosition = position
                         startSmoothScroll(smoothScroller)
                     }
-
-                    override fun scrollVerticallyBy(
-                        dy: Int,
-                        recycler: RecyclerView.Recycler?,
-                        state: RecyclerView.State?
-                    ): Int {
+                    override fun scrollVerticallyBy(dy: Int, recycler: RecyclerView.Recycler?, state: RecyclerView.State?): Int {
                         return super.scrollVerticallyBy(dy, recycler, state)
                     }
                 } .apply {
                     // Thiết lập số lượng item prefetch ban đầu (thay thế cho getExtraLayoutSpace)
                     initialPrefetchItemCount = 5// Prefetch 5 item để cuộn mượt
                 }
-
                 adapter = ReelAdapter(reels, context = context2, mediaCache, this)
                 setHasFixedSize(true)
-
                 // tối ưu performance bằng cách:
                 // - Tăng cache để tái sử dụng view
                 // - Tăng số view tái sử dụng
@@ -90,15 +72,16 @@ fun ReelList(
                 setRecycledViewPool(RecyclerView.RecycledViewPool().apply {
                     setMaxRecycledViews(0, 5)
                 })
-
                 val snapHelper = KyobiSnapHelper()
                 snapHelper.attachToRecyclerView(this)
-
                 // auto play video when snap
                 addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                    private var lastPlayedPosition = -1
                     private var lastVisiblePosition = -1 // Lưu visiblePosition để tránh xử lý lặp lại
                     private var isProgrammaticScroll = false // Biến để kiểm soát cuộn tự động
+                    private var lastPlayTime = 0L // thời gian lần gần nhất play
+                    private val playDebounceDuration = 300L
+                    private var lastScrollTime = 0L
+                    private val scrollDebounceDuration = 100L // thời gian lần gần nhất scroll
 
                     override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                         super.onScrollStateChanged(recyclerView, newState)
@@ -111,23 +94,19 @@ fun ReelList(
                                 Timber.tag("ReelList").w("No visible position found")
                                 return
                             }
-
                             var visiblePosition = firstVisiblePosition
                             var closestDistanceToCenter = Int.MAX_VALUE
-
                             // Tìm view gần trung tâm nhất
                             for (i in firstVisiblePosition..lastVisiblePosition) {
                                 val child = layoutManager.findViewByPosition(i) ?: continue
                                 val viewCenter = (child.top + child.bottom) / 2
                                 val containerCenter = recyclerView.height / 2
                                 val distanceToCenter = abs(viewCenter - containerCenter)
-
                                 if (distanceToCenter < closestDistanceToCenter) {
                                     closestDistanceToCenter = distanceToCenter
                                     visiblePosition = i
                                 }
                             }
-
                             // Kiểm tra xem view có cần snap không
                             // set ngưỡng để snap nhạy hơn
                             // // TikTok: ~15-20% chiều cao màn hình
@@ -137,7 +116,6 @@ fun ReelList(
                                 val viewCenter = (snapView.top + snapView.bottom) / 2
                                 val containerCenter = recyclerView.height / 2
                                 val distanceToCenter = abs(viewCenter - containerCenter)
-
                                 if (distanceToCenter > snapThreshold) {
                                     // Tìm vị trí gần trung tâm hơn
                                     for (i in firstVisiblePosition..lastVisiblePosition) {
@@ -149,7 +127,6 @@ fun ReelList(
                                             break
                                         }
                                     }
-
                                     // Chỉ gọi snap nếu vị trí thay đổi
                                     if (visiblePosition != this.lastVisiblePosition) {
                                         isProgrammaticScroll = true
@@ -157,17 +134,6 @@ fun ReelList(
                                     }
                                 }
                             }
-
-                            // Chỉ xử lý nếu vị trí thay đổi
-                            if (visiblePosition != this.lastVisiblePosition) {
-                                Timber.tag("ReelList").d("Scroll state idle, visiblePosition: $visiblePosition")
-                                if (visiblePosition != lastPlayedPosition) {
-                                    (adapter as? ReelAdapter)?.playVideoAtPosition(visiblePosition)
-                                    lastPlayedPosition = visiblePosition
-                                }
-                                this.lastVisiblePosition = visiblePosition
-                            }
-
                         } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                             isProgrammaticScroll = false // Reset sau khi cuộn tự động hoàn tất
                         }
@@ -175,23 +141,69 @@ fun ReelList(
 
                     override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                         super.onScrolled(recyclerView, dx, dy)
+                        val currentTime = System.currentTimeMillis()
+                        if (currentTime - lastScrollTime < scrollDebounceDuration) {
+                            return
+                        }
+                        lastScrollTime = currentTime
+
                         val layoutManager = recyclerView.layoutManager as LinearLayoutManager
                         val firstVisiblePosition = layoutManager.findFirstVisibleItemPosition()
                         val lastVisiblePosition = layoutManager.findLastVisibleItemPosition()
-                        if (firstVisiblePosition == RecyclerView.NO_POSITION ||
-                            lastVisiblePosition == RecyclerView.NO_POSITION) {
+                        if (firstVisiblePosition == RecyclerView.NO_POSITION || lastVisiblePosition == RecyclerView.NO_POSITION) {
                             return
                         }
 
-                        // preload video
+                        val currentPlayingPosition = (adapter as? ReelAdapter)?.currentPlayingPosition
+                        // Xác định vị trí video "nổi bật" để play
+                        // vị trí nổi bật là vị trí gần trung tâm nhất
+                        val targetPosition = determineProminentPosition(recyclerView, firstVisiblePosition, lastVisiblePosition)
+                        // Debounce: Chỉ play nếu đã qua 300ms kể từ lần play trước
+                        if (targetPosition != RecyclerView.NO_POSITION &&
+                            targetPosition != currentPlayingPosition &&
+                            (currentTime - lastPlayTime) > playDebounceDuration) {
+                            // Auto play video với vị trí nổi bật
+                            (adapter as? ReelAdapter)?.playVideoAtPosition(targetPosition)
+                            lastPlayTime = currentTime
+                        }
+
+                        // Preload videos
                         (recyclerView.adapter as? ReelAdapter)?.preloadVideos(firstVisiblePosition, lastVisiblePosition)
                     }
+
+                    // Hàm xác định vị trí video "nổi bật" (gần trung tâm màn hình nhất)
+                    private fun determineProminentPosition(recyclerView: RecyclerView, firstVisiblePosition: Int, lastVisiblePosition: Int): Int {
+                        val screenHeight = recyclerView.height
+                        val centerY = screenHeight / 2
+                        var closestPosition = RecyclerView.NO_POSITION
+                        var minDistanceToCenter = Int.MAX_VALUE
+                        // Duyệt qua các view hiện tại trên màn hình
+                        for (position in firstVisiblePosition..lastVisiblePosition) {
+                            val view = recyclerView.findViewHolderForAdapterPosition(position)?.itemView
+                            if (view != null) {
+                                val viewTop = view.top
+                                val viewBottom = view.bottom
+                                val viewCenterY = (viewTop + viewBottom) / 2
+                                // Tính khoảng cách từ trung tâm của view đến trung tâm màn hình
+                                val distanceToCenter = abs(viewCenterY - centerY)
+                                if (distanceToCenter < minDistanceToCenter) {
+                                    minDistanceToCenter = distanceToCenter
+                                    closestPosition = position
+                                }
+                            }
+                        }
+                        return closestPosition
+                    }
                 })
-
                 recyclerViewRef?.value = this
-
                 post {
-                    (adapter as? ReelAdapter)?.playVideoAtPosition(0)
+                    (adapter as? ReelAdapter)?.let { reelAdapter ->
+                        if (reelAdapter.currentPlayingPosition == RecyclerView.NO_POSITION) {
+                            reelAdapter.playVideoAtPosition(0)
+                        } else {
+                            Timber.tag("ReelList").d("Video at position 0 is already playing, skipping play")
+                        }
+                    }
                 }
             }
         },
@@ -199,7 +211,13 @@ fun ReelList(
             (recyclerView.adapter as? ReelAdapter)?.let { _ ->
                 recyclerView.adapter = ReelAdapter(reels, context, mediaCache, recyclerView)
                 recyclerView.post {
-                    (recyclerView.adapter as? ReelAdapter)?.playVideoAtPosition(0)
+                    (recyclerView.adapter as? ReelAdapter)?.let { reelAdapter ->
+                        if (reelAdapter.currentPlayingPosition == RecyclerView.NO_POSITION) {
+                            reelAdapter.playVideoAtPosition(0)
+                        } else {
+                            Timber.tag("ReelList").d("Video at position 0 is already playing, skipping play")
+                        }
+                    }
                 }
             }
         },
