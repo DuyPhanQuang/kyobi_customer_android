@@ -2,16 +2,26 @@ package com.kyobi.trend.ui
 
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import com.kyobi.trend.KyobiSnapHelper
+import com.kyobi.featurecommon.monitor.network.NetworkUtils
 import com.kyobi.trend.cache.MediaCache
+import com.kyobi.trend.config.ReelConfigViewModel
 import com.kyobi.trend.model.Reel
+import com.kyobi.featurecommon.monitor.network.NetworkMonitor
 import timber.log.Timber
 import kotlin.math.abs
 
@@ -23,6 +33,22 @@ fun ReelList(
     recyclerViewRef: MutableState<RecyclerView?>? = null
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val configViewModel: ReelConfigViewModel = hiltViewModel()
+    val networkUtils = remember { NetworkUtils(context) }
+    val networkMonitor = remember { NetworkMonitor(context, networkUtils) }
+    val currentReels by rememberUpdatedState(reels)
+    val adapter = remember { mutableStateOf<ReelAdapter?>(null) }
+
+    // Observer network change
+    val isConnected by networkMonitor.observeNetwork { isConnected ->
+        if (isConnected) {
+            Timber.tag("ReelList").d("Network connected, retrying downloads")
+            adapter.value?.retryDownloads()
+        } else {
+            Timber.tag("ReelList").d("Network disconnected")
+        }
+    }
 
     AndroidView(
         factory = { context2 ->
@@ -63,7 +89,17 @@ fun ReelList(
                     // Thiết lập số lượng item prefetch ban đầu (thay thế cho getExtraLayoutSpace)
                     initialPrefetchItemCount = 5// Prefetch 5 item để cuộn mượt
                 }
-                adapter = ReelAdapter(reels, context = context2, mediaCache, this)
+                // khởi tạo và gán adapter
+                adapter.value = ReelAdapter(
+                    reels = currentReels,
+                    context = context2,
+                    mediaCache = mediaCache,
+                    lifecycleOwner = lifecycleOwner,
+                    configViewModel = configViewModel,
+                    networkMonitor = networkMonitor,
+                    recyclerView = this
+                )
+                this.adapter = adapter.value
                 setHasFixedSize(true)
                 // tối ưu performance bằng cách:
                 // - Tăng cache để tái sử dụng view
@@ -154,7 +190,7 @@ fun ReelList(
                             return
                         }
 
-                        val currentPlayingPosition = (adapter as? ReelAdapter)?.currentPlayingPosition
+                        val currentPlayingPosition = adapter.value?.currentPlayingPosition
                         // Xác định vị trí video "nổi bật" để play
                         // vị trí nổi bật là vị trí gần trung tâm nhất
                         val targetPosition = determineProminentPosition(recyclerView, firstVisiblePosition, lastVisiblePosition)
@@ -163,7 +199,7 @@ fun ReelList(
                             targetPosition != currentPlayingPosition &&
                             (currentTime - lastPlayTime) > playDebounceDuration) {
                             // Auto play video với vị trí nổi bật
-                            (adapter as? ReelAdapter)?.playVideoAtPosition(targetPosition)
+                            adapter.value?.playVideoAtPosition(targetPosition)
                             lastPlayTime = currentTime
                         }
 
@@ -197,7 +233,7 @@ fun ReelList(
                 })
                 recyclerViewRef?.value = this
                 post {
-                    (adapter as? ReelAdapter)?.let { reelAdapter ->
+                    adapter.value?.let { reelAdapter ->
                         if (reelAdapter.currentPlayingPosition == RecyclerView.NO_POSITION) {
                             reelAdapter.playVideoAtPosition(0)
                         } else {
@@ -208,10 +244,9 @@ fun ReelList(
             }
         },
         update = { recyclerView ->
-            (recyclerView.adapter as? ReelAdapter)?.let { _ ->
-                recyclerView.adapter = ReelAdapter(reels, context, mediaCache, recyclerView)
-                recyclerView.post {
-                    (recyclerView.adapter as? ReelAdapter)?.let { reelAdapter ->
+            (recyclerView.adapter as? ReelAdapter)?.let { reelAdapter ->
+                if (reelAdapter.reels != currentReels) {
+                    recyclerView.post {
                         if (reelAdapter.currentPlayingPosition == RecyclerView.NO_POSITION) {
                             reelAdapter.playVideoAtPosition(0)
                         } else {
@@ -224,7 +259,17 @@ fun ReelList(
         onRelease = { recyclerView ->
             (recyclerView.adapter as? ReelAdapter)?.releaseAllPlayers()
             recyclerView.adapter = null
+            adapter.value = null
             recyclerViewRef?.value = null
-        },
+        }
     )
+
+    DisposableEffect(Unit) {
+        onDispose {
+            adapter.value?.releaseAllPlayers()
+            adapter.value = null
+            recyclerViewRef?.value?.adapter = null
+            recyclerViewRef?.value = null
+        }
+    }
 }

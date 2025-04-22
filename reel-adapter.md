@@ -322,3 +322,8 @@ DefaultLoadControl.Builder()
 
 Kiểm tra thực tế trên thiết bị để đảm bảo không có giật lag khi chuyển nguồn từ remote sang local với ConcatenatingMediaSource2.
 
+Yêu cầu của retryDownloads
+Retry tải các video chưa tải được (không có trong downloadedFiles và không đang tải trong downloadLatches).
+Chỉ retry các video trong phạm vi hợp lệ (positionsToKeep).
+Sau khi tải thành công, gọi callback để chuyển nguồn phát (giống logic trong playVideoAtPosition).
+Kiểm tra mạng trước khi retry.

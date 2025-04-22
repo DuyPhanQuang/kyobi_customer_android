@@ -114,6 +114,7 @@ fun DependencyHandler.baseDependencies() {
     implementation(Libraries.Hilt.hiltAndroid)
     implementation(Libraries.Hilt.hiltWork)
     ksp(Libraries.Hilt.hiltAndroidCompiler)
+    ksp(Libraries.Hilt.hiltCompiler)
 
     implementation(Libraries.Google.guava)
 
@@ -165,6 +166,7 @@ fun DependencyHandler.moduleDependencies() {
     COMMON_THEME
     COMMON_COMPOSABLE
     FEATURECOMMON_AUTH
+    FEATURECOMMON_MONITOR
     FEATURE_HOME
     FEATURE_PROFILE
     FEATURE_AUTHENTICATION
@@ -188,6 +190,9 @@ val DependencyHandler.DOMAIN
 
 val DependencyHandler.FEATURECOMMON_AUTH
     get() = implementation(project(mapOf("path" to ":featurecommon:auth")))
+
+val DependencyHandler.FEATURECOMMON_MONITOR
+    get() = implementation(project(mapOf("path" to ":featurecommon:monitor")))
 
 val DependencyHandler.FEATURE_HOME
     get() = implementation(project(mapOf("path" to ":feature:home")))

@@ -10,6 +10,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -29,9 +31,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.kyobi.feature.trend.R
 import com.kyobi.trend.cache.MediaCache
+import com.kyobi.trend.config.ReelConfig
+import com.kyobi.trend.config.ReelConfigViewModel
 import com.kyobi.trend.model.Reel
+import com.kyobi.featurecommon.monitor.network.NetworkMonitor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -49,12 +55,17 @@ class ReelAdapter(
     val reels: List<Reel>,
     private val context: Context,
     private val mediaCache: MediaCache,
-    private val recyclerView: RecyclerView
+    private val lifecycleOwner: LifecycleOwner,
+    private val configViewModel: ReelConfigViewModel,
+    private val networkMonitor: NetworkMonitor,
+    private val recyclerView: RecyclerView,
 ) : RecyclerView.Adapter<ReelAdapter.ReelViewHolder>() {
     private var lastPlayTime = 0L
     private val playDebounceDuration = 300L
     private var lastPreloadTime = 0L
     private val preloadDebounceDuration = 300L
+    private var lastCleanupTime = 0L
+    private val cleanupDebounceDuration = 500L
     var currentPlayingPosition: Int = RecyclerView.NO_POSITION // Theo dõi position đang phát
         private set
     private val mediaSources = mutableMapOf<Int, MediaSource>() // Lưu MediaSource đã preload
@@ -63,6 +74,16 @@ class ReelAdapter(
     private val downloadedFiles = mutableMapOf<Int, File>() // Lưu file đã tải
     private val downloadLatches = mutableMapOf<Int, CountDownLatch>() // Lưu trạng thái tải file
     private val mainHandler = Handler(Looper.getMainLooper()) // Thread để switch luồng phát
+    private var config: ReelConfig = ReelConfig()
+
+    init {
+        lifecycleOwner.lifecycleScope.launch {
+            configViewModel.config.collectLatest { newConfig ->
+                config = newConfig
+                Timber.tag("ReelAdapter").d("Updated config: $config")
+            }
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReelViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -230,10 +251,12 @@ class ReelAdapter(
                         Timber.tag("ReelAdapter").d("Checking downloadedFiles for position $position: containsKey=${downloadedFiles.containsKey(position)}, filePath=${downloadedFiles[position]?.path}")
                         val playbackState = player.playbackState
                         if (downloadedFiles.containsKey(position) &&
+                            (downloadedFiles[position]?.length() ?: 0L) >= 1024 &&
                             (playbackState == Player.STATE_BUFFERING ||
                                     playbackState == Player.STATE_READY ||
                                     playbackState == Player.STATE_ENDED ||
-                                    playbackState == Player.STATE_IDLE)) {
+                                    playbackState == Player.STATE_IDLE)
+                        ) {
                             val currentUri = player.currentMediaItem?.mediaId
                             val localUri = downloadedFiles[position]?.path
                             if (currentUri != localUri) {
@@ -259,10 +282,12 @@ class ReelAdapter(
                                         Timber.tag("ReelAdapter").d("Retrying switch to local file at position: $position")
                                         val retryPlaybackState = player.playbackState
                                         if (downloadedFiles.containsKey(position) &&
+                                            (downloadedFiles[position]?.length() ?: 0L) >= 1024 &&
                                             (retryPlaybackState == Player.STATE_BUFFERING ||
                                                     retryPlaybackState == Player.STATE_READY ||
                                                     retryPlaybackState == Player.STATE_ENDED ||
-                                                    retryPlaybackState == Player.STATE_IDLE)) {
+                                                    retryPlaybackState == Player.STATE_IDLE)
+                                        ) {
                                             val currentUri = player.currentMediaItem?.mediaId
                                             val localUri = downloadedFiles[position]?.path
                                             if (currentUri != localUri) {
@@ -375,10 +400,9 @@ class ReelAdapter(
         } else {
             Timber.tag("ReelAdapter").d("Creating remote media source for position: $position")
             val cacheDataSourceFactory = CacheDataSource.Factory()
-                .setCache(mediaCache.obtainCache())
+                .setCache(mediaCache.getCache())
                 .setUpstreamDataSourceFactory(DefaultHttpDataSource.Factory())
-                .setCacheWriteDataSinkFactory(CacheDataSink.Factory().setCache(mediaCache.obtainCache()))
-                .setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE)
+                .setCacheWriteDataSinkFactory(CacheDataSink.Factory().setCache(mediaCache.getCache()))
             val mediaItem = MediaItem.fromUri(remoteUri).buildUpon().setMediaId(remoteUri.toString()).build()
             ProgressiveMediaSource.Factory(cacheDataSourceFactory).createMediaSource(mediaItem)
         }
@@ -386,24 +410,36 @@ class ReelAdapter(
 
     private fun downloadVideoPartial(position: Int, onComplete: () -> Unit = {}) {
         if (position < 0 || position >= reels.size) return
-        if (downloadedFiles.containsKey(position)) {
-            Timber.tag("ReelAdapter").d("First 5MB of video at position $position already downloaded")
-            onComplete()
+
+        val maxBytes = config.downloadSizeMb * 1024 * 1024L
+        synchronized(downloadedFiles) {
+            if (downloadedFiles.containsKey(position)) {
+                Timber.tag("ReelAdapter").d("First ${config.downloadSizeMb}MB of video at position $position already downloaded")
+                return
+            }
+        }
+        synchronized(downloadLatches) {
+            if (downloadLatches.containsKey(position)) {
+                Timber.tag("ReelAdapter").d("Download already in progress for position $position, skipping")
+                return
+            }
+        }
+
+        if (!networkMonitor.isConnected.value) {
+            Timber.tag("ReelAdapter").w("No network available, skipping download for position $position")
             return
         }
-        if (downloadLatches.containsKey(position)) {
-            Timber.tag("ReelAdapter").d("Download already in progress for position $position, skipping")
-            return
-        }
+
         val latch = CountDownLatch(1)
-        downloadLatches[position] = latch
+        synchronized(downloadLatches) {
+            downloadLatches[position] = latch
+        }
         val url = reels[position].videoUrl
         val file = File(recyclerView.context.cacheDir, "video_${position}_partial.mp4")
         val client = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
-        val maxBytes = 5 * 1024 * 1024 // 5MB
         val request = Request.Builder()
             .url(url)
             .header("Range", "bytes=0-${maxBytes - 1}")
@@ -413,47 +449,89 @@ class ReelAdapter(
                 val response = client.newCall(request).execute()
                 if (response.isSuccessful) {
                     response.body?.let { body ->
+                        val contentLength = body.contentLength()
+                        Timber.tag("ReelAdapter").d("Content length for position $position: $contentLength bytes")
+                        if (contentLength <= 0) {
+                            Timber.tag("ReelAdapter").w("Content length is 0 or invalid for position $position")
+                            return@let
+                        }
                         val sink = file.sink().buffer()
-                        sink.writeAll(body.source())
+                        var bytesWritten = 0L
+                        val source = body.source()
+                        while (!source.exhausted() && bytesWritten < maxBytes) {
+                            val bytesRead = source.read(sink.buffer, (maxBytes - bytesWritten).coerceAtMost(8192L))
+                            if (bytesRead == -1L) break
+                            bytesWritten += bytesRead
+                            sink.emit()
+                        }
                         sink.close()
                         val bytesDownloaded = file.length()
-                        downloadedFiles[position] = file
-                        Timber.tag("ReelAdapter").d("Successfully downloaded first 5MB for position $position ($bytesDownloaded bytes)")
+                        if (bytesDownloaded != bytesWritten) {
+                            Timber.tag("ReelAdapter").w("Mismatch in downloaded bytes for position $position: expected $bytesWritten, got $bytesDownloaded")
+                        }
+                        if (bytesDownloaded < 1024) {
+                            Timber.tag("ReelAdapter").w("Downloaded file too small for position $position: $bytesDownloaded bytes, skipping")
+                            file.delete()
+                            return@let
+                        }
+                        synchronized(downloadedFiles) {
+                            downloadedFiles[position] = file
+                        }
+                        Timber.tag("ReelAdapter").d("Successfully downloaded first ${config.downloadSizeMb}MB for position $position ($bytesDownloaded bytes)")
                         onComplete()
                     } ?: run {
-                        Timber.tag("ReelAdapter").w("Failed to download first 5MB for position $position: Empty response body")
+                        Timber.tag("ReelAdapter").w("Failed to download first ${config.downloadSizeMb}MB for position $position: Empty response body")
                     }
                 } else {
-                    Timber.tag("ReelAdapter").w("Failed to download first 5MB for position $position: HTTP ${response.code}")
+                    Timber.tag("ReelAdapter").w("Failed to download first ${maxBytes}MB for position $position: HTTP ${response.code}")
                 }
             } catch (e: Exception) {
-                Timber.tag("ReelAdapter").e(e, "Error downloading first 5MB for position $position")
+                Timber.tag("ReelAdapter").e(e, "Error downloading first ${maxBytes}MB for position $position")
             } finally {
                 latch.countDown()
-                downloadLatches.remove(position)
+                synchronized(downloadLatches) {
+                    downloadLatches.remove(position)
+                }
             }
         }
     }
 
     // khoanh vùng vị trí hợp lệ tải trước
     private fun positionsToKeep(currentPosition: Int): Set<Int> {
-        val range = (currentPosition - 3..currentPosition + 3)
+        val range = (currentPosition - config.positionsToKeepRange..currentPosition + config.positionsToKeepRange)
             .filter { it >= 0 && it < reels.size }
             .toSet()
         return range
     }
 
     private fun cleanupOldFiles(currentPosition: Int) {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastCleanupTime < cleanupDebounceDuration) {
+            Timber.tag("ReelAdapter").d("Skipped cleanupOldFiles due to debounce")
+            return
+        }
+        lastCleanupTime = currentTime
+
         val positionsToKeep = positionsToKeep(currentPosition)
-        val iterator = downloadedFiles.iterator()
-        while (iterator.hasNext()) {
-            val entry = iterator.next()
-            val position = entry.key
-            if (position !in positionsToKeep) {
-                val file = entry.value
-                file.delete()
-                iterator.remove()
-                Timber.tag("ReelAdapter").d("Deleted old partial video file for position $position")
+        synchronized(downloadLatches) {
+            downloadLatches.keys.toList().forEach { pos ->
+                if (pos !in positionsToKeep) {
+                    downloadLatches.remove(pos)?.countDown()
+                    Timber.tag("ReelAdapter").d("Canceled download for position: $pos")
+                }
+            }
+        }
+        synchronized(downloadedFiles) {
+            val iterator = downloadedFiles.iterator()
+            while (iterator.hasNext()) {
+                val entry = iterator.next()
+                val position = entry.key
+                if (position !in positionsToKeep) {
+                    val file = entry.value
+                    file.delete()
+                    iterator.remove()
+                    Timber.tag("ReelAdapter").d("Deleted old partial video file for position $position")
+                }
             }
         }
     }
@@ -470,12 +548,69 @@ class ReelAdapter(
                 downloadedFiles.values.forEach { it.delete() }
                 downloadedFiles.clear()
                 downloadLatches.clear()
+                mediaCache.release()
             }
             mediaSources.clear()
             activePlayers.clear()
             Timber.tag("ReelAdapter").d("Cleared all downloaded partial files, media sources, and active players")
         } finally {
             playLock.unlock()
+        }
+    }
+
+    fun retryDownloads() {
+        if (!networkMonitor.isConnected.value) {
+            Timber.tag("ReelAdapter").w("No network available, skipping retry downloads")
+            return
+        }
+        // Xác định các position cần retry (trong phạm vi positionsToKeep)
+        val positionsToKeep = positionsToKeep(currentPlayingPosition)
+        val positionsToRetry = positionsToKeep.filter { position ->
+            // Chỉ retry các position chưa tải và không đang tải
+            position >= 0 && position < reels.size && !downloadedFiles.containsKey(position) && !downloadLatches.containsKey(position)
+        }
+        if (positionsToRetry.isEmpty()) {
+            Timber.tag("ReelAdapter").d("No positions to retry downloading")
+            return
+        }
+        Timber.tag("ReelAdapter").d("Retrying downloads for positions: $positionsToRetry")
+        for (position in positionsToRetry) {
+            // Tải file và chuyển nguồn nếu cần
+            downloadVideoPartial(position) {
+                // Chuyển callback sang main thread
+                mainHandler.post {
+                    // Callback để chuyển nguồn phát sang file local nếu position đang phát
+                    if (position == currentPlayingPosition) {
+                        val holder = recyclerView.findViewHolderForAdapterPosition(position) as? ReelViewHolder
+                        holder?.player?.let { player ->
+                            val playbackState = player.playbackState
+                            if (downloadedFiles.containsKey(position) &&
+                                (playbackState == Player.STATE_BUFFERING ||
+                                        playbackState == Player.STATE_READY ||
+                                        playbackState == Player.STATE_ENDED ||
+                                        playbackState == Player.STATE_IDLE)) {
+                                val currentUri = player.currentMediaItem?.mediaId
+                                val localUri = downloadedFiles[position]?.path
+                                if (currentUri != localUri) {
+                                    val localMediaSource = createMediaSource(position, useLocal = true)
+                                    val concatenatingMediaSource = ConcatenatingMediaSource2.Builder()
+                                        .add(localMediaSource, 3000)
+                                        .build()
+                                    val currentPositionMs = player.currentPosition
+                                    val wasPlaying = player.isPlaying
+                                    player.setMediaSource(concatenatingMediaSource)
+                                    player.seekTo(currentPositionMs)
+                                    player.prepare()
+                                    if (wasPlaying) {
+                                        player.play()
+                                    }
+                                    Timber.tag("ReelAdapter").d("Switched to local file after retry at position: $position localFile: ${downloadedFiles[position]?.path}")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -498,7 +633,12 @@ class ReelAdapter(
             player = ExoPlayer.Builder(context)
                 .setLoadControl(
                     DefaultLoadControl.Builder()
-                        .setBufferDurationsMs(3000, 30000, 3000, 3000)
+                        .setBufferDurationsMs(
+                            config.bufferMinMs,
+                            config.bufferMaxMs,
+                            config.bufferPlaybackMs,
+                            config.bufferRebufferMs
+                        )
                         .build()
                 )
                 .build()
@@ -509,32 +649,38 @@ class ReelAdapter(
                         }
                         override fun onPlayerError(error: PlaybackException) {
                             Timber.tag("ReelAdapter").e("Error playing video at position $bindingAdapterPosition: ${error.message}")
-                            Toast.makeText(context, "Error playing video at position $bindingAdapterPosition", Toast.LENGTH_SHORT).show()
 
                             if (retryCount < maxRetries && bindingAdapterPosition == currentPlayingPosition) {
+                                if (bindingAdapterPosition < 0 || bindingAdapterPosition >= reels.size) {
+                                    Timber.tag("ReelAdapter").w("Invalid position $bindingAdapterPosition during retry, skipping")
+                                    return
+                                }
                                 retryCount++
                                 Timber.tag("ReelAdapter").d("Retrying playback at position $bindingAdapterPosition, attempt $retryCount")
                                 postDelayed({
                                     CoroutineScope(Dispatchers.Default).launch {
+                                        if (bindingAdapterPosition < 0 || bindingAdapterPosition >= reels.size) {
+                                            Timber.tag("ReelAdapter").w("Invalid position $bindingAdapterPosition during retry callback, skipping")
+                                            return@launch
+                                        }
                                         val remoteUri = Uri.parse(reels[bindingAdapterPosition].videoUrl)
                                         val mediaSource = ProgressiveMediaSource.Factory(DefaultHttpDataSource.Factory())
                                             .createMediaSource(MediaItem.fromUri(remoteUri))
-                                        // Chuyển về thread chính để cập nhật player
-                                        // (setMediaSource, prepare, play) phải chạy trên main thread vì ExoPlayer không thread-safe
                                         withContext(Dispatchers.Main) {
                                             Timber.tag("ReelAdapter").w("Started switching to main thread")
                                             setMediaSource(mediaSource)
-                                            playWhenReady = true
                                             volume = 1f
                                             repeatMode = Player.REPEAT_MODE_ONE
+                                            playWhenReady = true
                                             prepare()
-                                            play() // đảm bảo play đc gọi. bình thường chỉ cần gọi playWhenReady -> prepare
+                                            play()
                                         }
                                     }
                                 }, 500)
                             } else {
                                 retryCount = 0
                                 Timber.tag("ReelAdapter").w("Max retries reached at position $bindingAdapterPosition, skipping")
+                                Toast.makeText(context, "Error playing video at position $bindingAdapterPosition", Toast.LENGTH_SHORT).show()
                             }
                         }
                         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -572,6 +718,7 @@ class ReelAdapter(
                 activePlayers.remove(bindingAdapterPosition)
                 Timber.tag("ReelAdapter").d("Removed player from activePlayers at position $bindingAdapterPosition, activePlayers size: ${activePlayers.size}")
             }
+            playerView.removeCallbacks(null)
             player?.release() // Chỉ release khi cần, không đặt player = null nếu ko force
             // force = true khi recyclerView releases
             if (force) {

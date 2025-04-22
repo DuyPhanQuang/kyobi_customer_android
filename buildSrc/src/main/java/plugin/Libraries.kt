@@ -16,7 +16,7 @@ import Version.TimberVersion
 import Version.TruthExt
 
 object Version {
-    const val CoreKtx = "1.13.0"
+    const val CoreKtx = "1.16.0"
     const val AppCompat = "1.7.0"
     const val AndroidXCompose = "1.7.0"
     const val ComposeMaterial3Components = "1.3.0"
@@ -31,8 +31,8 @@ object Version {
     const val JunitExtKtx = "1.2.1"
     const val TruthExt = "1.6.0"
     const val Coil = "2.7.0"
-    const val HiltNavigationCompose = "1.1.0"
-    const val HiltAndroidVersion = "2.51.1"
+    const val HiltNavigationCompose = "1.2.0"
+    const val HiltAndroidVersion = "2.56.1"
     const val Accompanist = "0.34.0"
     const val SplashScreenApi = "1.1.0"
     const val ConstraintLayoutCompose = "1.1.0"
@@ -198,6 +198,7 @@ object Libraries {
         const val hiltAndroidCompiler = "com.google.dagger:hilt-android-compiler:$HiltAndroidVersion"
         const val hiltWork =
             "androidx.hilt:hilt-work:$HiltNavigationCompose"
+        const val hiltCompiler = "com.google.dagger:hilt-compiler:${HiltAndroidVersion}"
 
         //hilt compose
         const val hiltNavigationCompose =

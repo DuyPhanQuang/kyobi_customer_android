@@ -9,8 +9,8 @@ import testDependencies
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.parcelize")
     id("com.google.dagger.hilt.android")
+    id("org.jetbrains.kotlin.plugin.parcelize")
     id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.plugin.compose")
 }
