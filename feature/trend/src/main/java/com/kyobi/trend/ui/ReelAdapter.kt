@@ -1,4 +1,4 @@
-package com.kyobi.trend
+package com.kyobi.trend.ui
 
 import android.content.Context
 import android.graphics.Color
