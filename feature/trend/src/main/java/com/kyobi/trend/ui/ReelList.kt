@@ -42,11 +42,11 @@ fun ReelList(
                     ) {
                         val smoothScroller = object : LinearSmoothScroller(recyclerView.context) {
                             override fun calculateSpeedPerPixel(displayMetrics: android.util.DisplayMetrics): Float {
-                                return 120f / displayMetrics.densityDpi // Tốc độ cuộn chậm, mượt hơn
+                                return 90f / displayMetrics.densityDpi // Tốc độ cuộn chậm, mượt hơn
                             }
 
                             override fun calculateTimeForDeceleration(dx: Int): Int {
-                                return 100 // Thời gian giảm tốc cố định, tạo cảm giác mượt
+                                return 80 // Thời gian giảm tốc cố định, tạo cảm giác mượt
                             }
 
                             override fun getVerticalSnapPreference(): Int {
@@ -132,7 +132,8 @@ fun ReelList(
 
                             // Kiểm tra xem view có cần snap không
                             // set ngưỡng để snap nhạy hơn
-                            val snapThreshold = recyclerView.height / 4
+                            // // TikTok: ~15-20% chiều cao màn hình
+                            val snapThreshold = recyclerView.height / 5
                             val snapView = layoutManager.findViewByPosition(visiblePosition)
                             if (snapView != null) {
                                 val viewCenter = (snapView.top + snapView.bottom) / 2
@@ -169,7 +170,7 @@ fun ReelList(
                                 this.lastVisiblePosition = visiblePosition
                             }
 
-                        } else if (newState == RecyclerView.SCROLL_STATE_IDLE && isProgrammaticScroll) {
+                        } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                             isProgrammaticScroll = false // Reset sau khi cuộn tự động hoàn tất
                         }
                     }

@@ -63,7 +63,9 @@ class KyobiSnapHelper: LinearSnapHelper() {
     override fun calculateScrollDistance(velocityX: Int, velocityY: Int): IntArray {
         val out = super.calculateScrollDistance(velocityX, velocityY)
         if (recyclerView?.layoutManager?.canScrollVertically() == true) {
-            val scaledVelocity = (velocityY * 0.2f).toInt() // Giảm quán tính fling
+            // TikTok: ~0.1f-0.15f
+            // Giảm quán tính fling
+            val scaledVelocity = (velocityY * 0.15f).toInt()
             out[1] = scaledVelocity
         }
         return out
