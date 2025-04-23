@@ -61,6 +61,9 @@ fun DependencyHandler.composeDependencies() {
     implementation(Libraries.Timber.timber)
 
     //Firebase
+    implementation(platform(Libraries.Google.Firebase.bom))
+    implementation(Libraries.Google.Firebase.analytics)
+    implementation(Libraries.Google.Firebase.crashlytics)
 
     // Maps, Places, PlayServices
     implementation(Libraries.Google.PlayServices.map)

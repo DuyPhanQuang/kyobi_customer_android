@@ -6,6 +6,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
     id("com.google.devtools.ksp")
 }
 
@@ -74,6 +76,9 @@ android {
                 "coroutines.pro",
                 "okhttp3.pro",
             )
+
+            // Force all debug builds(devDebug, prodDebug) dùng kyobi dev keystore
+            signingConfig = signingConfigs.getByName("devSigning")
         }
         getByName("release") {
             isDebuggable = false
@@ -86,12 +91,18 @@ android {
                 "coroutines.pro",
                 "okhttp3.pro",
             )
+
+            // Force all release builds(prodRelease, devRelease) dùng kyobi prod keystore
+            signingConfig = signingConfigs.getByName("prodSigning")
         }
 
         maybeCreate("profile").apply {
             initWith(getByName("debug"))
             isDebuggable = false
             isMinifyEnabled = true
+
+            // Force all profile builds(devProfile, prodProfile) dùng kyobi dev keystore
+            signingConfig = signingConfigs.getByName("devSigning")
         }
     }
 
@@ -102,16 +113,10 @@ android {
             dimension = "env"
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-
-            // Signed
-            signingConfig = signingConfigs.getByName("devSigning")
         }
 
         create("prod") {
             dimension = "env"
-
-            // Signed
-            signingConfig = signingConfigs.getByName("prodSigning")
         }
     }
 
@@ -144,6 +149,13 @@ android {
 
     packaging  {
         resources.excludes.add("META-INF/**/*")
+    }
+    sourceSets {
+        getByName("prod") {
+            res {
+                srcDirs("src\\prod\\res", "src\\prod\\res")
+            }
+        }
     }
 }
 
