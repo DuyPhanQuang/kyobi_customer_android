@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.core.coroutines.handleErrors
 import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.core.coroutines.withLoading

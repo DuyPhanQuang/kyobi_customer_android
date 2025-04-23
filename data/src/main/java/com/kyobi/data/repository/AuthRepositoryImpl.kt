@@ -4,8 +4,6 @@ import com.kyobi.core.model.RestNetworkResult
 import com.kyobi.core.storage.TokenStorage
 import com.kyobi.data.network.KyobiApiService
 import com.kyobi.domain.model.LoggedInUser
-import com.kyobi.domain.model.UserInfo
-import com.kyobi.domain.model.UserType
 import com.kyobi.domain.model.request.LoginRequest
 import com.kyobi.domain.model.request.SignupRequest
 import com.kyobi.domain.repository.AuthRepository
@@ -20,19 +18,7 @@ class AuthRepositoryImpl @Inject constructor(
             is RestNetworkResult.Success -> {
                 val response = result.data
                 tokenStorage.saveTokens(response.session.accessToken, response.session.refreshToken)
-                val userType = if (response.user.isAnonymous) UserType.ANONYMOUS else UserType.LOGGED_IN
-                val phone = response.user.userMetadata?.phone
-                RestNetworkResult.Success(
-                    LoggedInUser(
-                        id = response.user.id,
-                        userType = userType,
-                        info = UserInfo(
-                            email = response.user.email,
-                            phoneNumber = phone,
-                            nickname = null
-                        )
-                    )
-                )
+                RestNetworkResult.Success(response.toLoggedInUser())
             }
             is RestNetworkResult.Error -> RestNetworkResult.Error(result.message, result.code)
             is RestNetworkResult.Loading -> RestNetworkResult.Loading
@@ -45,13 +31,7 @@ class AuthRepositoryImpl @Inject constructor(
                 val response = result.data
                 val session = response.data.session
                 tokenStorage.saveTokens(session.accessToken, session.refreshToken)
-                RestNetworkResult.Success(
-                    LoggedInUser(
-                        id = response.data.user.id,
-                        userType = UserType.ANONYMOUS,
-                        info = null
-                    )
-                )
+                RestNetworkResult.Success(response.toLoggedInUser())
             }
             is RestNetworkResult.Error -> RestNetworkResult.Error(result.message, result.code)
             is RestNetworkResult.Loading -> RestNetworkResult.Loading
@@ -62,19 +42,7 @@ class AuthRepositoryImpl @Inject constructor(
         return when (val result = apiService.getAuthUser()) {
             is RestNetworkResult.Success -> {
                 val response = result.data
-                val userType = if (response.isAnonymous) UserType.ANONYMOUS else UserType.LOGGED_IN
-                val phone = response.userMetadata?.phone
-                RestNetworkResult.Success(
-                    LoggedInUser(
-                        id = response.id,
-                        userType = userType,
-                        info = UserInfo(
-                            email = response.email,
-                            phoneNumber = phone,
-                            nickname = null
-                        )
-                    )
-                )
+                RestNetworkResult.Success(response.toLoggedInUser())
             }
             is RestNetworkResult.Error -> RestNetworkResult.Error(result.message, result.code)
             is RestNetworkResult.Loading -> RestNetworkResult.Loading

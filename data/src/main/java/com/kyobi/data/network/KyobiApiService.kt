@@ -4,6 +4,7 @@ import com.kyobi.core.model.RestNetworkResult
 import com.kyobi.core.network.WithAuthHeaders
 import com.kyobi.data.model.AuthUserResponse
 import com.kyobi.data.model.AnonymousLoginResponse
+import com.kyobi.data.model.AppVersionResponse
 import com.kyobi.data.model.LoginResponse
 import com.kyobi.data.model.SignupResponse
 import com.kyobi.domain.model.request.LoginRequest
@@ -29,4 +30,7 @@ interface KyobiApiService {
 
     @POST("auth/signup")
     suspend fun signup(@Body request: SignupRequest): RestNetworkResult<SignupResponse>
+
+    @GET("app/status")
+    suspend fun getAppVersion(): RestNetworkResult<AppVersionResponse>
 }

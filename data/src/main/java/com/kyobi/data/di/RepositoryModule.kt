@@ -1,7 +1,9 @@
 package com.kyobi.data.di
 
+import com.kyobi.data.repository.AppConfigRepositoryImpl
 import com.kyobi.data.repository.AuthRepositoryImpl
 import com.kyobi.data.repository.ProductRepositoryImpl
+import com.kyobi.domain.repository.AppConfigRepository
 import com.kyobi.domain.repository.AuthRepository
 import com.kyobi.domain.repository.ProductRepository
 import dagger.Binds
@@ -20,4 +22,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAppConfigRepository(impl: AppConfigRepositoryImpl): AppConfigRepository
 }

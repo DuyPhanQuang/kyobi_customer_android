@@ -18,6 +18,4 @@ dependencies {
     implementation("org.jetbrains.kotlin.plugin.compose:org.jetbrains.kotlin.plugin.compose.gradle.plugin:2.1.10")
     implementation("org.jetbrains.kotlin.plugin.parcelize:org.jetbrains.kotlin.plugin.parcelize.gradle.plugin:2.1.10")
     implementation("com.google.dagger:hilt-android-gradle-plugin:2.56.1")
-    implementation("com.google.firebase.crashlytics:com.google.firebase.crashlytics.gradle.plugin:3.0.3")
-    implementation("com.google.android.libraries.mapsplatform.secrets-gradle-plugin:secrets-gradle-plugin:2.0.1")
 }

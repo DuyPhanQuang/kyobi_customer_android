@@ -1,26 +1,10 @@
 package com.kyobi.data.model
 
+import com.kyobi.domain.model.LoggedInUser
+import com.kyobi.domain.model.UserInfo
+import com.kyobi.domain.model.UserType
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-
-@JsonClass(generateAdapter = true)
-data class AuthUserResponse(
-    val id: String,
-    val aud: String,
-    val role: String,
-    val email: String,
-    @Json(name = "email_confirmed_at") val emailConfirmedAt: String?,
-    val phone: String?,
-    @Json(name = "confirmation_sent_at") val confirmationSentAt: String?,
-    @Json(name = "confirmed_at") val confirmedAt: String?,
-    @Json(name = "last_sign_in_at") val lastSignInAt: String?,
-    @Json(name = "app_metadata") val appMetadata: AppMetadata?,
-    @Json(name = "user_metadata") val userMetadata: UserMetadata?,
-    val identities: List<Identity>?,
-    @Json(name = "created_at") val createdAt: String?,
-    @Json(name = "updated_at") val updatedAt: String?,
-    @Json(name = "is_anonymous") val isAnonymous: Boolean
-)
 
 @JsonClass(generateAdapter = true)
 data class AppMetadata(
@@ -58,3 +42,37 @@ data class IdentityData(
     @Json(name = "phone_verified") val phoneVerified: Boolean?,
     val sub: String?
 )
+
+@JsonClass(generateAdapter = true)
+data class AuthUserResponse(
+    val id: String,
+    val aud: String,
+    val role: String,
+    val email: String,
+    @Json(name = "email_confirmed_at") val emailConfirmedAt: String?,
+    val phone: String?,
+    @Json(name = "confirmation_sent_at") val confirmationSentAt: String?,
+    @Json(name = "confirmed_at") val confirmedAt: String?,
+    @Json(name = "last_sign_in_at") val lastSignInAt: String?,
+    @Json(name = "app_metadata") val appMetadata: AppMetadata?,
+    @Json(name = "user_metadata") val userMetadata: UserMetadata?,
+    val identities: List<Identity>?,
+    @Json(name = "created_at") val createdAt: String?,
+    @Json(name = "updated_at") val updatedAt: String?,
+    @Json(name = "is_anonymous") val isAnonymous: Boolean
+) {
+
+    fun toLoggedInUser(): LoggedInUser {
+        val userType = if (isAnonymous) UserType.ANONYMOUS else UserType.LOGGED_IN
+        val phone = userMetadata?.phone
+        return LoggedInUser(
+            id = id,
+            userType = userType,
+            info = UserInfo(
+                email = email,
+                phoneNumber = phone,
+                nickname = null
+            )
+        )
+    }
+}

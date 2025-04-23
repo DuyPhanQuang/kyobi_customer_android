@@ -61,8 +61,6 @@ fun DependencyHandler.composeDependencies() {
     implementation(Libraries.Timber.timber)
 
     //Firebase
-    implementation(platform(Libraries.Google.Firebase.bom))
-    implementation(Libraries.Google.Firebase.crashlytics)
 
     // Maps, Places, PlayServices
     implementation(Libraries.Google.PlayServices.map)
@@ -138,6 +136,8 @@ fun DependencyHandler.baseDependencies() {
 
     //supabase
     implementation(Libraries.Supabase.auth)
+    implementation(Libraries.Supabase.postgrest)
+    implementation(Libraries.Supabase.realtime)
 
     // Security
     implementation(Libraries.AndroidX.security)
@@ -148,6 +148,9 @@ fun DependencyHandler.baseDependencies() {
 
     //kotlinreflect
     implementation(Libraries.KotlinReflect.reflect)
+
+    //Semver
+    implementation(Libraries.Semver.semver)
 }
 
 fun DependencyHandler.testDependencies() {

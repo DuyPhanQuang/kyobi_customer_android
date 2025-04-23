@@ -1,13 +1,9 @@
 package com.kyobi.data.model
 
+import com.kyobi.domain.model.LoggedInUser
+import com.kyobi.domain.model.UserType
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-
-@JsonClass(generateAdapter = true)
-data class AnonymousLoginResponse(
-    val message: String,
-    val data: AnonymousLoginData
-)
 
 @JsonClass(generateAdapter = true)
 data class AnonymousLoginData(
@@ -40,3 +36,17 @@ data class AnonymousSession(
     @Json(name = "refresh_token") val refreshToken: String,
     val user: AnonymousUser
 )
+
+@JsonClass(generateAdapter = true)
+data class AnonymousLoginResponse(
+    val message: String,
+    val data: AnonymousLoginData
+) {
+    fun toLoggedInUser(): LoggedInUser {
+        return LoggedInUser(
+            id = data.user.id,
+            userType = UserType.ANONYMOUS,
+            info = null
+        )
+    }
+}

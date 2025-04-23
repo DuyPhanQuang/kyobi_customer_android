@@ -1,6 +1,5 @@
 package plugin
 
-import AppConfig
 import baseDependencies
 import viewDependencies
 import composeDependencies
@@ -63,6 +62,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging  {

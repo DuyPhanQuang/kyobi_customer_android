@@ -1,3 +1,4 @@
+import plugin.AppConfig
 import java.util.Properties
 
 plugins {
@@ -5,11 +6,6 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.compose")
-
-    // GG PlayServices, firebase, maps
-    id("com.google.gms.google-services")
-    id("com.google.firebase.crashlytics")
-    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
     id("com.google.devtools.ksp")
 }
 
@@ -37,7 +33,7 @@ android {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
         }
 
-//        buildConfigField("String", "BASE_URL", properties.getProperty("BASE_URL"))
+        buildConfigField("String", "BASE_URL", properties.getProperty("BASE_URL"))
     }
 
     buildTypes {
@@ -52,7 +48,6 @@ android {
                 "coroutines.pro",
                 "gson.pro",
                 "okhttp3.pro",
-                "firebase-crashlytics.pro"
             )
         }
         getByName("release") {
@@ -66,7 +61,6 @@ android {
                 "coroutines.pro",
                 "gson.pro",
                 "okhttp3.pro",
-                "firebase-crashlytics.pro"
             )
         }
 
@@ -101,6 +95,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging  {

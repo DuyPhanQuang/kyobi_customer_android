@@ -1,19 +1,4 @@
-import Version.AndroidXTestVersion
-import Version.AppCompat
-import Version.ConstraintLayoutCompose
-import Version.CoreKtx
-import Version.EspressoCore
-import Version.GsonVersion
-import Version.GuavaAndroid
-import Version.HiltAndroidVersion
-import Version.HiltNavigationCompose
-import Version.JunitExtKtx
-import Version.NavigationCompose
-import Version.Okhttp3Version
-import Version.SplashScreenApi
-import Version.TestRunnerVersion
-import Version.TimberVersion
-import Version.TruthExt
+
 
 object Version {
     const val CoreKtx = "1.16.0"
@@ -25,41 +10,42 @@ object Version {
     const val AndroidXLiveData = "1.7.0"
     const val AndroidXLifeCycle = "2.8.0"
     const val NavigationCompose = "2.8.0"
-    const val AndroidXTestVersion = "1.6.1"
+    const val AndroidXTest = "1.6.1"
     const val EspressoCore = "3.6.1"
-    const val TestRunnerVersion = "1.6.2"
+    const val TestRunner = "1.6.2"
     const val JunitExtKtx = "1.2.1"
     const val TruthExt = "1.6.0"
     const val Coil = "2.7.0"
     const val HiltNavigationCompose = "1.2.0"
-    const val HiltAndroidVersion = "2.56.1"
+    const val HiltAndroid = "2.56.1"
     const val Accompanist = "0.34.0"
     const val SplashScreenApi = "1.1.0"
     const val ConstraintLayoutCompose = "1.1.0"
-    const val GsonVersion = "2.11.0"
+    const val Gson = "2.11.0"
     const val GuavaAndroid = "33.2.0-android"
-    const val TimberVersion = "5.0.1"
-    const val Okhttp3Version = "4.12.0"
-    const val Retrofit2Version = "2.11.0"
+    const val Timber = "5.0.1"
+    const val Okhttp3 = "4.12.0"
+    const val Retrofit2 = "2.11.0"
     const val AndroidXActivity = "1.9.2"
     const val KotlinxCoroutines = "1.10.1"
     const val KotlinReflect = "2.1.10"
-    const val LottieVersion = "6.5.0"
-    const val RoomVersion = "2.6.1"
+    const val Lottie = "6.5.0"
+    const val Room = "2.6.1"
     const val Apollo = "3.8.4"
     const val Moshi = "1.15.1"
     const val ConverterMoshi = "2.11.0"
-    const val SupabaseAuth = "3.1.4"
+    const val Supabase = "3.1.4"
     const val RecycleView = "1.4.0"
     const val ConstraintLayout = "2.2.1"
     const val MediaPlayer = "1.6.1"
     const val Glide = "4.16.0"
+    const val Semver = "5.6.0"
 }
 
 object Libraries {
     object AndroidX {
-        const val coreKtx = "androidx.core:core-ktx:$CoreKtx"
-        const val appCompat = "androidx.appcompat:appcompat:$AppCompat"
+        const val coreKtx = "androidx.core:core-ktx:${Version.CoreKtx}"
+        const val appCompat = "androidx.appcompat:appcompat:${Version.AppCompat}"
         const val lifecycleRunTimeKtx =
             "androidx.lifecycle:lifecycle-runtime-ktx:${Version.AndroidXLifeCycle}"
         const val lifecycleRunTimeCompose =
@@ -70,7 +56,7 @@ object Libraries {
             "androidx.lifecycle:lifecycle-viewmodel-ktx:${Version.AndroidXLifeCycle}"
         const val liveData = "androidx.compose.runtime:runtime-livedata:${Version.AndroidXLiveData}"
         const val workManager = "androidx.work:work-runtime-ktx:2.8.1"
-        const val splashScreen = "androidx.core:core-splashscreen:$SplashScreenApi"
+        const val splashScreen = "androidx.core:core-splashscreen:${Version.SplashScreenApi}"
         const val multiDex = "androidx.multidex:multidex:2.0.1"
         const val security = "androidx.security:security-crypto:1.1.0-alpha06"
         const val recyclerView = "androidx.recyclerview:recyclerview:${Version.RecycleView}"
@@ -88,15 +74,16 @@ object Libraries {
         const val composeActivity = "androidx.activity:activity-compose:${Version.AndroidXActivity}"
         const val composeUiUtil = "androidx.compose.ui:ui-util:${Version.AndroidXCompose}"
         const val constraintLayoutCompose =
-            "androidx.constraintlayout:constraintlayout-compose:$ConstraintLayoutCompose"
+            "androidx.constraintlayout:constraintlayout-compose:${Version.ConstraintLayoutCompose}"
     }
 
     object Google {
-        const val gson = "com.google.code.gson:gson:$GsonVersion"
-        const val guava = "com.google.guava:guava:$GuavaAndroid"
+        const val gson = "com.google.code.gson:gson:${Version.Gson}"
+        const val guava = "com.google.guava:guava:${Version.GuavaAndroid}"
         object Firebase {
             const val bom = "com.google.firebase:firebase-bom:33.0.0"
             const val crashlytics = "com.google.firebase:firebase-crashlytics-ktx"
+            const val analytics = "com.google.firebase:firebase-analytics-ktx"
         }
         object PlayServices {
             const val location = "com.google.android.gms:play-services-location:21.3.0"
@@ -107,24 +94,24 @@ object Libraries {
     }
 
     object Room {
-        const val runtime = "androidx.room:room-runtime:${Version.RoomVersion}"
-        const val ktx = "androidx.room:room-ktx:${Version.RoomVersion}"
-        const val compiler = "androidx.room:room-compiler:${Version.RoomVersion}"
+        const val runtime = "androidx.room:room-runtime:${Version.Room}"
+        const val ktx = "androidx.room:room-ktx:${Version.Room}"
+        const val compiler = "androidx.room:room-compiler:${Version.Room}"
     }
 
     object Timber {
-        const val timber = "com.jakewharton.timber:timber:$TimberVersion"
+        const val timber = "com.jakewharton.timber:timber:${Version.Timber}"
     }
 
     object Lottie {
-        const val lottie = "com.airbnb.android:lottie-compose:${Version.LottieVersion}"
+        const val lottie = "com.airbnb.android:lottie-compose:${Version.Lottie}"
     }
 
     object SquareUp {
-        const val okhttp3 = "com.squareup.okhttp3:okhttp:$Okhttp3Version"
-        const val okhttp3LoggingInterceptor = "com.squareup.okhttp3:logging-interceptor:$Okhttp3Version"
-        const val retrofit2 = "com.squareup.retrofit2:retrofit:${Version.Retrofit2Version}"
-        const val converterGson = "com.squareup.retrofit2:converter-gson:${Version.Retrofit2Version}"
+        const val okhttp3 = "com.squareup.okhttp3:okhttp:${Version.Okhttp3}"
+        const val okhttp3LoggingInterceptor = "com.squareup.okhttp3:logging-interceptor:${Version.Okhttp3}"
+        const val retrofit2 = "com.squareup.retrofit2:retrofit:${Version.Retrofit2}"
+        const val converterGson = "com.squareup.retrofit2:converter-gson:${Version.Retrofit2}"
         const val moshi = "com.squareup.moshi:moshi:${Version.Moshi}"
         const val converterMoshi = "com.squareup.retrofit2:converter-moshi:${Version.ConverterMoshi}"
         const val moshiCodegen = "com.squareup.moshi:moshi-kotlin-codegen:${Version.Moshi}"
@@ -135,7 +122,9 @@ object Libraries {
     }
 
     object Supabase {
-        const val auth = "io.github.jan-tennert.supabase:auth-kt:${Version.SupabaseAuth}"
+        const val auth = "io.github.jan-tennert.supabase:auth-kt:${Version.Supabase}"
+        const val postgrest = "io.github.jan-tennert.supabase:postgrest-kt:${Version.Supabase}"
+        const val realtime = "io.github.jan-tennert.supabase:realtime-kt:${Version.Supabase}"
     }
 
     object Coroutine {
@@ -146,6 +135,10 @@ object Libraries {
 
     object KotlinReflect {
         const val reflect = "org.jetbrains.kotlin:kotlin-reflect:${Version.KotlinReflect}"
+    }
+
+    object Semver {
+        const val semver = "org.semver4j:semver4j:${Version.Semver}"
     }
 
     object MediaPlayer {
@@ -178,7 +171,7 @@ object Libraries {
     }
 
     object Navigation {
-        const val navigationCompose = "androidx.navigation:navigation-compose:$NavigationCompose"
+        const val navigationCompose = "androidx.navigation:navigation-compose:${Version.NavigationCompose}"
     }
 
     object Coil {
@@ -186,22 +179,22 @@ object Libraries {
     }
 
     object Test {
-        const val testCoreKtx = "androidx.test:core-ktx:$AndroidXTestVersion"
-        const val espressorCore = "androidx.test.espresso:espresso-core:$EspressoCore"
-        const val junitExtKtx = "androidx.test.ext:junit-ktx:$JunitExtKtx"
-        const val truthExt = "androidx.test.ext:truth:$TruthExt"
-        const val runner = "androidx.test:runner:$TestRunnerVersion"
+        const val testCoreKtx = "androidx.test:core-ktx:${Version.AndroidXTest}"
+        const val espressorCore = "androidx.test.espresso:espresso-core:${Version.EspressoCore}"
+        const val junitExtKtx = "androidx.test.ext:junit-ktx:${Version.JunitExtKtx}"
+        const val truthExt = "androidx.test.ext:truth:${Version.TruthExt}"
+        const val runner = "androidx.test:runner:${Version.TestRunner}"
     }
 
     object Hilt {
-        const val hiltAndroid = "com.google.dagger:hilt-android:$HiltAndroidVersion"
-        const val daggerCompiler = "com.google.dagger:dagger-compiler:$HiltAndroidVersion"
-        const val hiltWork =
-            "androidx.hilt:hilt-work:$HiltNavigationCompose"
-        const val hiltCompiler = "com.google.dagger:hilt-compiler:${HiltAndroidVersion}"
+        // dagger hilt
+        const val hiltAndroid = "com.google.dagger:hilt-android:${Version.HiltAndroid}"
+        const val daggerCompiler = "com.google.dagger:dagger-compiler:${Version.HiltAndroid}"
+        const val hiltCompiler = "com.google.dagger:hilt-compiler:${Version.HiltAndroid}"
 
-        //hilt compose
+        //hilt
+        const val hiltWork = "androidx.hilt:hilt-work:${Version.HiltNavigationCompose}"
         const val hiltNavigationCompose =
-            "androidx.hilt:hilt-navigation-compose:$HiltNavigationCompose"
+            "androidx.hilt:hilt-navigation-compose:${Version.HiltNavigationCompose}"
     }
 }

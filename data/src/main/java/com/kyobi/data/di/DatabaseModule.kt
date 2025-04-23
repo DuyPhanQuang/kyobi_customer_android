@@ -1,6 +1,7 @@
 package com.kyobi.data.di
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.room.Room
 import com.kyobi.data.database.AppDatabase
 import com.kyobi.data.database.dao.TokenDao
@@ -12,6 +13,7 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 const val databaseName = "kyobi_database"
+const val sharePrefsName = "kyobi_prefs"
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -30,5 +32,11 @@ object DatabaseModule {
     @Singleton
     fun provideTokenDao(database: AppDatabase): TokenDao {
         return database.tokenDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences {
+        return context.getSharedPreferences(sharePrefsName, Context.MODE_PRIVATE)
     }
 }

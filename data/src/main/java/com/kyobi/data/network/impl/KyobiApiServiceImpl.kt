@@ -2,6 +2,7 @@ package com.kyobi.data.network.impl
 
 import com.kyobi.core.model.RestNetworkResult
 import com.kyobi.data.model.AnonymousLoginResponse
+import com.kyobi.data.model.AppVersionResponse
 import com.kyobi.data.model.AuthUserResponse
 import com.kyobi.data.model.LoginResponse
 import com.kyobi.data.model.SignupResponse
@@ -116,6 +117,21 @@ class KyobiApiServiceImpl @Inject constructor(
                     }
                 }
                 409 -> RestNetworkResult.Error("Email already registered and verified")
+                429 -> RestNetworkResult.Error("Too many requests, please try again later")
+                500 -> RestNetworkResult.Error("Server error, please try again later")
+                else -> RestNetworkResult.Error("Error ${e.code()}: ${e.message()}")
+            }
+        } catch (e: Exception) {
+            RestNetworkResult.Error("Network error: ${e.message}")
+        }
+    }
+
+    override suspend fun getAppVersion(): RestNetworkResult<AppVersionResponse> {
+        return try {
+            val response = api.getAppVersion()
+            response
+        } catch (e: HttpException) {
+            when (e.code()) {
                 429 -> RestNetworkResult.Error("Too many requests, please try again later")
                 500 -> RestNetworkResult.Error("Server error, please try again later")
                 else -> RestNetworkResult.Error("Error ${e.code()}: ${e.message()}")
