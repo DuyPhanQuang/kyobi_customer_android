@@ -221,11 +221,14 @@ class GetProductsUseCaseImpl @Inject constructor(
                 │   ├── DatabaseModule.kt
                 │   ├── DataModule.kt
                 │   ├── RepositoryModule.kt
-                │   └── StorageModule.kt
+                │   ├── StorageModule.kt
+                │   └── ApiServiceModule.kt
                 ├── model/
                 │   ├── AnonymousUserResponse.kt
+                │   ├── AppVersionResponse.kt
                 │   ├── LoginResponse.kt
                 │   ├── AuthUserResponse.kt
+                │   ├── SignupResponse.kt
                 │   └── ProductResponse.kt
                 ├── network/
                 │   ├── impl/
@@ -234,6 +237,7 @@ class GetProductsUseCaseImpl @Inject constructor(
                 │   ├── KyobiApiService.kt
                 │   └── ShopifyApiService.kt
                 ├── repository/
+                │   ├── AppConfigRepositoryImpl.kt
                 │   ├── AuthRepositoryImpl.kt
                 │   └── ProductRepositoryImpl.kt
                 └── storage/
@@ -241,6 +245,9 @@ class GetProductsUseCaseImpl @Inject constructor(
 ```
 
 - **build.gradle.kts**: Phụ thuộc `:core` và `:domain`, sử dụng plugin Apollo GraphQL, namespace `com.kyobi.data`.
+- **ApiServiceModule.kt**: Bind các implementation của API service (VD: `ShopifyApiServiceImpl`). Không cung cấp provider riêng cho `KyobiApiService` để tránh dependency cycle.
+- **DataModule.kt**: Bind `KyobiApiServiceImpl` vào `KyobiApiService` để Hilt inject vào các repository.
+- **KyobiApiServiceImpl.kt**: Implement `KyobiApiService`, sử dụng `Retrofit` để tạo instance của `KyobiApiService` và xử lý lỗi với `ErrorHandler` từ module `:core`. Các API như `login`, `loginAnonymously`, `getAuthUser`, `logout`, `signup`, và `getAppVersion` sử dụng `Moshi` với `@Json` annotation để parse JSON và throw `KyobiApiException` khi có lỗi.
 - **TokenStorageImpl.kt**: Lưu token vào `EncryptedSharedPreferences` và Room.
 
 **Ví dụ từ `TokenStorageImpl.kt`:**
@@ -256,6 +263,38 @@ class TokenStorageImpl @Inject constructor(
             .putString(REFRESH_TOKEN_KEY, refreshToken)
             .apply()
         tokenDao.insert(TokenEntity(accessToken = accessToken, refreshToken = refreshToken))
+    }
+}
+```
+
+**Ví dụ từ `KyobiApiServiceImpl.kt`:**
+```kotlin
+@Singleton
+class KyobiApiServiceImpl @Inject constructor(
+    retrofit: Retrofit,
+    private val errorHandler: ErrorHandler
+) : KyobiApiService {
+    private val api = retrofit.create(KyobiApiService::class.java)
+
+    override suspend fun login(request: LoginRequest): LoginResponse {
+        try {
+            Timber.tag("KyobiApiService").d("Logging in with email: ${request.email}")
+            return api.login(request)
+        } catch (e: HttpException) {
+            val errorBody = e.response()?.errorBody()?.string() ?: ""
+            when (e.code()) {
+                401 -> {
+                    if (errorBody.contains("Email not confirmed")) {
+                        throw KyobiApiException("Please verify your email to login", e.code())
+                    } else {
+                        throw KyobiApiException("Invalid email or password", e.code())
+                    }
+                }
+                else -> throw errorHandler.handleError(e)
+            }
+        } catch (e: Exception) {
+            throw errorHandler.handleError(e)
+        }
     }
 }
 ```

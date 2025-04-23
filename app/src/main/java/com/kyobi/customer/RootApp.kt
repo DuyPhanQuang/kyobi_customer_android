@@ -12,7 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.kyobi.customer.bottom_bar.BottomNavigationBar
-import com.kyobi.customer.ui.RootDialogContainer
+import com.kyobi.customer.ui.RootUpdateVersionDialog
 import com.kyobi.home.HomeTab
 import com.kyobi.profile.ProfileTab
 import com.kyobi.theme.AppTheme
@@ -36,7 +36,8 @@ fun RootApp(
         ) { innerPadding ->
             Timber.tag("MainScreen").d("Inner padding: top=${innerPadding.calculateTopPadding()}, bottom=${innerPadding.calculateBottomPadding()}")
 
-            RootDialogContainer()
+            // show popup update version dialog
+            RootUpdateVersionDialog()
 
             NavHost(
                 navController = navController,
