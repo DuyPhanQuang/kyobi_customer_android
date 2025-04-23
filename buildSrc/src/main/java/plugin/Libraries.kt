@@ -31,7 +31,7 @@ object Version {
     const val KotlinReflect = "2.1.10"
     const val Lottie = "6.5.0"
     const val Room = "2.6.1"
-    const val Apollo = "3.8.4"
+    const val Apollo = "4.0.0-beta.7"
     const val Moshi = "1.15.1"
     const val ConverterMoshi = "2.11.0"
     const val Supabase = "3.1.4"

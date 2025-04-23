@@ -16,11 +16,15 @@ object ApolloClientModule {
     @Provides
     @Singleton
     fun provideApolloClient(
+        @Named("SHOPIFY_BASE_URL") shopifyBaseUrl: String,
+        @Named("SHOPIFY_API_VERSION") shopifyApiVersion: String,
+        @Named("X_SHOPIFY_STOREFRONT_ACCESS_TOKEN") xShopifyStorefrontAccessToken: String,
         @Named("ShopifyOkHttpClient") okHttpClient: OkHttpClient
     ): ApolloClient {
+        val baseUrl = "${shopifyBaseUrl}${shopifyApiVersion}"
         return ApolloClient.Builder()
-            .serverUrl("https://kyobidev.myshopify.com/api/2025-01/graphql.json")
-            .addHttpHeader("X-Shopify-Storefront-Access-Token", "5285611c5a57201a41d0d3e5b861c34d")
+            .serverUrl(baseUrl)
+            .addHttpHeader("X-Shopify-Storefront-Access-Token", xShopifyStorefrontAccessToken)
             .okHttpClient(okHttpClient)
             .build()
     }

@@ -13,5 +13,10 @@
 .externalNativeBuild
 .cxx
 .idea
-app/.idea
+/app/.idea
+/app/keystore
+/app/keystore/*.jks
+/app/keystore/keystore-*.properties
+app/keystore-dev.properties
+app/keystore-prod.properties
 local.properties

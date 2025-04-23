@@ -12,6 +12,12 @@ plugins {
 val properties = Properties().apply {
     load(project.rootProject.file("local.properties").inputStream())
 }
+val devKeystoreProperties = Properties().apply {
+    load(File(rootDir, "app/keystore/keystore-dev.properties").inputStream())
+}
+val prodKeystoreProperties = Properties().apply {
+    load(File(rootDir, "app/keystore/keystore-prod.properties").inputStream())
+}
 
 android {
     namespace = "com.kyobi.customer"
@@ -33,7 +39,27 @@ android {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
         }
 
+        // build config
         buildConfigField("String", "BASE_URL", properties.getProperty("BASE_URL"))
+        buildConfigField("String", "SHOPIFY_BASE_URL", properties.getProperty("SHOPIFY_BASE_URL"))
+        buildConfigField("String", "SHOPIFY_API_VERSION", properties.getProperty("SHOPIFY_API_VERSION"))
+        buildConfigField("String", "X_SHOPIFY_STOREFRONT_ACCESS_TOKEN", properties.getProperty("X_SHOPIFY_STOREFRONT_ACCESS_TOKEN"))
+    }
+
+    signingConfigs {
+        create("devSigning") {
+            storeFile = file(devKeystoreProperties["storeFile"] as String)
+            storePassword = devKeystoreProperties["storePassword"] as String
+            keyAlias = devKeystoreProperties["keyAlias"] as String
+            keyPassword = devKeystoreProperties["keyPassword"] as String
+        }
+
+        create("prodSigning") {
+            storeFile = file(prodKeystoreProperties["storeFile"] as String)
+            storePassword = prodKeystoreProperties["storePassword"] as String
+            keyAlias = prodKeystoreProperties["keyAlias"] as String
+            keyPassword = prodKeystoreProperties["keyPassword"] as String
+        }
     }
 
     buildTypes {
@@ -46,7 +72,6 @@ android {
                 "proguard-rules.pro",
                 "retrofit2.pro",
                 "coroutines.pro",
-                "gson.pro",
                 "okhttp3.pro",
             )
         }
@@ -59,15 +84,14 @@ android {
                 "proguard-rules.pro",
                 "retrofit2.pro",
                 "coroutines.pro",
-                "gson.pro",
                 "okhttp3.pro",
             )
         }
 
-        create("profile") {
+        maybeCreate("profile").apply {
             initWith(getByName("debug"))
-            isDebuggable = true
-            isMinifyEnabled = false
+            isDebuggable = false
+            isMinifyEnabled = true
         }
     }
 
@@ -78,11 +102,16 @@ android {
             dimension = "env"
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-            buildConfigField("String", "BASE_URL", properties.getProperty("BASE_URL"))
+
+            // Signed
+            signingConfig = signingConfigs.getByName("devSigning")
         }
+
         create("prod") {
             dimension = "env"
-            buildConfigField("String", "BASE_URL", properties.getProperty("BASE_URL"))
+
+            // Signed
+            signingConfig = signingConfigs.getByName("prodSigning")
         }
     }
 
