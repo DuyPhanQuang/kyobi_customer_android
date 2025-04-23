@@ -27,11 +27,12 @@ object RestClientModule {
     @Provides
     @Singleton
     fun provideRetrofit(
+        @Named("BASE_URL") baseUrl: String,
         @Named("KyobiOkHttpClient") okHttpClient: OkHttpClient,
         moshi: Moshi
     ): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://kyobi-backend.onrender.com/")
+            .baseUrl(baseUrl)
             .client(okHttpClient)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()

@@ -71,6 +71,21 @@ android {
         }
     }
 
+    flavorDimensions += "env"
+
+    productFlavors {
+        create("dev") {
+            dimension = "env"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            buildConfigField("String", "BASE_URL", properties.getProperty("BASE_URL"))
+        }
+        create("prod") {
+            dimension = "env"
+            buildConfigField("String", "BASE_URL", properties.getProperty("BASE_URL"))
+        }
+    }
+
     configurations {
         getByName("profileImplementation") {
         }

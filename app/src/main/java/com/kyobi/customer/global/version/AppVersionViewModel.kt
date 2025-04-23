@@ -14,8 +14,6 @@ import javax.inject.Inject
 import com.kyobi.core.coroutines.withLoading
 import kotlinx.coroutines.delay
 import androidx.core.content.edit
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.OnLifecycleEvent
 import com.kyobi.customer.constants.KeyConstant
 import com.kyobi.customer.BuildConfig
 import org.semver4j.Semver
