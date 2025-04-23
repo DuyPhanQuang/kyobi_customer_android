@@ -1,6 +1,7 @@
 package com.kyobi.data.network.impl
 
-import com.kyobi.core.model.RestNetworkResult
+import com.kyobi.core.exceptions.ErrorHandler
+import com.kyobi.core.exceptions.KyobiApiException
 import com.kyobi.data.model.AnonymousLoginResponse
 import com.kyobi.data.model.AppVersionResponse
 import com.kyobi.data.model.AuthUserResponse
@@ -11,133 +12,118 @@ import com.kyobi.domain.model.request.LoginRequest
 import com.kyobi.domain.model.request.SignupRequest
 import retrofit2.HttpException
 import retrofit2.Retrofit
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class KyobiApiServiceImpl @Inject constructor(
-    retrofit: Retrofit
+    retrofit: Retrofit,
+    private val errorHandler: ErrorHandler
 ) : KyobiApiService {
     private val api = retrofit.create(KyobiApiService::class.java)
 
-    override suspend fun login(request: LoginRequest): RestNetworkResult<LoginResponse> {
-        return try {
-            val response = api.login(request)
-            response
+    override suspend fun login(request: LoginRequest): LoginResponse {
+        try {
+            Timber.tag("KyobiApiService").d("Logging in with email: ${request.email}")
+            return api.login(request)
         } catch (e: HttpException) {
+            val errorBody = e.response()?.errorBody()?.string() ?: ""
             when (e.code()) {
                 401 -> {
-                    val errorMessage = e.response()?.errorBody()?.string() ?: "Unauthorized"
-                    if (errorMessage.contains("Email not confirmed")) {
-                        RestNetworkResult.Error("Please verify your email to login")
+                    if (errorBody.contains("Email not confirmed")) {
+                        throw KyobiApiException("Please verify your email to login", e.code())
                     } else {
-                        RestNetworkResult.Error("Invalid email or password")
+                        throw KyobiApiException("Invalid email or password", e.code())
                     }
                 }
-                429 -> RestNetworkResult.Error("Too many requests, please try again later")
-                500 -> RestNetworkResult.Error("Server error, please try again later")
-                else -> RestNetworkResult.Error("Error ${e.code()}: ${e.message()}")
+                else -> throw errorHandler.handleError(e)
             }
         } catch (e: Exception) {
-            RestNetworkResult.Error("Network error: ${e.message}")
+            throw errorHandler.handleError(e)
         }
     }
 
-    override suspend fun loginAnonymously(): RestNetworkResult<AnonymousLoginResponse> {
-        return try {
-            val response = api.loginAnonymously()
-            response
+    override suspend fun loginAnonymously(): AnonymousLoginResponse {
+        try {
+            Timber.tag("KyobiApiService").d("Logging in anonymously")
+            return api.loginAnonymously()
         } catch (e: HttpException) {
+            val errorBody = e.response()?.errorBody()?.string() ?: ""
             when (e.code()) {
-                429 -> RestNetworkResult.Error("Too many requests, please try again later")
                 500 -> {
-                    val errorMessage = e.response()?.errorBody()?.string() ?: "Server error"
-                    if (errorMessage.contains("Failed to create anonymous user")) {
-                        RestNetworkResult.Error("Failed to create anonymous user")
+                    if (errorBody.contains("Failed to create anonymous user")) {
+                        throw KyobiApiException("Failed to create anonymous user", e.code())
                     } else {
-                        RestNetworkResult.Error("Failed to sign in anonymously")
+                        throw KyobiApiException("Failed to sign in anonymously", e.code())
                     }
                 }
-                else -> RestNetworkResult.Error("Error ${e.code()}: ${e.message()}")
+                else -> throw errorHandler.handleError(e)
             }
         } catch (e: Exception) {
-            RestNetworkResult.Error("Network error: ${e.message}")
+            throw errorHandler.handleError(e)
         }
     }
 
-    override suspend fun getAuthUser(): RestNetworkResult<AuthUserResponse> {
-        return try {
-            val response = api.getAuthUser()
-            response
+    override suspend fun getAuthUser(): AuthUserResponse {
+        try {
+            Timber.tag("KyobiApiService").d("Fetching auth user")
+            return api.getAuthUser()
         } catch (e: HttpException) {
-            when (e.code()) {
-                401 -> RestNetworkResult.Error("User not found")
-                429 -> RestNetworkResult.Error("Too many requests, please try again later")
-                500 -> RestNetworkResult.Error("Server error, please try again later")
-                else -> RestNetworkResult.Error("Error ${e.code()}: ${e.message()}")
+            if (e.code() == 401) {
+                throw KyobiApiException("User not found", e.code())
             }
+            throw errorHandler.handleError(e)
         } catch (e: Exception) {
-            RestNetworkResult.Error("Network error: ${e.message}")
+            throw errorHandler.handleError(e)
         }
     }
 
-    override suspend fun logout(): RestNetworkResult<Unit> {
-        return try {
+    override suspend fun logout(): Unit {
+        try {
+            Timber.tag("KyobiApiService").d("Logging out")
             api.logout()
-            RestNetworkResult.Success(Unit)
-        } catch (e: HttpException) {
-            when (e.code()) {
-                500 -> RestNetworkResult.Error("Server error, please try again later")
-                else -> RestNetworkResult.Error("Error ${e.code()}: ${e.message()}")
-            }
         } catch (e: Exception) {
-            RestNetworkResult.Error("Network error: ${e.message}")
+            throw errorHandler.handleError(e)
         }
     }
 
-    override suspend fun signup(request: SignupRequest): RestNetworkResult<SignupResponse> {
-        return try {
-            val response = api.signup(request)
-            response
+    override suspend fun signup(request: SignupRequest): SignupResponse {
+        try {
+            Timber.tag("KyobiApiService").d("Signing up with email: ${request.email}")
+            return api.signup(request)
         } catch (e: HttpException) {
+            val errorBody = e.response()?.errorBody()?.string() ?: ""
             when (e.code()) {
                 400 -> {
-                    val errorMessage = e.response()?.errorBody()?.string() ?: "Invalid request"
-                    if (errorMessage.contains("User already registered")) {
-                        RestNetworkResult.Success(
-                            SignupResponse(
-                                message = "Verification email resent",
-                                data = null
-                            )
+                    if (errorBody.contains("User already registered")) {
+                        return SignupResponse(
+                            message = "Verification email resent",
+                            data = null
                         )
-                    } else if (errorMessage.contains("is invalid")) {
-                        RestNetworkResult.Error("The email address is invalid or cannot be used for signup. Please try a different email.")
+                    } else if (errorBody.contains("is invalid")) {
+                        throw KyobiApiException(
+                            "The email address is invalid or cannot be used for signup. Please try a different email.",
+                            e.code()
+                        )
                     } else {
-                        RestNetworkResult.Error(errorMessage)
+                        throw KyobiApiException(errorBody, e.code())
                     }
                 }
-                409 -> RestNetworkResult.Error("Email already registered and verified")
-                429 -> RestNetworkResult.Error("Too many requests, please try again later")
-                500 -> RestNetworkResult.Error("Server error, please try again later")
-                else -> RestNetworkResult.Error("Error ${e.code()}: ${e.message()}")
+                409 -> throw KyobiApiException("Email already registered and verified", e.code())
+                else -> throw errorHandler.handleError(e)
             }
         } catch (e: Exception) {
-            RestNetworkResult.Error("Network error: ${e.message}")
+            throw errorHandler.handleError(e)
         }
     }
 
-    override suspend fun getAppVersion(): RestNetworkResult<AppVersionResponse> {
-        return try {
-            val response = api.getAppVersion()
-            response
-        } catch (e: HttpException) {
-            when (e.code()) {
-                429 -> RestNetworkResult.Error("Too many requests, please try again later")
-                500 -> RestNetworkResult.Error("Server error, please try again later")
-                else -> RestNetworkResult.Error("Error ${e.code()}: ${e.message()}")
-            }
+    override suspend fun getAppVersion(): AppVersionResponse {
+        try {
+            Timber.tag("KyobiApiService").d("Fetching app version")
+            return api.getAppVersion()
         } catch (e: Exception) {
-            RestNetworkResult.Error("Network error: ${e.message}")
+            throw errorHandler.handleError(e)
         }
     }
 }

@@ -113,6 +113,7 @@ object Libraries {
         const val retrofit2 = "com.squareup.retrofit2:retrofit:${Version.Retrofit2}"
         const val converterGson = "com.squareup.retrofit2:converter-gson:${Version.Retrofit2}"
         const val moshi = "com.squareup.moshi:moshi:${Version.Moshi}"
+        const val moshiKotlin = "com.squareup.moshi:moshi-kotlin:${Version.Moshi}"
         const val converterMoshi = "com.squareup.retrofit2:converter-moshi:${Version.ConverterMoshi}"
         const val moshiCodegen = "com.squareup.moshi:moshi-kotlin-codegen:${Version.Moshi}"
     }

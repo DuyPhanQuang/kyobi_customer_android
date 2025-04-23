@@ -1,5 +1,8 @@
 package com.kyobi.core.network
 
+import com.kyobi.core.exceptions.ErrorHandler
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,11 +18,28 @@ import javax.inject.Singleton
 object RestClientModule {
     @Provides
     @Singleton
-    fun provideRetrofit(@Named("KyobiOkHttpClient") okHttpClient: OkHttpClient): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl("https://xxx.onrender.com/")
-            .client(okHttpClient)
-            .addConverterFactory(MoshiConverterFactory.create())
+    fun provideMoshi(): Moshi {
+        return Moshi.Builder()
+            .add(KotlinJsonAdapterFactory())
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(
+        @Named("KyobiOkHttpClient") okHttpClient: OkHttpClient,
+        moshi: Moshi
+    ): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("https://kyobi-backend.onrender.com/")
+            .client(okHttpClient)
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideErrorHandler(moshi: Moshi): ErrorHandler {
+        return ErrorHandler(moshi)
     }
 }

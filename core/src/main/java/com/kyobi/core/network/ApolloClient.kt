@@ -19,8 +19,8 @@ object ApolloClientModule {
         @Named("ShopifyOkHttpClient") okHttpClient: OkHttpClient
     ): ApolloClient {
         return ApolloClient.Builder()
-            .serverUrl("https://xxx.myshopify.com/api/2025-01/graphql.json")
-            .addHttpHeader("X-Shopify-Storefront-Access-Token", "xxx")
+            .serverUrl("https://kyobidev.myshopify.com/api/2025-01/graphql.json")
+            .addHttpHeader("X-Shopify-Storefront-Access-Token", "5285611c5a57201a41d0d3e5b861c34d")
             .okHttpClient(okHttpClient)
             .build()
     }

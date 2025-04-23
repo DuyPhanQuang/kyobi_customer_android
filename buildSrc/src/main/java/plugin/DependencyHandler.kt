@@ -128,6 +128,7 @@ fun DependencyHandler.baseDependencies() {
 
     //moshi
     implementation(Libraries.SquareUp.moshi)
+    implementation(Libraries.SquareUp.moshiKotlin)
     implementation(Libraries.SquareUp.converterMoshi)
     ksp(Libraries.SquareUp.moshiCodegen)
 

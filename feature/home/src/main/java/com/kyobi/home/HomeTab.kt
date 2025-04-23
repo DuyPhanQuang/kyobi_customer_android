@@ -28,14 +28,14 @@ fun HomeTab(viewModel: HomeTabViewModel = hiltViewModel()) {
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp)
-        ) {
-            item {
-                ProductsSection(uiState.productsResult)
-            }
-        }
+//        LazyColumn(
+//            modifier = Modifier.fillMaxSize(),
+//            contentPadding = PaddingValues(16.dp)
+//        ) {
+//            item {
+//                ProductsSection(uiState.productsResult)
+//            }
+//        }
     }
 }
 

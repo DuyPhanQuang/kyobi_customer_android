@@ -55,7 +55,7 @@ class NetworkMonitor @Inject constructor(
         override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
             _isConnected.value = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             updateNetworkType()
-            Timber.tag("NetworkMonitor").d("Network capabilities changed: $_networkType")
+            Timber.tag("NetworkMonitor").d("Network capabilities changed: ${_networkType.value}")
         }
     }
     private fun updateNetworkType() {

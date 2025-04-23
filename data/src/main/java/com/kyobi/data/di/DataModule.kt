@@ -16,5 +16,5 @@ abstract class DataModule {
     abstract fun bindShopifyApiService(impl: ShopifyApiServiceImpl): ShopifyApiService
 
     @Binds
-    abstract  fun bindKyobiApiService(impl: KyobiApiServiceImpl): KyobiApiService
+    abstract fun bindKyobiApiService(impl: KyobiApiServiceImpl): KyobiApiService
 }

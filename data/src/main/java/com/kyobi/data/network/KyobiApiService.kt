@@ -1,6 +1,5 @@
 package com.kyobi.data.network
 
-import com.kyobi.core.model.RestNetworkResult
 import com.kyobi.core.network.WithAuthHeaders
 import com.kyobi.data.model.AuthUserResponse
 import com.kyobi.data.model.AnonymousLoginResponse
@@ -15,22 +14,22 @@ import retrofit2.http.POST
 
 interface KyobiApiService {
     @POST("auth/login")
-    suspend fun login(@Body request: LoginRequest): RestNetworkResult<LoginResponse>
+    suspend fun login(@Body request: LoginRequest): LoginResponse
 
     @POST("auth/anonymous-login")
-    suspend fun loginAnonymously(): RestNetworkResult<AnonymousLoginResponse>
+    suspend fun loginAnonymously(): AnonymousLoginResponse
 
     @WithAuthHeaders
     @GET("auth/me")
-    suspend fun getAuthUser(): RestNetworkResult<AuthUserResponse>
+    suspend fun getAuthUser(): AuthUserResponse
 
     @WithAuthHeaders
     @GET("auth/logout")
-    suspend fun logout(): RestNetworkResult<Unit>
+    suspend fun logout()
 
     @POST("auth/signup")
-    suspend fun signup(@Body request: SignupRequest): RestNetworkResult<SignupResponse>
+    suspend fun signup(@Body request: SignupRequest): SignupResponse
 
     @GET("app/status")
-    suspend fun getAppVersion(): RestNetworkResult<AppVersionResponse>
+    suspend fun getAppVersion(): AppVersionResponse
 }
