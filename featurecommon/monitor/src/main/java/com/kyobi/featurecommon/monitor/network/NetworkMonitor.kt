@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.MainScope
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -80,7 +81,6 @@ class NetworkMonitor @Inject constructor(
         try {
             connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
             isNetworkCallbackRegistered = true
-            // Cập nhật trạng thái ban đầu
             updateNetworkType()
             Timber.tag("NetworkMonitor").d("NetworkCallback registered successfully, initial state: isConnected=${_isConnected.value}, networkType=${_networkType.value}")
         } catch (e: Exception) {
@@ -95,7 +95,7 @@ class NetworkMonitor @Inject constructor(
         val onNetworkChangeCallback = rememberUpdatedState(onNetworkChange)
 
         DisposableEffect(this) {
-            val job = kotlinx.coroutines.MainScope().launch {
+            val job = MainScope().launch {
                 _isConnected.collect { isConnected ->
                     isConnectedState.value = isConnected
                     onNetworkChangeCallback.value(isConnected)
