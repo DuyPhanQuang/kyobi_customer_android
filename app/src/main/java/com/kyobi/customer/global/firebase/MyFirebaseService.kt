@@ -53,49 +53,57 @@ class MyFirebaseService @Inject constructor(
 
     private suspend fun registerTokenWithServer(userId: String, token: String) {
         Timber.tag(tag).d("Registering token with server: $token")
-        // Lấy kết quả cuối từ Flow, bỏ qua trạng thái Loading
-        val result = notificationUsecase.invokeRegister(userId, token).first { it !is DomainNetworkResult.Loading }
-        when (result) {
-            is DomainNetworkResult.Success -> {
-                Timber.tag(tag).d("Successfully registered token with server: ${result.data.message}")
+        try {
+            val result = notificationUsecase.invokeRegister(userId, token)
+                .first { it !is DomainNetworkResult.Loading }
+            when (result) {
+                is DomainNetworkResult.Success -> {
+                    Timber.tag(tag).d("Successfully registered token with server: ${result.data.message}")
+                }
+                is DomainNetworkResult.Error -> {
+                    val errorMessage = when (result) {
+                        is DomainNetworkResult.Error.KyobiApi -> result.exception.message
+                        is DomainNetworkResult.Error.Generic -> result.throwable.message
+                    } ?: "Something went wrong"
+                    Timber.tag(tag).e("Failed to register token: $errorMessage")
+                    throw Exception(errorMessage)
+                }
+                else -> {
+                    Timber.tag(tag).e("Unexpected result while registering token: $result")
+                    throw IllegalStateException("Unexpected result while registering token: $result")
+                }
             }
-            is DomainNetworkResult.Error -> {
-                val errorMessage = when (result) {
-                    is DomainNetworkResult.Error.KyobiApi -> result.exception.message
-                    is DomainNetworkResult.Error.Generic -> result.throwable.message
-                } ?: "Something went wrong"
-                Timber.tag(tag).e("Failed to register token: $errorMessage")
-                throw Exception(errorMessage)
-            }
-            else -> {
-                // Không xảy ra vì đã lọc Loading
-                Timber.tag(tag).e("Unexpected result while registering token")
-                throw IllegalStateException("Unexpected result while registering token")
-            }
+        } catch (e: Exception) {
+            Timber.tag(tag).e(e, "Error while registering token: ${e.message}")
+            throw e
         }
     }
 
     private suspend fun unregisterTokenFromServer(userId: String, token: String) {
         Timber.tag(tag).d("Unregistering token from server: $token")
-        // Lấy kết quả cuối từ Flow, bỏ qua trạng thái Loading
-        val result = notificationUsecase.invokeUnregister(userId, token).first { it !is DomainNetworkResult.Loading }
-        when (result) {
-            is DomainNetworkResult.Success -> {
-                Timber.tag(tag).d("Successfully unregistered token from server: ${result.data.message}")
+        try {
+            val result = notificationUsecase.invokeUnregister(userId, token)
+                .first { it !is DomainNetworkResult.Loading }
+            when (result) {
+                is DomainNetworkResult.Success -> {
+                    Timber.tag(tag).d("Successfully unregistered token from server: ${result.data.message}")
+                }
+                is DomainNetworkResult.Error -> {
+                    val errorMessage = when (result) {
+                        is DomainNetworkResult.Error.KyobiApi -> result.exception.message
+                        is DomainNetworkResult.Error.Generic -> result.throwable.message
+                    } ?: "Something went wrong"
+                    Timber.tag(tag).e("Failed to unregister token: $errorMessage")
+                    throw Exception(errorMessage)
+                }
+                else -> {
+                    Timber.tag(tag).e("Unexpected result while unregistering token: $result")
+                    throw IllegalStateException("Unexpected result while unregistering token: $result")
+                }
             }
-            is DomainNetworkResult.Error -> {
-                val errorMessage = when (result) {
-                    is DomainNetworkResult.Error.KyobiApi -> result.exception.message
-                    is DomainNetworkResult.Error.Generic -> result.throwable.message
-                } ?: "Something went wrong"
-                Timber.tag(tag).e("Failed to unregister token: $errorMessage")
-                throw Exception(errorMessage)
-            }
-            else -> {
-                // Không xảy ra vì đã lọc Loading
-                Timber.tag(tag).e("Unexpected result while unregistering token")
-                throw IllegalStateException("Unexpected result while unregistering token")
-            }
+        } catch (e: Exception) {
+            Timber.tag(tag).e(e, "Error while unregistering token: ${e.message}")
+            throw e
         }
     }
 }

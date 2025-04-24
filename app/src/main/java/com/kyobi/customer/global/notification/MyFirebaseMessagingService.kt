@@ -1,11 +1,15 @@
 package com.kyobi.customer.global.notification
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.kyobi.customer.MainActivity
@@ -19,7 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -42,26 +46,58 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var currentSession: Session? = null
-    private var isCollecting = false
+    private var hasStartedSessionCollection = false
 
     override fun onCreate() {
         super.onCreate()
-        Timber.tag(tag).d("MyFirebaseMessagingService onCreate called")
-        if (coroutineScope.isActive && !isCollecting) {
-            Timber.tag(tag).d("CoroutineScope is active, starting to collect sessionEvents")
-            coroutineScope.launch {
-                Timber.tag(tag).d("Starting to collect sessionEvents")
-                isCollecting = true
-                sessionEventBus.sessionFlow.collectLatest { session ->
-                    Timber.tag(tag).d("***sessionEventBus*** subscribed - Received new session: $session")
-                    currentSession = session
-                    handleTokenUpdate()
-                }
+        // Collect sessionFlow ngay lập tức để cập nhật currentSession
+        serviceScope.launch {
+            sessionEventBus.sessionFlow.collectLatest { session ->
+                Timber.tag(tag).d("***sessionEventBus*** subscribed - Received new session: $session")
+                currentSession = session
             }
+        }
+
+        // Kiểm tra quyền thông báo ban đầu
+        val isPermissionGrantedInitially = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
         } else {
-            Timber.tag(tag).e("CoroutineScope is not active, cannot collect sessionEvents")
+            true
+        }
+
+        // Kết hợp sessionFlow và notificationPermissionGranted để kiểm tra điều kiện
+        serviceScope.launch {
+            sessionEventBus.sessionFlow
+                .combine(sessionEventBus.notificationPermissionGranted) { session, isPermissionGranted ->
+                    Timber.tag(tag).d("Combining session:${session?.userId} permission status:${isPermissionGranted}")
+                    Pair(session, isPermissionGranted)
+                }
+                .collectLatest { (session, isPermissionGranted) ->
+                    if (session == null) {
+                        Timber.tag(tag).d("No session yet, waiting for session")
+                        return@collectLatest
+                    }
+                    // Nếu isPermissionGranted là null, dùng isPermissionGrantedInitially
+                    if (isPermissionGranted == null) {
+                        if (isPermissionGrantedInitially) {
+                            Timber.tag(tag).d("Both conditions met: session ($session) and initial permission granted, starting logic")
+                            startSessionCollection()
+                        } else {
+                            Timber.tag(tag).d("Session available ($session), but initial permission not granted, waiting for permission")
+                        }
+                        return@collectLatest
+                    }
+                    if (!isPermissionGranted) {
+                        Timber.tag(tag).d("Session available ($session), but notification permission not granted, waiting for permission")
+                    } else {
+                        Timber.tag(tag).d("Both conditions met: session ($session) and notification permission granted, starting logic")
+                        startSessionCollection()
+                    }
+                }
         }
     }
 
@@ -69,6 +105,22 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         super.onDestroy()
         // Hủy CoroutineScope khi Service bị hủy
         serviceScope.cancel()
+        currentSession = null
+    }
+
+    private fun startSessionCollection() {
+        if (hasStartedSessionCollection) {
+            Timber.tag(tag).d("startSessionCollection already called, skipping")
+            return
+        }
+        Timber.tag(tag).d("startSessionCollection called")
+        if (currentSession != null) {
+            Timber.tag(tag).d("Current session available ($currentSession), handling token update")
+            handleTokenUpdate()
+            hasStartedSessionCollection = true
+        } else {
+            Timber.tag(tag).w("No current session available, cannot handle token update")
+        }
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -95,9 +147,23 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onNewToken(token: String) {
-        // Không cần gọi refreshAndUploadToken ở đây nữa nhưng cứ override func này
-        // Logic đã được chuyển vào handleTokenUpdate() trong collectLatest
         Timber.tag(tag).d("onNewToken: $token")
+        val isPermissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+        if (currentSession == null) {
+            Timber.tag(tag).d("No session yet, skipping token update")
+        } else if (!isPermissionGranted) {
+            Timber.tag(tag).d("Session available ($currentSession), but notification permission not granted, skipping token update")
+        } else {
+            Timber.tag(tag).d("Both conditions met: session ($currentSession) and notification permission granted, handling token update")
+            handleTokenUpdate()
+        }
     }
 
     private fun handleTokenUpdate() {

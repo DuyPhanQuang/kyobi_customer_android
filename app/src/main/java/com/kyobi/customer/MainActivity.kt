@@ -1,17 +1,23 @@
 package com.kyobi.customer
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.view.WindowCompat
-import com.kyobi.customer.global.notification.MyFirebaseMessagingService
+import androidx.lifecycle.lifecycleScope
 import com.kyobi.customer.ui.RequestNotificationPermissionIfNeeded
+import com.kyobi.featurecommon.auth.session.SessionEventBus
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import timber.log.Timber
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val tag = "MainActivity"
+    @Inject
+    lateinit var sessionEventBus: SessionEventBus
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -21,20 +27,17 @@ class MainActivity : ComponentActivity() {
             // xin cấp quyền thông báo
             RequestNotificationPermissionIfNeeded(
                 onPermissionResult = { isGranted ->
-                    if (isGranted) {
-                        // Khởi động MyFirebaseMessagingService
-                        startFcmService()
+                    lifecycleScope.launch {
+                        sessionEventBus.emitNotificationPermissionGranted(isGranted)
+                        if (isGranted) {
+                            Timber.tag(tag).d("Notification permission granted")
+                        } else {
+                            Timber.tag(tag).w("Notification permission denied")
+                        }
                     }
                 }
             )
             RootApp()
         }
-    }
-
-    private fun startFcmService() {
-        val intent = Intent(this, MyFirebaseMessagingService::class.java)
-        intent.action = "com.google.firebase.MESSAGING_EVENT"
-        startService(intent)
-        Timber.tag("MyApplication").d("Sent signal to start fcm service")
     }
 }

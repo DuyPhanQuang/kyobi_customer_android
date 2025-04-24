@@ -103,8 +103,4 @@ class ReelConfigViewModel @Inject constructor(
         )
     }
 
-    override fun onCleared() {
-        // Không cần unregister NetworkCallback vì NetworkMonitor đã quản lý
-        super.onCleared()
-    }
 }

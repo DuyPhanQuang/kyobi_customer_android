@@ -66,36 +66,38 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    private suspend fun performAnonymousLogin() {
-        loginUseCase.loginAnonymously()
-            .handleErrors {
-                authStateProvider.setError(it.message)
-            }.collect { result ->
-                when (result) {
-                    is DomainNetworkResult.Success -> {
-                        // Emit Session
-                        Timber.tag(tag).d("Login anonymously success")
-                        handleEmitSession(Session.fromLoggedInUser(result.data))
-                        authStateProvider.updateAuthState(user = result.data, isAnonymous = true)
-                    }
-                    is DomainNetworkResult.Error -> {
-                        when (result) {
-                            is DomainNetworkResult.Error.KyobiApi -> {
-                                Timber.tag(tag).e("KyobiApiException: ${result.exception.message}")
-                                authStateProvider.setError(result.exception.message ?: "API error")
-                            }
-                            is DomainNetworkResult.Error.Generic -> {
-                                Timber.tag(tag).e("Generic error: ${result.throwable.message}")
-                                authStateProvider.setError(result.throwable.message ?: "Unknown error")
-                            }
+    private fun performAnonymousLogin() {
+        viewModelScope.launchOnIO {
+            loginUseCase.loginAnonymously()
+                .handleErrors {
+                    authStateProvider.setError(it.message)
+                }.collect { result ->
+                    when (result) {
+                        is DomainNetworkResult.Success -> {
+                            // Emit Session
+                            Timber.tag(tag).d("Login anonymously success")
+                            handleEmitSession(Session.fromLoggedInUser(result.data))
+                            authStateProvider.updateAuthState(user = result.data, isAnonymous = true)
                         }
-                        return@collect
-                    }
-                    is DomainNetworkResult.Loading -> {
-                        authStateProvider.setLoading(true)
+                        is DomainNetworkResult.Error -> {
+                            when (result) {
+                                is DomainNetworkResult.Error.KyobiApi -> {
+                                    Timber.tag(tag).e("KyobiApiException: ${result.exception.message}")
+                                    authStateProvider.setError(result.exception.message ?: "API error")
+                                }
+                                is DomainNetworkResult.Error.Generic -> {
+                                    Timber.tag(tag).e("Generic error: ${result.throwable.message}")
+                                    authStateProvider.setError(result.throwable.message ?: "Unknown error")
+                                }
+                            }
+                            return@collect
+                        }
+                        is DomainNetworkResult.Loading -> {
+                            authStateProvider.setLoading(true)
+                        }
                     }
                 }
-            }
+        }
     }
 
     private fun getLatestCurrentUser() {
