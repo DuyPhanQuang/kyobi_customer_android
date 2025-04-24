@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -91,9 +92,7 @@ fun LoginScreen(
 
         Button(
             onClick = {
-                viewModel.submitLogin { user, isAnonymous ->
-                    authViewModel.updateAuthState(user, isAnonymous)
-                }
+                viewModel.submitLogin()
             },
             enabled = !loginUiState.isLoading,
             modifier = Modifier.fillMaxWidth()

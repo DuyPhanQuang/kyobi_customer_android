@@ -1,6 +1,6 @@
 package com.kyobi.domain.usecase.impl
 
-import com.kyobi.core.model.RestNetworkResult
+import com.kyobi.core.exceptions.KyobiApiException
 import com.kyobi.domain.model.AppVersion
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.repository.AppConfigRepository
@@ -15,13 +15,16 @@ class AppVersionUsecaseImpl @Inject constructor(
 ): AppVersionUsecase {
     override suspend fun getAppVersion(): Flow<DomainNetworkResult<AppVersion>> {
         return flow {
-            when (val result = appConfigRepository.getAppVersion()) {
-                is RestNetworkResult.Success -> emit(DomainNetworkResult.Success(result.data))
-                is RestNetworkResult.Error -> emit(DomainNetworkResult.Error(Throwable(result.message)))
-                is RestNetworkResult.Loading -> emit(DomainNetworkResult.Loading)
+            try {
+                val result = appConfigRepository.getAppVersion()
+                emit(DomainNetworkResult.Success(result))
+            } catch (e: KyobiApiException) {
+                emit(DomainNetworkResult.Error.KyobiApi(e))
+            } catch (e: Exception) {
+                emit(DomainNetworkResult.Error.Generic(e))
             }
         }.catch { throwable ->
-            emit(DomainNetworkResult.Error(throwable))
+            emit(DomainNetworkResult.Error.Generic(throwable))
         }
     }
 

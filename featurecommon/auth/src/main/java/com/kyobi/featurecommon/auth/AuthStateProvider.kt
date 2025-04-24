@@ -7,6 +7,6 @@ interface AuthStateProvider {
     val authUiState: StateFlow<AuthUiState>
     fun setLoading(isLoading: Boolean)
     fun setError(error: String?)
-    fun updateAuthState(user: LoggedInUser?, isAnonymous: Boolean)
+    suspend fun updateAuthState(user: LoggedInUser?, isAnonymous: Boolean)
     fun logout()
 }

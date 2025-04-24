@@ -7,6 +7,7 @@ import com.kyobi.domain.repository.ProductRepository
 import com.kyobi.domain.usecase.GetProductsUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import java.lang.Exception
 import javax.inject.Inject
 
 class GetProductsUseCaseImpl @Inject constructor(
@@ -17,7 +18,7 @@ class GetProductsUseCaseImpl @Inject constructor(
             emit(DomainNetworkResult.Loading)
             when (val result = productRepository.getProductsFromShopify()) {
                 is NetworkResult.Success -> emit(DomainNetworkResult.Success(result.data))
-                is NetworkResult.Error -> emit(DomainNetworkResult.Error(result.exception))
+                is NetworkResult.Error -> emit(DomainNetworkResult.Error.Generic(Exception()))
                 is NetworkResult.Loading -> emit(DomainNetworkResult.Loading)
             }
         }

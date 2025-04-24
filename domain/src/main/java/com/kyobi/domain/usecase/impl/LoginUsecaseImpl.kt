@@ -1,6 +1,6 @@
 package com.kyobi.domain.usecase.impl
 
-import com.kyobi.core.model.RestNetworkResult
+import com.kyobi.core.exceptions.KyobiApiException
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.LoggedInUser
 import com.kyobi.domain.model.request.LoginRequest
@@ -18,38 +18,48 @@ class LoginUsecaseImpl @Inject constructor(
         return flow {
             emit(DomainNetworkResult.Loading)
             val request = LoginRequest(email = email, password = password)
-            when (val result = authRepository.login(request)) {
-                is RestNetworkResult.Success -> emit(DomainNetworkResult.Success(result.data))
-                is RestNetworkResult.Error -> emit(DomainNetworkResult.Error(Throwable(result.message)))
-                is RestNetworkResult.Loading -> emit(DomainNetworkResult.Loading)
+            try {
+                val result = authRepository.login(request)
+                emit(DomainNetworkResult.Success(result))
+            } catch (e: KyobiApiException) {
+                emit(DomainNetworkResult.Error.KyobiApi(e))
+            } catch (e: Exception) {
+                emit(DomainNetworkResult.Error.Generic(e))
             }
         }.catch { throwable ->
-            emit(DomainNetworkResult.Error(throwable))
+            emit(DomainNetworkResult.Error.Generic(throwable))
         }
     }
 
     override suspend fun loginAnonymously(): Flow<DomainNetworkResult<LoggedInUser>> {
         return flow {
             emit(DomainNetworkResult.Loading)
-            when (val result = authRepository.loginAnonymously()) {
-                is RestNetworkResult.Success -> emit(DomainNetworkResult.Success(result.data))
-                is RestNetworkResult.Error -> emit(DomainNetworkResult.Error(Throwable(result.message)))
-                is RestNetworkResult.Loading -> emit(DomainNetworkResult.Loading)
+            try {
+                val result = authRepository.loginAnonymously()
+                emit(DomainNetworkResult.Success(result))
+            } catch (e: KyobiApiException) {
+                emit(DomainNetworkResult.Error.KyobiApi(e))
+            } catch (e: Exception) {
+                emit(DomainNetworkResult.Error.Generic(e))
             }
         }.catch { throwable ->
-            emit(DomainNetworkResult.Error(throwable))
+            emit(DomainNetworkResult.Error.Generic(throwable))
         }
     }
 
     override suspend fun getCurrentUser(): Flow<DomainNetworkResult<LoggedInUser>> {
         return flow {
-            when (val result = authRepository.getAuthUser()) {
-                is RestNetworkResult.Success -> emit(DomainNetworkResult.Success(result.data))
-                is RestNetworkResult.Error -> emit(DomainNetworkResult.Error(Throwable(result.message)))
-                is RestNetworkResult.Loading -> emit(DomainNetworkResult.Loading)
+            emit(DomainNetworkResult.Loading)
+            try {
+                val result = authRepository.getAuthUser()
+                emit(DomainNetworkResult.Success(result))
+            } catch (e: KyobiApiException) {
+                emit(DomainNetworkResult.Error.KyobiApi(e))
+            } catch (e: Exception) {
+                emit(DomainNetworkResult.Error.Generic(e))
             }
         }.catch { throwable ->
-            emit(DomainNetworkResult.Error(throwable))
+            emit(DomainNetworkResult.Error.Generic(throwable))
         }
     }
 

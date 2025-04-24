@@ -6,24 +6,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.kyobi.customer.bottom_bar.BottomNavigationBar
 import com.kyobi.customer.ui.RootUpdateVersionDialog
+import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.home.HomeTab
 import com.kyobi.profile.ProfileTab
 import com.kyobi.theme.AppTheme
 import com.kyobi.trend.TrendTab
 import timber.log.Timber
 
+// Tạo CompositionLocal để cung cấp AuthViewModel
+val LocalAuthViewModel = compositionLocalOf<AuthViewModel> { error("No AuthViewModel provided") }
+
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun RootApp(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
 
     AppTheme {

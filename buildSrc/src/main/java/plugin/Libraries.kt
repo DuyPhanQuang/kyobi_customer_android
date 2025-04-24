@@ -84,6 +84,7 @@ object Libraries {
             const val bom = "com.google.firebase:firebase-bom:33.0.0"
             const val crashlytics = "com.google.firebase:firebase-crashlytics-ktx"
             const val analytics = "com.google.firebase:firebase-analytics-ktx"
+            const val messaging = "com.google.firebase:firebase-messaging-ktx"
         }
         object PlayServices {
             const val location = "com.google.android.gms:play-services-location:21.3.0"
@@ -132,6 +133,7 @@ object Libraries {
         const val core = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${Version.KotlinxCoroutines}"
         const val android = "org.jetbrains.kotlinx:kotlinx-coroutines-android:${Version.KotlinxCoroutines}"
         const val test = "org.jetbrains.kotlinx:kotlinx-coroutines-test:${Version.KotlinxCoroutines}"
+        const val playServices = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:${Version.KotlinxCoroutines}"
     }
 
     object KotlinReflect {

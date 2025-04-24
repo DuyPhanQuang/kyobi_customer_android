@@ -1,6 +1,6 @@
 package com.kyobi.domain.usecase.impl
 
-import com.kyobi.core.model.RestNetworkResult
+import com.kyobi.core.exceptions.KyobiApiException
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.repository.AuthRepository
 import com.kyobi.domain.usecase.LogoutUseCase
@@ -14,13 +14,17 @@ class LogoutUsecaseImpl @Inject constructor(
 ): LogoutUseCase {
     override fun logout(): Flow<DomainNetworkResult<Unit>> {
         return flow {
-            when (val result = authRepository.logout()) {
-                is RestNetworkResult.Success -> emit(DomainNetworkResult.Success(Unit))
-                is RestNetworkResult.Error -> emit(DomainNetworkResult.Error(Throwable(result.message)))
-                is RestNetworkResult.Loading -> {}
+            emit(DomainNetworkResult.Loading)
+            try {
+                authRepository.logout()
+                emit(DomainNetworkResult.Success(Unit))
+            } catch (e: KyobiApiException) {
+                emit(DomainNetworkResult.Error.KyobiApi(e))
+            } catch (e: Exception) {
+                emit(DomainNetworkResult.Error.Generic(e))
             }
         }.catch { throwable ->
-            emit(DomainNetworkResult.Error(throwable))
+            emit(DomainNetworkResult.Error.Generic(throwable))
         }
     }
 

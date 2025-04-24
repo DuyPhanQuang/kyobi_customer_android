@@ -59,9 +59,17 @@ class SignupViewModel @Inject constructor(
                             // show dialog open gmail app here to activated account via link in email
                         }
                         is DomainNetworkResult.Error -> {
+                            val errorMessage = when (result) {
+                                is DomainNetworkResult.Error.KyobiApi -> {
+                                    result.exception.message
+                                }
+                                is DomainNetworkResult.Error.Generic -> {
+                                    result.throwable.message
+                                }
+                            } ?: "Something went wrong"
                             signUpUiState = signUpUiState.copy(
                                 isLoading = false,
-                                error = result.exception.message ?: "Something went wrong")
+                                error = errorMessage)
                         }
                         is DomainNetworkResult.Loading -> {
                             signUpUiState = signUpUiState.copy(isLoading = true)

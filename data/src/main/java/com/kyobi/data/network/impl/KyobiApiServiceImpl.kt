@@ -6,10 +6,13 @@ import com.kyobi.data.model.AnonymousLoginResponse
 import com.kyobi.data.model.AppVersionResponse
 import com.kyobi.data.model.AuthUserResponse
 import com.kyobi.data.model.LoginResponse
+import com.kyobi.data.model.NotificationResponse
 import com.kyobi.data.model.SignupResponse
 import com.kyobi.data.network.KyobiApiService
 import com.kyobi.domain.model.request.LoginRequest
+import com.kyobi.domain.model.request.RegisterTokenRequest
 import com.kyobi.domain.model.request.SignupRequest
+import com.kyobi.domain.model.request.UnregisterTokenRequest
 import retrofit2.HttpException
 import retrofit2.Retrofit
 import timber.log.Timber
@@ -22,10 +25,11 @@ class KyobiApiServiceImpl @Inject constructor(
     private val errorHandler: ErrorHandler
 ) : KyobiApiService {
     private val api = retrofit.create(KyobiApiService::class.java)
+    private val tag = "KyobiApiService"
 
     override suspend fun login(request: LoginRequest): LoginResponse {
         try {
-            Timber.tag("KyobiApiService").d("Logging in with email: ${request.email}")
+            Timber.tag(tag).d("Logging in with email: ${request.email}")
             return api.login(request)
         } catch (e: HttpException) {
             val errorBody = e.response()?.errorBody()?.string() ?: ""
@@ -46,7 +50,7 @@ class KyobiApiServiceImpl @Inject constructor(
 
     override suspend fun loginAnonymously(): AnonymousLoginResponse {
         try {
-            Timber.tag("KyobiApiService").d("Logging in anonymously")
+            Timber.tag(tag).d("Logging in anonymously")
             return api.loginAnonymously()
         } catch (e: HttpException) {
             val errorBody = e.response()?.errorBody()?.string() ?: ""
@@ -67,7 +71,7 @@ class KyobiApiServiceImpl @Inject constructor(
 
     override suspend fun getAuthUser(): AuthUserResponse {
         try {
-            Timber.tag("KyobiApiService").d("Fetching auth user")
+            Timber.tag(tag).d("Fetching auth user")
             return api.getAuthUser()
         } catch (e: HttpException) {
             if (e.code() == 401) {
@@ -79,9 +83,9 @@ class KyobiApiServiceImpl @Inject constructor(
         }
     }
 
-    override suspend fun logout(): Unit {
+    override suspend fun logout() {
         try {
-            Timber.tag("KyobiApiService").d("Logging out")
+            Timber.tag(tag).d("Logging out")
             api.logout()
         } catch (e: Exception) {
             throw errorHandler.handleError(e)
@@ -90,7 +94,7 @@ class KyobiApiServiceImpl @Inject constructor(
 
     override suspend fun signup(request: SignupRequest): SignupResponse {
         try {
-            Timber.tag("KyobiApiService").d("Signing up with email: ${request.email}")
+            Timber.tag(tag).d("Signing up with email: ${request.email}")
             return api.signup(request)
         } catch (e: HttpException) {
             val errorBody = e.response()?.errorBody()?.string() ?: ""
@@ -120,8 +124,36 @@ class KyobiApiServiceImpl @Inject constructor(
 
     override suspend fun getAppVersion(): AppVersionResponse {
         try {
-            Timber.tag("KyobiApiService").d("Fetching app version")
+            Timber.tag(tag).d("Fetching app version")
             return api.getAppVersion()
+        } catch (e: Exception) {
+            throw errorHandler.handleError(e)
+        }
+    }
+
+    override suspend fun register(id: String, request: RegisterTokenRequest): NotificationResponse {
+        try {
+            Timber.tag(tag).d("Registering FCM token: ${request.token}")
+            return api.register(id, request)
+        } catch (e: HttpException) {
+            when (e.code()) {
+                401 -> throw KyobiApiException("Invalid or expired token", e.code())
+                else -> throw errorHandler.handleError(e)
+            }
+        } catch (e: Exception) {
+            throw errorHandler.handleError(e)
+        }
+    }
+
+    override suspend fun unregister(id: String, request: UnregisterTokenRequest): NotificationResponse {
+        try {
+            Timber.tag(tag).d("Unregistering FCM token: ${request.token}")
+            return api.unregister(id, request)
+        } catch (e: HttpException) {
+            when (e.code()) {
+                401 -> throw KyobiApiException("Invalid or expired token", e.code())
+                else -> throw errorHandler.handleError(e)
+            }
         } catch (e: Exception) {
             throw errorHandler.handleError(e)
         }

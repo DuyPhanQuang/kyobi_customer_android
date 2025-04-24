@@ -1,8 +1,14 @@
 package com.kyobi.core.storage
 
 interface TokenStorage {
-    suspend fun saveTokens(accessToken: String, refreshToken: String)
-    suspend fun getAccessToken(): String?
-    suspend fun getRefreshToken(): String?
-    suspend fun clearTokens()
+    // base token
+    fun saveTokens(accessToken: String, refreshToken: String)
+    fun getAccessToken(): String?
+    fun getRefreshToken(): String?
+    fun clearTokens()
+
+    // firebase
+    fun saveFcmToken(fcmToken: String)
+    fun clearFcmToken()
+    fun getFcmToken(): String?
 }

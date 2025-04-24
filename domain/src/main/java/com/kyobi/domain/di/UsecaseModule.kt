@@ -4,11 +4,13 @@ import com.kyobi.domain.usecase.AppVersionUsecase
 import com.kyobi.domain.usecase.GetProductsUseCase
 import com.kyobi.domain.usecase.LoginUseCase
 import com.kyobi.domain.usecase.LogoutUseCase
+import com.kyobi.domain.usecase.NotificationUseCase
 import com.kyobi.domain.usecase.SignUpUseCase
 import com.kyobi.domain.usecase.impl.AppVersionUsecaseImpl
 import com.kyobi.domain.usecase.impl.GetProductsUseCaseImpl
 import com.kyobi.domain.usecase.impl.LoginUsecaseImpl
 import com.kyobi.domain.usecase.impl.LogoutUsecaseImpl
+import com.kyobi.domain.usecase.impl.NotificationUseCaseImpl
 import com.kyobi.domain.usecase.impl.SignupUsecaseImpl
 import dagger.Binds
 import dagger.Module
@@ -38,4 +40,8 @@ abstract class UseCaseModule {
     @Binds
     @Singleton
     abstract fun bindAppVersionUsecase(impl: AppVersionUsecaseImpl): AppVersionUsecase
+
+    @Binds
+    @Singleton
+    abstract fun bindNotificationUseCase(impl: NotificationUseCaseImpl): NotificationUseCase
 }

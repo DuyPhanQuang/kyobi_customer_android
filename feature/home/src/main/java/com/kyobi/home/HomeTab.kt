@@ -47,7 +47,7 @@ fun ProductsSection(productsResult: DomainNetworkResult<List<Product>>) {
         }
         is DomainNetworkResult.Error -> {
             Text(
-                text = "Lỗi: ${productsResult.exception.message}",
+                text = "Lỗi roi",
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(16.dp)
             )

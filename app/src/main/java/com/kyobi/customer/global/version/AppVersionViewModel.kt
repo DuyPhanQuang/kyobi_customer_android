@@ -57,6 +57,7 @@ class AppVersionViewModel @Inject constructor(
                             is DomainNetworkResult.Success -> {
                                 val data = result.data
                                 val currentVersion = BuildConfig.VERSION_NAME
+                                val minimumVersion = data.minimumVersion
                                 val latestVersion = data.maximumVersion
                                 val seenVersion = sharedPreferences.getString(KeyConstant.SharePrefs.seenVersion, null)
                                 // Case 0: maintenance = true
@@ -76,7 +77,7 @@ class AppVersionViewModel @Inject constructor(
                                     return@collect
                                 } else {
                                     // Case 2: forceUpdate = false
-                                    if (isVersionLower(currentVersion, data.minimumVersion)) {
+                                    if (isVersionLower(currentVersion, minimumVersion)) {
                                         // Case 2.1: currentVersion < minimumVersion
                                         _uiState.value = AppVersionUiState(
                                             showForceUpdate = true,
@@ -96,11 +97,19 @@ class AppVersionViewModel @Inject constructor(
                                 }
                             }
                             is DomainNetworkResult.Error -> {
+                                val errorMessage = when (result) {
+                                    is DomainNetworkResult.Error.KyobiApi -> {
+                                        result.exception.message
+                                    }
+                                    is DomainNetworkResult.Error.Generic -> {
+                                        result.throwable.message
+                                    }
+                                } ?: "Something went wrong"
                                 _uiState.value = AppVersionUiState(
                                     isMaintenance = true,
-                                    maintenanceMessage = result.exception.message,
+                                    maintenanceMessage = errorMessage,
                                     isLoading = false,
-                                    error = result.exception.message
+                                    error = errorMessage
                                 )
                             }
                             is DomainNetworkResult.Loading -> {

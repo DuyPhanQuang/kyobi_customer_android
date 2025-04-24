@@ -1,6 +1,6 @@
 package com.kyobi.domain.usecase.impl
 
-import com.kyobi.core.model.RestNetworkResult
+import com.kyobi.core.exceptions.KyobiApiException
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.request.SignupRequest
 import com.kyobi.domain.repository.AuthRepository
@@ -20,17 +20,17 @@ class SignupUsecaseImpl @Inject constructor(
     ): Flow<DomainNetworkResult<Boolean>> {
         return flow {
             emit(DomainNetworkResult.Loading)
-            val request = SignupRequest(
-                email = email,
-                password = password,
-                phone = phone)
-            when (val result = authRepository.signup(request)) {
-                is RestNetworkResult.Success -> emit(DomainNetworkResult.Success(result.data))
-                is RestNetworkResult.Error -> emit(DomainNetworkResult.Error(Throwable(result.message)))
-                is RestNetworkResult.Loading -> emit(DomainNetworkResult.Loading)
+            val request = SignupRequest(email = email, password = password, phone = phone)
+            try {
+                val result = authRepository.signup(request)
+                emit(DomainNetworkResult.Success(result))
+            } catch (e: KyobiApiException) {
+                emit(DomainNetworkResult.Error.KyobiApi(e))
+            } catch (e: Exception) {
+                emit(DomainNetworkResult.Error.Generic(e))
             }
         }.catch { throwable ->
-            emit(DomainNetworkResult.Error(throwable))
+            emit(DomainNetworkResult.Error.Generic(throwable))
         }
     }
 

@@ -64,6 +64,7 @@ fun DependencyHandler.composeDependencies() {
     implementation(platform(Libraries.Google.Firebase.bom))
     implementation(Libraries.Google.Firebase.analytics)
     implementation(Libraries.Google.Firebase.crashlytics)
+    implementation(Libraries.Google.Firebase.messaging)
 
     // Maps, Places, PlayServices
     implementation(Libraries.Google.PlayServices.map)
@@ -149,6 +150,7 @@ fun DependencyHandler.baseDependencies() {
     //coroutines
     implementation(Libraries.Coroutine.android)
     implementation(Libraries.Coroutine.core)
+    implementation(Libraries.Coroutine.playServices)
 
     //kotlinreflect
     implementation(Libraries.KotlinReflect.reflect)

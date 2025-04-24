@@ -23,7 +23,7 @@ class AuthStateProviderImpl @Inject constructor() : AuthStateProvider {
         )
     }
 
-    override fun updateAuthState(user: LoggedInUser?, isAnonymous: Boolean) {
+    override suspend fun updateAuthState(user: LoggedInUser?, isAnonymous: Boolean) {
         _authUiState.value = _authUiState.value.copy(
             isLoading = false,
             isLoggedIn = user != null,
