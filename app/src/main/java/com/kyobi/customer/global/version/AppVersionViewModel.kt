@@ -16,6 +16,7 @@ import kotlinx.coroutines.delay
 import androidx.core.content.edit
 import com.kyobi.customer.constants.KeyConstant
 import com.kyobi.customer.BuildConfig
+import com.kyobi.featurecommon.auth.session.SessionEventBus
 import org.semver4j.Semver
 import org.semver4j.SemverException
 import timber.log.Timber
@@ -23,8 +24,10 @@ import timber.log.Timber
 @HiltViewModel
 class AppVersionViewModel @Inject constructor(
     private val appVersionUseCase: AppVersionUsecase,
-    private val sharedPreferences: SharedPreferences
+    private val sharedPreferences: SharedPreferences,
+    val sessionEventBus: SessionEventBus
 ): ViewModel() {
+    private val tag = "AppVersionViewModel"
     private val _uiState = MutableStateFlow(AppVersionUiState())
     val uiState: StateFlow<AppVersionUiState> = _uiState
 
@@ -33,7 +36,7 @@ class AppVersionViewModel @Inject constructor(
     }
 
     fun onAppForeground() {
-        Timber.tag("AppVersionViewModel").d("onAppForeground called")
+        Timber.tag(tag).d("onAppForeground called")
         checkAppVersion()
     }
 
@@ -98,26 +101,18 @@ class AppVersionViewModel @Inject constructor(
                             }
                             is DomainNetworkResult.Error -> {
                                 val errorMessage = when (result) {
-                                    is DomainNetworkResult.Error.KyobiApi -> {
-                                        result.exception.message
-                                    }
-                                    is DomainNetworkResult.Error.Generic -> {
-                                        result.throwable.message
-                                    }
+                                    is DomainNetworkResult.Error.KyobiApi -> result.exception.message
+                                    is DomainNetworkResult.Error.Generic -> result.throwable.message
                                 } ?: "Something went wrong"
-                                _uiState.value = AppVersionUiState(
-                                    isMaintenance = true,
-                                    maintenanceMessage = errorMessage,
-                                    isLoading = false,
-                                    error = errorMessage
-                                )
+                                Timber.tag(tag).e("Failed to get app version")
+                                _uiState.value = _uiState.value.copy(isLoading = true, error = errorMessage)
                             }
                             is DomainNetworkResult.Loading -> {
                                 _uiState.value = _uiState.value.copy(isLoading = true, error = null)
                             }
                         }
                     }
-                delay(60_000) // Poll mỗi 60 giây để check version mới
+                delay(5 * 60_000) // Poll mỗi 5 phút để check version mới
             }
         }
     }

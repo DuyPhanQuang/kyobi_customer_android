@@ -33,6 +33,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun logout() {
         apiService.logout()
         tokenStorage.clearTokens()
+        tokenStorage.clearFcmToken()
     }
 
     override suspend fun signup(request: SignupRequest): Boolean {

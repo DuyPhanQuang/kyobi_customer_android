@@ -13,7 +13,7 @@ import javax.inject.Inject
 class FcmUsecaseServiceImpl @Inject constructor(
     private val notificationUsecase: NotificationUseCase
 ): FcmUsecaseService {
-    private val tag = "FCM"
+    private val tag = "FcmUsecaseService"
 
     override suspend fun refreshAndUploadToken(userId: String) {
         try {
