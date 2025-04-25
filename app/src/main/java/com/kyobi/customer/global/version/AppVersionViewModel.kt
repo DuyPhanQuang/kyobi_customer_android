@@ -48,12 +48,7 @@ class AppVersionViewModel @Inject constructor(
                         _uiState.value = _uiState.value.copy(isLoading = true, error = null)
                     }
                     .handleErrors { throwable ->
-                        _uiState.value = AppVersionUiState(
-                            isMaintenance = true,
-                            maintenanceMessage = throwable.message ?: "Server is currently unavailable",
-                            isLoading = false,
-                            error = throwable.message
-                        )
+                        Timber.tag(tag).e("Failed to get app version error: ${throwable.message}")
                     }
                     .collect { result ->
                         when (result) {
@@ -65,36 +60,64 @@ class AppVersionViewModel @Inject constructor(
                                 val seenVersion = sharedPreferences.getString(KeyConstant.SharePrefs.seenVersion, null)
                                 // Case 0: maintenance = true
                                 if (data.isMaintenance) {
-                                    _uiState.value = AppVersionUiState(
+                                    _uiState.value = _uiState.value.copy(
                                         isMaintenance = true,
                                         maintenanceMessage = data.maintenanceMessage,
+                                        showForceUpdate = false,
+                                        showUpdateNotification = false,
+                                        maximumVersion = latestVersion,
+                                        isLoading = false,
+                                        error = null
                                     )
                                     return@collect
                                 }
                                 // Case 1: forceUpdate = true
                                 if (data.forceUpdate) {
-                                    _uiState.value = AppVersionUiState(
+                                    _uiState.value = _uiState.value.copy(
+                                        isMaintenance = false,
                                         showForceUpdate = true,
-                                        forceUpdateMessage = data.forceUpdateMessage
+                                        forceUpdateMessage = data.forceUpdateMessage,
+                                        showUpdateNotification = false,
+                                        maximumVersion = latestVersion,
+                                        isLoading = false,
+                                        error = null
                                     )
                                     return@collect
                                 } else {
+                                    Timber.tag(tag).d("currentVersion: $currentVersion, latestVersion: $latestVersion, seenVersion: $seenVersion")
                                     // Case 2: forceUpdate = false
                                     if (isVersionLower(currentVersion, minimumVersion)) {
                                         // Case 2.1: currentVersion < minimumVersion
-                                        _uiState.value = AppVersionUiState(
+                                        _uiState.value = _uiState.value.copy(
+                                            isMaintenance = false,
                                             showForceUpdate = true,
-                                            forceUpdateMessage = "Your app version is too old. Please update to continue."
+                                            forceUpdateMessage = "Your app version is too old. Please update to continue.",
+                                            showUpdateNotification = false,
+                                            maximumVersion = latestVersion,
+                                            isLoading = false,
+                                            error = null
                                         )
                                     } else if (isVersionLower(currentVersion, latestVersion) && seenVersion != latestVersion) {
                                         // Case 2.2: Có version mới trên store, chưa show popup
-                                        _uiState.value = AppVersionUiState(
+                                        _uiState.value = _uiState.value.copy(
+                                            isMaintenance = false,
+                                            showForceUpdate = false,
                                             showUpdateNotification = true,
-                                            updateNotificationMessage = "A new version is available. Update now for the best experience."
+                                            updateNotificationMessage = "A new version is available. Update now for the best experience.",
+                                            maximumVersion = latestVersion,
+                                            isLoading = false,
+                                            error = null
                                         )
                                     } else {
                                         // Version hợp lệ, không cần hiển thị popup
-                                        _uiState.value = AppVersionUiState()
+                                        _uiState.value = _uiState.value.copy(
+                                            isMaintenance = false,
+                                            showForceUpdate = false,
+                                            showUpdateNotification = false,
+                                            maximumVersion = latestVersion,
+                                            isLoading = false,
+                                            error = null
+                                        )
                                     }
                                     return@collect
                                 }
@@ -112,7 +135,7 @@ class AppVersionViewModel @Inject constructor(
                             }
                         }
                     }
-                delay(5 * 60_000) // Poll mỗi 5 phút để check version mới
+                delay(10 * 60_000) // Poll mỗi 10 phút để check version mới
             }
         }
     }

@@ -58,67 +58,65 @@ fun RootUpdateVersionDialog() {
     }
 
 
-    if (sessionState?.userId != null) {
-        when {
-            // Hiển thị dialog maintenance
-            uiState.isMaintenance -> {
-                AlertDialog(
-                    onDismissRequest = { /* Non-dismissable */ },
-                    title = {
-                        Text(
-                            text = "Server Maintenance"
-                        )},
-                    text = {
-                        Text(
-                            text = uiState.maintenanceMessage ?: "Server is under maintenance. Please try again later.")},
-                    confirmButton = {},
-                    dismissButton = {}
-                )
-            }
-            // Hiển thị dialog force update
-            uiState.showForceUpdate -> {
-                AlertDialog(
-                    onDismissRequest = { /* Non-dismissable */ },
-                    title = { Text("Update Required") },
-                    text = { Text(uiState.forceUpdateMessage ?: "Please update to the latest version.") },
-                    confirmButton = {
-                        Button(
-                            onClick = { AppIntentUtils.openPlayStore(context, PackageNameType.Kyobi) }
-                        ) {
-                            Text("Update Now")
-                        }
-                    },
-                    dismissButton = {}
-                )
-            }
-            // Update Notification Popup (Case 2.2)
-            uiState.showUpdateNotification -> {
-                AlertDialog(
-                    onDismissRequest = { viewModel.onUpdateNotificationDismissed() },
-                    title = {
-                        Text(
-                            text = "New Version Available"
-                        )},
-                    text = {
-                        Text(
-                            text = uiState.updateNotificationMessage ?: "A new version is available. Update now for the best experience."
-                        )},
-                    confirmButton = {
-                        Button(
-                            onClick = { AppIntentUtils.openPlayStore(context, PackageNameType.Kyobi) }
-                        ) {
-                            Text("Update Now")
-                        }
-                    },
-                    dismissButton = {
-                        Button(
-                            onClick = { viewModel.onUpdateNotificationDismissed() }
-                        ) {
-                            Text("Skip")
-                        }
+    when {
+        // Hiển thị dialog maintenance
+        uiState.isMaintenance -> {
+            AlertDialog(
+                onDismissRequest = { /* Non-dismissable */ },
+                title = {
+                    Text(
+                        text = "Server Maintenance"
+                    )},
+                text = {
+                    Text(
+                        text = uiState.maintenanceMessage ?: "Server is under maintenance. Please try again later.")},
+                confirmButton = {},
+                dismissButton = {}
+            )
+        }
+        // Hiển thị dialog force update
+        uiState.showForceUpdate -> {
+            AlertDialog(
+                onDismissRequest = { /* Non-dismissable */ },
+                title = { Text("Update Required") },
+                text = { Text(uiState.forceUpdateMessage ?: "Please update to the latest version.") },
+                confirmButton = {
+                    Button(
+                        onClick = { AppIntentUtils.openPlayStore(context, PackageNameType.Kyobi) }
+                    ) {
+                        Text("Update Now")
                     }
-                )
-            }
+                },
+                dismissButton = {}
+            )
+        }
+        // Update Notification Popup (Case 2.2)
+        uiState.showUpdateNotification -> {
+            AlertDialog(
+                onDismissRequest = { viewModel.onUpdateNotificationDismissed() },
+                title = {
+                    Text(
+                        text = "New Version Available"
+                    )},
+                text = {
+                    Text(
+                        text = uiState.updateNotificationMessage ?: "A new version is available. Update now for the best experience."
+                    )},
+                confirmButton = {
+                    Button(
+                        onClick = { AppIntentUtils.openPlayStore(context, PackageNameType.Kyobi) }
+                    ) {
+                        Text("Update Now")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = { viewModel.onUpdateNotificationDismissed() }
+                    ) {
+                        Text("Skip")
+                    }
+                }
+            )
         }
     }
 }
