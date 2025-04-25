@@ -54,7 +54,6 @@ class AppVersionViewModel @Inject constructor(
                         when (result) {
                             is DomainNetworkResult.Success -> {
                                 val data = result.data
-                                val currentVersion = BuildConfig.VERSION_NAME
                                 val minimumVersion = data.minimumVersion
                                 val latestVersion = data.maximumVersion
                                 val seenVersion = sharedPreferences.getString(KeyConstant.SharePrefs.seenVersion, null)
@@ -84,9 +83,9 @@ class AppVersionViewModel @Inject constructor(
                                     )
                                     return@collect
                                 } else {
-                                    Timber.tag(tag).d("currentVersion: $currentVersion, latestVersion: $latestVersion, seenVersion: $seenVersion")
+                                    Timber.tag(tag).d("latestVersion: $latestVersion, seenVersion: $seenVersion")
                                     // Case 2: forceUpdate = false
-                                    if (isVersionLower(currentVersion, minimumVersion)) {
+                                    if (isVersionLower(minimumVersion)) {
                                         // Case 2.1: currentVersion < minimumVersion
                                         _uiState.value = _uiState.value.copy(
                                             isMaintenance = false,
@@ -97,7 +96,7 @@ class AppVersionViewModel @Inject constructor(
                                             isLoading = false,
                                             error = null
                                         )
-                                    } else if (isVersionLower(currentVersion, latestVersion) && seenVersion != latestVersion) {
+                                    } else if (isVersionLower(latestVersion) && seenVersion != latestVersion) {
                                         // Case 2.2: Có version mới trên store, chưa show popup
                                         _uiState.value = _uiState.value.copy(
                                             isMaintenance = false,
@@ -149,10 +148,11 @@ class AppVersionViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(showUpdateNotification = false)
     }
 
-    private fun isVersionLower(version1: String, version2: String): Boolean {
-        if (version1.isBlank() || version2.isBlank()) return false
+    private fun isVersionLower(compareVersion: String): Boolean {
+        val currentVersion = BuildConfig.VERSION_NAME
+        if (currentVersion.isBlank() || compareVersion.isBlank()) return false
         return try {
-            Semver(version1).isLowerThan(version2)
+            Semver(currentVersion).isLowerThan(compareVersion)
         } catch (e: SemverException) {
             false
         }
