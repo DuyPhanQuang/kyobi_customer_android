@@ -11,6 +11,7 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Invocation
 import okhttp3.logging.HttpLoggingInterceptor
+import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
@@ -70,6 +71,8 @@ object NetworkModule {
                 if (refreshToken != null) {
                     newRequest.addHeader("X-Refresh-Token", refreshToken)
                 }
+                Timber.tag("NetworkModule").d("accesstoken: $accessToken")
+                Timber.tag("NetworkModule").d("refreshtoken: $refreshToken")
                 chain.proceed(newRequest.build())
             } else {
                 chain.proceed(request)

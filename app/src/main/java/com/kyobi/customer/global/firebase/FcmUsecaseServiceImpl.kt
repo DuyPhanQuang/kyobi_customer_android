@@ -10,22 +10,17 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @ServiceScoped
-class MyFirebaseService @Inject constructor(
+class FcmUsecaseServiceImpl @Inject constructor(
     private val notificationUsecase: NotificationUseCase
-) {
+): FcmUsecaseService {
     private val tag = "FCM"
 
-    suspend fun refreshAndUploadToken(userId: String) {
+    override suspend fun refreshAndUploadToken(userId: String) {
         try {
-            // Xóa token cũ
             FirebaseMessaging.getInstance().deleteToken().await()
             Timber.tag(tag).d("Deleted old token successfully")
-
-            // Lấy token mới
             val fcmToken = FirebaseMessaging.getInstance().token.await()
             Timber.tag(tag).d("Got refreshed token $fcmToken")
-
-            // Gửi token lên server
             registerTokenWithServer(userId, fcmToken)
         } catch (e: Exception) {
             Timber.tag(tag).e(e, "Failed to refresh and upload token")
@@ -33,14 +28,12 @@ class MyFirebaseService @Inject constructor(
         }
     }
 
-    suspend fun removeCurrentToken(userId: String) {
+    override suspend fun removeCurrentToken(userId: String) {
         try {
-            // Lấy token hiện tại
             val fcmToken = FirebaseMessaging.getInstance().token.await()
             Timber.tag(tag).d("Removing token $fcmToken")
 
             if (userId.isNotEmpty()) {
-                // Xóa token khỏi server chỉ khi có userId
                 unregisterTokenFromServer(userId, fcmToken)
             } else {
                 Timber.tag(tag).w("No userId provided, skipping unregister token from server")

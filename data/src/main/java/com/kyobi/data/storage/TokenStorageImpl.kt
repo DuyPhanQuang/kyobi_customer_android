@@ -54,7 +54,7 @@ class TokenStorageImpl @Inject constructor(
 
     override fun saveFcmToken(fcmToken: String) {
         prefs.edit {
-            putString(ACCESS_TOKEN_KEY, fcmToken)
+            putString(FCM_TOKEN_KEY, fcmToken)
         }
     }
 

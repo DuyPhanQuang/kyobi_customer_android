@@ -23,7 +23,7 @@ class NotificationRepositoryImpl @Inject constructor(
 
     override suspend fun unregisterToken(userId: String, request: UnregisterTokenRequest): Notification {
         val response = apiService.unregister(userId, request)
-        tokenStorage.clearTokens()
+        tokenStorage.clearFcmToken()
         return response.toNotification()
     }
 }

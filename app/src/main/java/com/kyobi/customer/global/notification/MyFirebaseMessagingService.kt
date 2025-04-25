@@ -14,7 +14,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.kyobi.customer.MainActivity
 import com.kyobi.customer.R
-import com.kyobi.customer.global.firebase.MyFirebaseService
+import com.kyobi.customer.global.firebase.FcmUsecaseService
 import com.kyobi.featurecommon.auth.session.Session
 import com.kyobi.featurecommon.auth.session.SessionEventBus
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,7 +39,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     @Inject
-    lateinit var firebaseService: MyFirebaseService
+    lateinit var fcmUsecaseService: FcmUsecaseService
 
     @Inject
     lateinit var sessionEventBus: SessionEventBus
@@ -81,7 +81,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                         Timber.tag(tag).d("No session yet, waiting for session")
                         return@collectLatest
                     }
-                    // Nếu isPermissionGranted là null, dùng isPermissionGrantedInitially
                     if (isPermissionGranted == null) {
                         if (isPermissionGrantedInitially) {
                             Timber.tag(tag).d("Both conditions met: session ($session) and initial permission granted, starting logic")
@@ -103,7 +102,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Hủy CoroutineScope khi Service bị hủy
         serviceScope.cancel()
         currentSession = null
     }
@@ -138,7 +136,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 )
             }
         }
-
         // Data Message (luôn cần tự xử lý)
         if (remoteMessage.data.isNotEmpty()) {
             Timber.tag(tag).d("Data Payload: ${remoteMessage.data}")
@@ -148,6 +145,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         Timber.tag(tag).d("onNewToken: $token")
+        Timber.tag(tag).d("New token: $token")
+
         val isPermissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
                 this,
@@ -156,14 +155,24 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         } else {
             true
         }
+
         if (currentSession == null) {
             Timber.tag(tag).d("No session yet, skipping token update")
-        } else if (!isPermissionGranted) {
-            Timber.tag(tag).d("Session available ($currentSession), but notification permission not granted, skipping token update")
-        } else {
-            Timber.tag(tag).d("Both conditions met: session ($currentSession) and notification permission granted, handling token update")
-            handleTokenUpdate()
+            return
         }
+
+        if (!isPermissionGranted) {
+            Timber.tag(tag).d("Session available ($currentSession), but notification permission not granted, skipping token update")
+            return
+        }
+
+        if (hasStartedSessionCollection) {
+            Timber.tag(tag).d("Token update already handled in onCreate, skipping in onNewToken")
+            return
+        }
+
+        Timber.tag(tag).d("Both conditions met: session ($currentSession) and notification permission granted, handling token update")
+        handleTokenUpdate()
     }
 
     private fun handleTokenUpdate() {
@@ -174,8 +183,8 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             serviceScope.launch {
                 try {
                     // Gọi tuần tự với suspend function
-                    firebaseService.removeCurrentToken(userId)
-                    firebaseService.refreshAndUploadToken(userId)
+                    fcmUsecaseService.removeCurrentToken(userId)
+                    fcmUsecaseService.refreshAndUploadToken(userId)
                     Timber.tag(tag).d("Token update completed for user: $userId")
                 } catch (e: Exception) {
                     Timber.tag(tag).e(e, "Error updating token for user: $userId")
