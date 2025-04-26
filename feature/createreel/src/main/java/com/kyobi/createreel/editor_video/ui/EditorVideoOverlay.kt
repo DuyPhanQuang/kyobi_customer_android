@@ -1,8 +1,7 @@
-package com.kyobi.createreel.editor_video
+package com.kyobi.createreel.editor_video.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,39 +23,6 @@ import ly.img.editor.EditorUiState
 import ly.img.editor.HideLoading
 import ly.img.editor.core.EditorContext
 import ly.img.editor.core.event.EditorEvent
-
-import android.os.Parcel
-import android.os.Parcelable
-import androidx.core.os.ParcelCompat
-
-// highlight-configuration-custom-state
-data class OverlayCustomState(
-    // hide default loading so we can use custom loading
-    val baseState: EditorUiState = EditorUiState(showLoading = false),
-    val showCustomLoading: Boolean = true,
-) : Parcelable {
-    constructor(parcel: Parcel) : this(
-        baseState = ParcelCompat.readParcelable(parcel, EditorUiState::class.java.classLoader, EditorUiState::class.java)!!,
-        showCustomLoading = parcel.readByte() != 0.toByte(),
-    )
-
-    override fun writeToParcel(
-        parcel: Parcel,
-        flags: Int,
-    ) {
-        parcel.writeParcelable(baseState, flags)
-        parcel.writeByte(if (showCustomLoading) 1 else 0)
-    }
-
-    override fun describeContents() = 0
-
-    companion object CREATOR : Parcelable.Creator<OverlayCustomState> {
-        override fun createFromParcel(parcel: Parcel): OverlayCustomState = OverlayCustomState(parcel)
-
-        override fun newArray(size: Int): Array<OverlayCustomState?> = arrayOfNulls(size)
-    }
-}
-// highlight-configuration-custom-state
 
 @Composable
 fun EditorVideoOverlay(

@@ -20,12 +20,6 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var sessionEventBus: SessionEventBus
 
-    @Inject
-    lateinit var assetSourceUsecase: AssetSourceUsecase
-
-    @Inject
-    lateinit var assetUsecase: AssetUsecase
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -45,10 +39,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             )
-            RootApp(
-                assetSourceUsecase = assetSourceUsecase,
-                assetUsecase = assetUsecase
-            )
+            RootApp()
         }
     }
 }

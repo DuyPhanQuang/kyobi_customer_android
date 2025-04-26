@@ -5,6 +5,9 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
+import androidx.core.net.toUri
+
+enum class PackageNameType { Kyobi }
 
 object IntentUtils {
     fun Context.share(
@@ -31,6 +34,17 @@ object IntentUtils {
         } catch (e: Exception) {
             Log.e("share", "redirect fail: ${e.message}")
         }
+    }
+
+    fun Context.openPlayStore(packageName: PackageNameType) {
+        val id = when (packageName) {
+            PackageNameType.Kyobi -> "com.kyobi.customer"
+        }
+        startActivity(
+            Intent(Intent.ACTION_VIEW, "market://details?id=$id".toUri()).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+        )
     }
 }
 

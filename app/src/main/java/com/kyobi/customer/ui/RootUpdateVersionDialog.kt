@@ -13,10 +13,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.lifecycle.Lifecycle
-import com.kyobi.customer.utils.AppIntentUtils
-import com.kyobi.customer.utils.PackageNameType
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
+import com.kyobi.core.utils.IntentUtils.openPlayStore
+import com.kyobi.core.utils.PackageNameType
 import com.kyobi.featurecommon.auth.session.Session
 import kotlinx.coroutines.flow.collectLatest
 import timber.log.Timber
@@ -82,7 +82,7 @@ fun RootUpdateVersionDialog() {
                 text = { Text(uiState.forceUpdateMessage ?: "Please update to the latest version.") },
                 confirmButton = {
                     Button(
-                        onClick = { AppIntentUtils.openPlayStore(context, PackageNameType.Kyobi) }
+                        onClick = { context.openPlayStore(PackageNameType.Kyobi) }
                     ) {
                         Text("Update Now")
                     }
@@ -104,7 +104,7 @@ fun RootUpdateVersionDialog() {
                     )},
                 confirmButton = {
                     Button(
-                        onClick = { AppIntentUtils.openPlayStore(context, PackageNameType.Kyobi) }
+                        onClick = { context.openPlayStore(PackageNameType.Kyobi) }
                     ) {
                         Text("Update Now")
                     }
