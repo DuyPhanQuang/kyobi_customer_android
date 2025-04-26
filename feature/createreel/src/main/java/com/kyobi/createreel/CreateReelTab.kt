@@ -66,10 +66,12 @@ import ly.img.editor.core.library.data.AssetSourceType
 @Composable
 fun rememberEngineConfigurationForScene(
     sceneUri: Uri,
+    userId: String?,
     assetSourceUsecase: AssetSourceUsecase,
     assetUsecase: AssetUsecase
 ): EngineConfiguration = EngineConfiguration.remember(
     license = Secrets.license,
+    userId = userId,
     onCreate = {
         Timber.tag("EngineConfig").d("onCreate called with sceneUri: $sceneUri")
         val engine = this.editorContext.engine
@@ -79,14 +81,22 @@ fun rememberEngineConfigurationForScene(
             Timber.tag("engineConfiguration").d("isVideoScene $isVideoScene")
             if (isVideoScene) {
                 scope.launch {
-                    Timber.tag("engineConfiguration").d("Registering Giphy Asset Sources")
-                    engine.addGiphyAssetSources(assetSourceUsecase, assetUsecase)
+                    try {
+                        // Thêm Giphy asset source
+                        engine.addGiphyAssetSources(assetSourceUsecase, assetUsecase)
+                        Timber.tag("CreateReelTab").d("Added Giphy asset source successfully")
+                    } catch (e: Exception) {
+                        Timber.tag("CreateReelTab").e("Error configuring Giphy: ${e.message}")
+                    }
                 }
             } else {
                 Timber.tag("engineConfiguration").w("Not a video scene, skipping Giphy asset source registration")
             }
         }
     },
+    onError = { error ->
+        Timber.tag("EngineConfig").d("onError called: $error")
+    }
 )
 
 @OptIn(UnstableEditorApi::class)
@@ -219,7 +229,7 @@ fun CreateReelTab(
 
     Timber.tag(tag).d("EditorConfiguration created, initializing VideoEditor")
     VideoEditor(
-        engineConfiguration = rememberEngineConfigurationForScene(sceneUri, assetSourceUsecase, assetUsecase),
+        engineConfiguration = rememberEngineConfigurationForScene(sceneUri, userId, assetSourceUsecase, assetUsecase),
         editorConfiguration = editorConfiguration,
     ) {
         Timber.tag(tag).d("VideoEditor closed, popping back stack")
@@ -248,7 +258,6 @@ private fun getAssetLibrary(): AssetLibrary {
         titleRes = R.string.giphy,
         sourceTypes = listOf(giphyStickersAssetSourceType),
         assetType = AssetType.Sticker,
-        expandContent = LibraryContent.Stickers
     )
 
     // Tùy chỉnh LibraryCategory.Stickers

@@ -1,6 +1,5 @@
 package com.kyobi.createreel.asset
 
-import android.net.Uri
 import com.kyobi.domain.model.Assets
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.usecase.AssetSourceUsecase
@@ -9,7 +8,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import ly.img.engine.Asset
 import ly.img.engine.AssetContext
@@ -31,6 +29,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import timber.log.Timber
 
+const val tag = "RemoteAssetSource"
+
 suspend fun Engine.addRemoteAssetSources(
     paths: Set<RemoteAssetSource.Path>,
     assetSourceUsecase: AssetSourceUsecase,
@@ -40,9 +40,9 @@ suspend fun Engine.addRemoteAssetSources(
         .map { async { RemoteAssetSource(engine = this@addRemoteAssetSources, path = it, assetSourceUsecase, assetUsecase).create() } }
         .awaitAll()
         .forEach { source ->
-            Timber.tag("RemoteAssetSource").d("Adding source: ${source.sourceId}")
+            Timber.tag(tag).d("Adding source: ${source.sourceId}")
             asset.addSource(source)
-            Timber.tag("RemoteAssetSource").d("Source ${source.sourceId} added successfully")
+            Timber.tag(tag).d("Source ${source.sourceId} added successfully")
         }
 }
 
@@ -51,7 +51,7 @@ suspend fun Engine.addGiphyAssetSources(
     assetUsecase: AssetUsecase
 ) = coroutineScope {
     val paths = setOf(RemoteAssetSource.Path.GiphyStickers)
-    Timber.tag("RemoteAssetSource").d("Adding Giphy asset sources")
+    Timber.tag(tag).d("Adding Giphy asset sources")
     addRemoteAssetSources(paths, assetSourceUsecase, assetUsecase)
 }
 
@@ -68,46 +68,47 @@ class RemoteAssetSource @Inject constructor(
     }
 
     suspend fun create(): AssetSource {
-        Timber.tag("RemoteAssetSource").d("Starting create() for ${path.pathString}")
+        Timber.tag(tag).d("Starting create() for ${path.pathString}")
         val domainManifestData = withContext(Dispatchers.IO) {
-            Timber.tag("RemoteAssetSource").d("Fetching manifest data for ${path.pathString}")
+            Timber.tag(tag).d("Fetching manifest data for ${path.pathString}")
             val result = assetSourceUsecase.getGiphyAssetSource()
                 .catch { e ->
-                    Timber.tag("RemoteAssetSource").e("Flow error while fetching manifest: ${e.message}")
+                    Timber.tag(tag).e("Flow error while fetching manifest: ${e.message}")
                     throw e
                 }
                 .firstOrNull()
 
             if (result == null) {
-                Timber.tag("RemoteAssetSource").e("Asset source result is null")
+                Timber.tag(tag).e("Asset source result is null")
                 throw Exception("Asset source result is null")
             }
 
-            Timber.tag("RemoteAssetSource").d("Result from assetSourceUsecase: $result")
+            Timber.tag(tag).d("Result from assetSourceUsecase: $result")
             when (result) {
                 is DomainNetworkResult.Success -> {
                     val data = result.data
                     if (data.id != path.pathString.removePrefix("/")) {
-                        Timber.tag("RemoteAssetSource").e("Manifest id does not match path: expected ${path.pathString.removePrefix("/")}, got ${data.id}")
+                        Timber.tag(tag).e("Manifest id does not match path: expected ${path.pathString.removePrefix("/")}, got ${data.id}")
                         throw Exception("Manifest id does not match path")
                     }
-                    Timber.tag("RemoteAssetSource").d("Manifest data fetched: $data")
-                    Timber.tag("RemoteAssetSource").d("Manifest id: ${data.id}")
+                    Timber.tag(tag).d("Manifest data fetched: $data")
+                    Timber.tag(tag).d("Manifest id: ${data.id}")
                     data
                 }
                 else -> {
-                    Timber.tag("RemoteAssetSource").e("Failed to fetch asset source manifest: $result")
+                    Timber.tag(tag).e("Failed to fetch asset source manifest: $result")
                     throw Exception("Failed to fetch asset source manifest: $result")
                 }
             }
         }
 
-        Timber.tag("RemoteAssetSource").d("Creating AssetSource with id: ${domainManifestData.id}")
+        Timber.tag(tag).d("Creating AssetSource with id: ${domainManifestData.id}")
 
         // Create AssetSource instance
         val assetSource = object : AssetSource(domainManifestData.id) {
             override suspend fun findAssets(query: FindAssetsQuery): FindAssetsResult {
-                Timber.tag("RemoteAssetSource").d("findAssets called with query: ${query.query}, page: ${query.page}, perPage: ${query.perPage}, locale: ${query.locale}")
+                Timber.tag(tag).d("findAssets called with query: ${query.query}, page: ${query.page}, perPage: ${query.perPage}, locale: ${query.locale}")
+
                 val result = assetUsecase.getGiphyAssets(
                     query = query.query,
                     page = if (query.page > 0) query.page else 1,
@@ -115,22 +116,24 @@ class RemoteAssetSource @Inject constructor(
                     locale = query.locale
                 )
                     .catch { e ->
-                        Timber.tag("RemoteAssetSource").e("Flow error while fetching assets: ${e.message}")
+                        Timber.tag(tag).e("Flow error while fetching assets: ${e.message}")
                         throw e
                     }
                     .firstOrNull()
 
                 return if (result == null) {
-                    Timber.tag("RemoteAssetSource").e("Assets result is null")
+                    Timber.tag(tag).e("Assets result is null")
                     throw Exception("Assets result is null")
                 } else {
                     when (result) {
                         is DomainNetworkResult.Success -> {
-                            Timber.tag("RemoteAssetSource").d("Assets fetched: ${result.data.assets.size} items")
-                            mapAssetsToFindAssetsResult(result.data, this)
+                            Timber.tag(tag).d("Assets fetched: ${result.data.assets.size} items")
+                            val mappedResult = mapAssetsToFindAssetsResult(result.data, this)
+                            Timber.tag(tag).d("Returning FindAssetsResult with ${mappedResult.assets.size} assets")
+                            mappedResult
                         }
                         else -> {
-                            Timber.tag("RemoteAssetSource").e("Failed to fetch assets: $result")
+                            Timber.tag(tag).e("Failed to fetch assets: $result")
                             throw Exception("Failed to fetch assets: $result")
                         }
                     }
@@ -140,7 +143,7 @@ class RemoteAssetSource @Inject constructor(
             override suspend fun getGroups() = null
 
             override suspend fun applyAsset(asset: Asset): DesignBlock? {
-                Timber.tag("RemoteAssetSource").d("Applying asset: ${asset.id}")
+                Timber.tag(tag).d("Applying asset: ${asset.id}")
                 val block = engine.asset.defaultApplyAsset(asset) ?: return null
                 engine.block.ensureAssetDuration(block, asset)
                 engine.block.ensureMetadataKeys(block, asset, sourceId)
@@ -151,7 +154,7 @@ class RemoteAssetSource @Inject constructor(
                 asset: Asset,
                 block: DesignBlock,
             ) {
-                Timber.tag("RemoteAssetSource").d("Applying asset to block: ${asset.id}")
+                Timber.tag(tag).d("Applying asset to block: ${asset.id}")
                 engine.asset.defaultApplyAsset(asset, block)
                 engine.block.ensureMetadataKeys(block, asset, sourceId)
             }
@@ -169,9 +172,10 @@ class RemoteAssetSource @Inject constructor(
             )
         }
 
-        Timber.tag("RemoteAssetSource").d("AssetSource created successfully for ${path.pathString}")
+        Timber.tag(tag).d("AssetSource created successfully for ${path.pathString}")
         return assetSource
     }
+
     private fun BlockApi.ensureMetadataKeys(
         designBlock: DesignBlock,
         asset: Asset,
@@ -193,43 +197,61 @@ class RemoteAssetSource @Inject constructor(
         setDuration(designBlock, duration)
     }
 
-    private fun mapAssetsToFindAssetsResult(assets: Assets, assetSource: AssetSource): FindAssetsResult {
-        return FindAssetsResult(
-            assets = assets.assets.map { asset ->
-                Asset(
-                    id = asset.id,
-                    context = AssetContext(assetSource.sourceId),
-                    label = asset.label,
-                    locale = asset.locale,
-                    tags = asset.tags.takeIf { it.isNotEmpty() },
-                    groups = asset.groups.takeIf { it.isNotEmpty() },
-                    meta = asset.meta.takeIf { it.isNotEmpty() },
-                    payload = AssetPayload(
-                        sourceSet = asset.payload.sourceSet.map { source ->
-                            Source(
-                                uri = source.uri.toUri(),
-                                width = source.width,
-                                height = source.height
-                            )
-                        }
-                    ),
-                    credits = AssetCredits(
-                        name = asset.credits.name,
-                        uri = asset.credits.url.toUri()
-                    ),
-                    license = AssetLicense(
-                        name = asset.license.name,
-                        uri = asset.license.url.toUri()
-                    ),
-                    utm = AssetUTM(
-                        source = asset.utm.source,
-                        medium = asset.utm.medium
-                    )
+    private suspend fun mapAssetsToFindAssetsResult(assets: Assets, assetSource: AssetSource): FindAssetsResult {
+        val mappedAssets = assets.assets.map { asset ->
+            Timber.tag(tag).d("Mapping asset: ${asset.id}, sourceSet: ${asset.payload.sourceSet}")
+            val sourceSet = asset.payload.sourceSet.map { source ->
+                val dataUri = try {
+                    val imageData = withContext(Dispatchers.IO) {
+                        java.net.URL(source.uri).openStream().use { it.readBytes() }
+                    }
+                    val base64 = android.util.Base64.encodeToString(imageData, android.util.Base64.DEFAULT)
+                    val dataUri = "data:image/gif;base64,$base64"
+                    dataUri
+                } catch (e: Exception) {
+                    Timber.tag(tag).e("Error converting to Data URI for ${asset.id}: ${e.message}")
+                    source.uri
+                }
+
+                Source(
+                    uri = dataUri.toUri(),
+                    width = source.width,
+                    height = source.height
                 )
-            },
-            currentPage = assets.currentPage ?: 1,
-            nextPage = assets.nextPage ?: 1,
+            }
+            Timber.tag(tag).d("Mapping sourceSet: $sourceSet")
+            Asset(
+                id = asset.id,
+                context = AssetContext(assetSource.sourceId),
+                label = asset.label,
+                locale = asset.locale,
+                tags = asset.tags.takeIf { it.isNotEmpty() },
+                groups = asset.groups.takeIf { it.isNotEmpty() },
+                meta = asset.meta.takeIf { it.isNotEmpty() },
+                payload = AssetPayload(
+                    sourceSet = sourceSet
+                ),
+                credits = AssetCredits(
+                    name = asset.credits.name,
+                    uri = asset.credits.url.toUri()
+                ),
+                license = AssetLicense(
+                    name = asset.license.name,
+                    uri = asset.credits.url.toUri()
+                ),
+                utm = AssetUTM(
+                    source = asset.utm.source,
+                    medium = asset.utm.medium
+                )
+            )
+        }
+        return FindAssetsResult(
+            assets = mappedAssets,
+            currentPage = assets.currentPage ?: -1,
+            nextPage = assets.nextPage ?: -1,
             total = assets.total
-        )
+        ).also {
+            Timber.tag(tag).d("Mapped assets: ${mappedAssets.map { asset -> asset.id to asset.payload.sourceSet }}")
+        }
     }
 }
