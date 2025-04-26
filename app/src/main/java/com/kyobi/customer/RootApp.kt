@@ -1,7 +1,6 @@
 package com.kyobi.customer
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -13,6 +12,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.kyobi.createreel.CreateReelTab
 import com.kyobi.customer.bottom_bar.BottomNavigationBar
 import com.kyobi.customer.ui.RootUpdateVersionDialog
 import com.kyobi.featurecommon.auth.AuthViewModel
@@ -54,6 +54,9 @@ fun RootApp(
             ) {
                 composable("home") {
                     HomeTab()
+                }
+                composable("create-reel") {
+                    CreateReelTab(navController = navController)
                 }
                 composable("trend") {
                     TrendTab(navController = navController)

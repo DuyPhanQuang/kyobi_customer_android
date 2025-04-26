@@ -30,6 +30,10 @@ fun DependencyHandler.viewDependencies() {
 
     // Glide
     implementation(Libraries.Glide.glide)
+
+    implementation("ly.img:engine:1.49.1")
+    implementation("ly.img:editor:1.49.1")
+    implementation("ly.img:camera:1.49.1")
 }
 
 fun DependencyHandler.composeDependencies() {
@@ -182,6 +186,7 @@ fun DependencyHandler.moduleDependencies() {
     FEATURE_PROFILE
     FEATURE_AUTHENTICATION
     FEATURE_TREND
+    FEATURE_CREATEREEL
 }
 
 val DependencyHandler.CORE
@@ -213,6 +218,9 @@ val DependencyHandler.FEATURE_PROFILE
 
 val DependencyHandler.FEATURE_TREND
     get() = implementation(project(mapOf("path" to ":feature:trend")))
+
+val DependencyHandler.FEATURE_CREATEREEL
+    get() = implementation(project(mapOf("path" to ":feature:createreel")))
 
 val DependencyHandler.FEATURE_AUTHENTICATION
     get() = implementation(project(mapOf("path" to ":feature:authentication")))

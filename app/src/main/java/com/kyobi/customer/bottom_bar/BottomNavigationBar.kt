@@ -40,6 +40,11 @@ val bottomNavItems = listOf(
         label = "Home"
     ),
     BottomNavItem(
+        route = "create-reel",
+        iconResId = R.drawable.ic_category_tab,
+        label = "Lookbook"
+    ),
+    BottomNavItem(
         route = "trend",
         iconResId = R.drawable.ic_category_tab,
         label = "Trend"
@@ -52,7 +57,6 @@ val bottomNavItems = listOf(
     )
 )
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun BottomNavigationBar(
     navController: NavHostController,

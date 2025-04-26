@@ -13,6 +13,13 @@ dependencyResolutionManagement {
         mavenCentral()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots/")
         maven(url = "https://jitpack.io") // Cho Supabase
+        maven {
+            name = "IMG.LY Artifactory"
+            url = uri("https://artifactory.img.ly/artifactory/maven")
+            mavenContent {
+                includeGroup("ly.img")
+            }
+        }
 //        val flutterStorageUrl = System.getenv("FLUTTER_STORAGE_BASE_URL") ?: "https://storage.googleapis.com"
 //        maven(url = "C:\\Users\\Admin\\qualgoo\\channel_flutter\\build\\host\\outputs\\repo")
 //        maven(url = "$flutterStorageUrl/download.flutter.io")
@@ -32,3 +39,4 @@ include(":feature:home")
 include(":feature:authentication")
 include(":feature:profile")
 include(":feature:trend")
+include(":feature:createreel")

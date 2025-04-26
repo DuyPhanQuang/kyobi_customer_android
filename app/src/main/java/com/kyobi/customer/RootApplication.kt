@@ -6,6 +6,7 @@ import com.kyobi.featurecommon.monitor.network.NetworkMonitor
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 import javax.inject.Inject
+import ly.img.engine.Engine
 
 const val ENGINE_ID = "1"
 
@@ -25,6 +26,9 @@ class RootApplication : Application() {
         // Global Crash Handler
         CrashReporter.initGlobalHandler()
         Timber.tag("MyApplication").d("Initiated global crash handler")
+
+        // Init Imgly Engine
+        Engine.init(this)
     }
 
     override fun onTerminate() {
