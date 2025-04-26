@@ -4,6 +4,8 @@ import com.kyobi.core.exceptions.ErrorHandler
 import com.kyobi.core.exceptions.KyobiApiException
 import com.kyobi.data.model.AnonymousLoginResponse
 import com.kyobi.data.model.AppVersionResponse
+import com.kyobi.data.model.AssetSourceResponse
+import com.kyobi.data.model.AssetsResponse
 import com.kyobi.data.model.AuthUserResponse
 import com.kyobi.data.model.LoginResponse
 import com.kyobi.data.model.NotificationResponse
@@ -154,6 +156,29 @@ class KyobiApiServiceImpl @Inject constructor(
                 401 -> throw KyobiApiException("Invalid or expired token", e.code())
                 else -> throw errorHandler.handleError(e)
             }
+        } catch (e: Exception) {
+            throw errorHandler.handleError(e)
+        }
+    }
+
+    override suspend fun getAssetSource(): AssetSourceResponse {
+        try {
+            Timber.tag(tag).d("Fetching asset source manifest")
+            return api.getAssetSource()
+        } catch (e: Exception) {
+            throw errorHandler.handleError(e)
+        }
+    }
+
+    override suspend fun getAssets(
+        query: String?,
+        page: Int?,
+        perPage: Int?,
+        locale: String?
+    ): AssetsResponse {
+        try {
+            Timber.tag(tag).d("Fetching assets with query: $query, page: $page, perPage: $perPage")
+            return api.getAssets(query, page, perPage, locale)
         } catch (e: Exception) {
             throw errorHandler.handleError(e)
         }

@@ -4,6 +4,8 @@ import com.kyobi.core.network.WithAuthHeaders
 import com.kyobi.data.model.AuthUserResponse
 import com.kyobi.data.model.AnonymousLoginResponse
 import com.kyobi.data.model.AppVersionResponse
+import com.kyobi.data.model.AssetSourceResponse
+import com.kyobi.data.model.AssetsResponse
 import com.kyobi.data.model.LoginResponse
 import com.kyobi.data.model.NotificationResponse
 import com.kyobi.data.model.SignupResponse
@@ -15,6 +17,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface KyobiApiService {
     @POST("auth/login")
@@ -51,4 +54,15 @@ interface KyobiApiService {
         @Path("id") id: String,
         @Body request: UnregisterTokenRequest
     ): NotificationResponse
+
+    @GET("api/assets/v1/giphy-stickers")
+    suspend fun getAssetSource(): AssetSourceResponse
+
+    @GET("api/assets/v1/giphy-stickers/assets")
+    suspend fun getAssets(
+        @Query("query") query: String? = "fashion style",
+        @Query("page") page: Int? = 1,
+        @Query("per_page") perPage: Int? = 10,
+        @Query("locale") locale: String? = "en"
+    ): AssetsResponse
 }

@@ -20,7 +20,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kyobi.feature.createreel.R
-import ly.img.editor.DismissVideoExportEvent
 import ly.img.editor.EditorUiState
 import ly.img.editor.HideLoading
 import ly.img.editor.core.EditorContext
@@ -29,7 +28,6 @@ import ly.img.editor.core.event.EditorEvent
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.core.os.ParcelCompat
-import ly.img.editor.DismissCloseConfirmationDialogEvent
 
 // highlight-configuration-custom-state
 data class OverlayCustomState(

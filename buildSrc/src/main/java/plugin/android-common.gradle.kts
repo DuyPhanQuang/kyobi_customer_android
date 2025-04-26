@@ -5,6 +5,7 @@ import viewDependencies
 import composeDependencies
 import implementation
 import testDependencies
+import java.util.Properties
 
 plugins {
     id("com.android.library")

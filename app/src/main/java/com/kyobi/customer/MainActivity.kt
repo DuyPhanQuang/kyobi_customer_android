@@ -6,6 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.kyobi.customer.ui.RequestNotificationPermissionIfNeeded
+import com.kyobi.domain.usecase.AssetSourceUsecase
+import com.kyobi.domain.usecase.AssetUsecase
 import com.kyobi.featurecommon.auth.session.SessionEventBus
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -17,6 +19,12 @@ class MainActivity : ComponentActivity() {
     private val tag = "MainActivity"
     @Inject
     lateinit var sessionEventBus: SessionEventBus
+
+    @Inject
+    lateinit var assetSourceUsecase: AssetSourceUsecase
+
+    @Inject
+    lateinit var assetUsecase: AssetUsecase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +45,10 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             )
-            RootApp()
+            RootApp(
+                assetSourceUsecase = assetSourceUsecase,
+                assetUsecase = assetUsecase
+            )
         }
     }
 }
