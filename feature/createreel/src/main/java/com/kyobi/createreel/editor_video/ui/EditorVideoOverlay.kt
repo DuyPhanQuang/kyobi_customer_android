@@ -19,7 +19,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kyobi.feature.createreel.R
-import ly.img.editor.EditorUiState
 import ly.img.editor.HideLoading
 import ly.img.editor.core.EditorContext
 import ly.img.editor.core.event.EditorEvent
@@ -27,9 +26,8 @@ import ly.img.editor.core.event.EditorEvent
 @Composable
 fun EditorVideoOverlay(
     editorContext: EditorContext,
-    state: EditorUiState,
-    isExporting: Boolean,
-    animatedProgress: Float
+    animatedProgress: Float,
+    onExportCancelled: () -> Unit,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -41,58 +39,53 @@ fun EditorVideoOverlay(
                 .align(Alignment.TopStart)
         )
 
-        // ProgressBar ở giữa màn hình
-        if (isExporting) {
-            Column(
+        Column(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .background(
+                    color = Color(0xFF1A1A1A).copy(alpha = 0.8f),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            LinearProgressIndicator(
+                progress = { animatedProgress },
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .background(
-                        color = Color(0xFF1A1A1A).copy(alpha = 0.8f),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .size(width = 200.dp, height = 8.dp),
+                color = Color(0xFF00A1D6),
+                trackColor = Color(0xFFF5F5F5)
+            )
+            Text(
+                text = "Exporting: ${(animatedProgress * 100).toInt()}%",
+                color = Color.White,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+            Text(text = "Please wait. If you want to cancel this process, click the button.")
+            TextButton(
+                onClick = {
+                    editorContext.eventHandler.send(HideLoading)
+                    editorContext.eventHandler.send(EditorEvent.Export.Cancel())
+                    onExportCancelled()
+                },
             ) {
-                LinearProgressIndicator(
-                    progress = { animatedProgress },
-                    modifier = Modifier
-                        .size(width = 200.dp, height = 8.dp),
-                    color = Color(0xFF00A1D6),
-                    trackColor = Color(0xFFF5F5F5)
-                )
-                Text(
-                    text = "Exporting: ${(animatedProgress * 100).toInt()}%",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-                TextButton(
-                    onClick = {
-                        editorContext.eventHandler.send(HideLoading)
-                        editorContext.eventHandler.send(EditorEvent.Export.Cancel())
-                        editorContext.eventHandler.send(EditorEvent.CloseEditor())
-                    },
-                ) {
-                    Text(text = "Cancel")
-                }
+                Text(text = "Cancel")
             }
         }
 
-        // Thông báo khuyến khích ở góc dưới bên phải
-        if (!state.sceneIsLoaded) {
-            Text(
-                text = "Tặng voucher 10% khi đăng Lookbook lên Kyobi!",
-                color = Color.White,
-                fontSize = 12.sp,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-                    .background(
-                        color = Color(0xFF00A1D6),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-            )
-        }
+        Text(
+            text = "Tặng voucher 10% khi đăng Lookbook lên Kyobi!",
+            color = Color.White,
+            fontSize = 12.sp,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+                .background(
+                    color = Color(0xFF00A1D6),
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        )
     }
 }

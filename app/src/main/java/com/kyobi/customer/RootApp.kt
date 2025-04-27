@@ -99,7 +99,6 @@ fun RootApp(
                             cameraResult = recording,
                             userId = userId,
                             editorVideoViewModel = editorVideoViewModel,
-                            activity = context as Activity,
                             isExporting = isExporting,
                             animatedProgress = animatedProgress,
                             onClose = {

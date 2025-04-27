@@ -74,7 +74,6 @@ fun NavBackStackEntry.getDecodedByKey(key: String): String? {
     return this.arguments?.getString(key)?.decodeBase64(Screen.BASE_64_URL_PREFIX)
 }
 
-
 @Composable
 fun <T> NavHostController.getParcelable(key: String): T? = previousBackStackEntry
     ?.savedStateHandle

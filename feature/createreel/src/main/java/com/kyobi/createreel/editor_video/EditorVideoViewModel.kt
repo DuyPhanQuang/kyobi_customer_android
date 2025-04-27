@@ -26,7 +26,6 @@ import ly.img.editor.ShowVideoExportErrorEvent
 import ly.img.editor.ShowVideoExportProgressEvent
 import ly.img.editor.ShowVideoExportSuccessEvent
 import ly.img.editor.core.event.EditorEvent
-import ly.img.editor.core.event.EditorEventHandler
 import ly.img.editor.core.library.AssetLibrary
 import ly.img.editor.core.library.AssetType
 import ly.img.editor.core.library.LibraryCategory
@@ -35,7 +34,9 @@ import ly.img.editor.core.library.addSection
 import ly.img.editor.core.library.data.AssetSourceType
 import ly.img.engine.Engine
 import ly.img.engine.SceneMode
+import ly.img.engine.populateAssetSource
 import timber.log.Timber
+import androidx.core.net.toUri
 
 @HiltViewModel
 class EditorVideoViewModel @Inject constructor(
@@ -43,6 +44,7 @@ class EditorVideoViewModel @Inject constructor(
     private val assetUsecase: AssetUsecase
 ) : ViewModel() {
     private val tag = "EditorVideoViewModel"
+    private val stickerMiscId = "ly.img.sticker.misc"
 
     // Trạng thái cho ProgressBar
     private val _isExporting = MutableStateFlow(false)
@@ -51,8 +53,13 @@ class EditorVideoViewModel @Inject constructor(
     private val _exportProgress = MutableStateFlow(0f)
     val exportProgress: StateFlow<Float> = _exportProgress.asStateFlow()
 
+    fun resetExportProgress() {
+        _isExporting.value = false
+        _exportProgress.value = 0f
+    }
+
     fun getAssetLibrary(): AssetLibrary {
-        Timber.tag("AssetLibrary").d("getAssetLibrary called")
+        Timber.tag(tag).d("getAssetLibrary called")
         val giphyStickersAssetSourceType = AssetSourceType("giphy-stickers")
         val giphySection = LibraryContent.Section(
             titleRes = R.string.giphy,
@@ -60,7 +67,7 @@ class EditorVideoViewModel @Inject constructor(
             assetType = AssetType.Sticker,
         )
         val customStickers = LibraryCategory.Stickers.addSection(giphySection)
-        Timber.tag("AssetLibrary").d("Configuring AssetLibrary with Giphy section, sourceId: giphy-stickers")
+        Timber.tag(tag).d("Configuring AssetLibrary with Giphy section, sourceId: giphy-stickers")
         return AssetLibrary.getDefault(
             tabs = listOf(
                 AssetLibrary.Tab.VIDEOS,
@@ -76,25 +83,28 @@ class EditorVideoViewModel @Inject constructor(
     fun configureEngine(engine: Engine) {
         viewModelScope.launch {
             val isVideoScene = engine.scene.getMode() == SceneMode.VIDEO
-            Timber.tag("engineConfiguration").d("isVideoScene $isVideoScene")
+            Timber.tag(tag).d("isVideoScene $isVideoScene")
             if (isVideoScene) {
                 try {
                     engine.addGiphyAssetSources(assetSourceUsecase, assetUsecase)
                     Timber.tag(tag).d("Added Giphy asset source successfully")
+
+                    // Giữ nguyên phần populateAssetSource cho sticker mặc định
+                    engine.populateAssetSource(
+                        id = stickerMiscId,
+                        jsonUri = "https://cdn.img.ly/assets/demo/v2/ly.img.sticker.misc/content.json".toUri(),
+                        replaceBaseUri = "https://cdn.img.ly/assets/demo/v2/ly.img.sticker.misc".toUri(),
+                    )
                 } catch (e: Exception) {
                     Timber.tag(tag).e("Error configuring Giphy: ${e.message}")
                 }
             } else {
-                Timber.tag("engineConfiguration").w("Not a video scene, skipping Giphy asset source registration")
+                Timber.tag(tag).w("Not a video scene, skipping Giphy asset source registration")
             }
         }
     }
 
-    fun handleEditorEvent(
-        activity: Activity,
-        state: EditorUiState,
-        event: EditorEvent
-    ): EditorUiState {
+    fun handleEditorEvent(activity: Activity, state: EditorUiState, event: EditorEvent): EditorUiState {
         return when (event) {
             is OnSceneLoaded -> {
                 Timber.tag(tag).d("Scene loaded successfully")
@@ -131,11 +141,11 @@ class EditorVideoViewModel @Inject constructor(
                 state
             }
             is ShowVideoExportErrorEvent -> {
-                Toast.makeText(activity, "Export failed. Please try again.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, "Export video failed. Please try again.", Toast.LENGTH_SHORT).show()
                 EditorDefaults.onEvent(activity, state, event)
             }
             is ShowVideoExportProgressEvent -> {
-                Timber.tag(tag).d("Export progress: ${event.progress}")
+                Timber.tag(tag).d("Export video progress: ${event.progress}")
                 _isExporting.value = true
                 _exportProgress.value = event.progress
                 EditorDefaults.onEvent(activity, state, event)

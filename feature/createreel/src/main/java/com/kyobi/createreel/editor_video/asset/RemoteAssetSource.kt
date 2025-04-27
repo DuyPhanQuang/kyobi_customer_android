@@ -199,7 +199,6 @@ class RemoteAssetSource @Inject constructor(
 
     private suspend fun mapAssetsToFindAssetsResult(assets: Assets, assetSource: AssetSource): FindAssetsResult {
         val mappedAssets = assets.assets.map { asset ->
-            Timber.tag(tag).d("Mapping asset: ${asset.id}, sourceSet: ${asset.payload.sourceSet}")
             val sourceSet = asset.payload.sourceSet.map { source ->
                 val dataUri = try {
                     val imageData = withContext(Dispatchers.IO) {
@@ -219,7 +218,6 @@ class RemoteAssetSource @Inject constructor(
                     height = source.height
                 )
             }
-            Timber.tag(tag).d("Mapping sourceSet: $sourceSet")
             Asset(
                 id = asset.id,
                 context = AssetContext(assetSource.sourceId),
@@ -250,8 +248,6 @@ class RemoteAssetSource @Inject constructor(
             currentPage = assets.currentPage ?: -1,
             nextPage = assets.nextPage ?: -1,
             total = assets.total
-        ).also {
-            Timber.tag(tag).d("Mapped assets: ${mappedAssets.map { asset -> asset.id to asset.payload.sourceSet }}")
-        }
+        )
     }
 }

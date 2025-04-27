@@ -1,6 +1,5 @@
 package com.kyobi.createreel.editor_video
 
-import android.app.Activity
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +16,6 @@ fun EditorVideoScreen(
     cameraResult: CameraResult.Record?,
     userId: String?,
     editorVideoViewModel: EditorVideoViewModel,
-    activity: Activity,
     isExporting: Boolean,
     animatedProgress: Float,
     onClose: () -> Unit
@@ -26,12 +24,16 @@ fun EditorVideoScreen(
     Timber.tag(tag).d("EditorConfiguration created, initializing VideoEditor")
 
     Box(
-        modifier =
-            Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
     ) {
         VideoEditor(
             engineConfiguration = getEngineConfiguration(selectType, uri, cameraResult, userId, editorVideoViewModel),
-            editorConfiguration = getVideoEditorConfiguration(activity, editorVideoViewModel, isExporting, animatedProgress),
+            editorConfiguration = getVideoEditorConfiguration(
+                editorVideoViewModel,
+                isExporting,
+                animatedProgress,
+                onExportCancelled = { editorVideoViewModel.resetExportProgress() }
+            ),
         ) {
             Timber.tag(tag).d("VideoEditor closed, invoking onClose")
             onClose()
