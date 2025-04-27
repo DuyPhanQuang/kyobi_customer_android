@@ -9,7 +9,7 @@ import androidx.core.content.FileProvider
 import android.content.Context
 import java.io.File
 
-object VideoUtils {
+object CreateReelUtils {
     fun saveVideoToGallery(context: Context, videoFile: File): String? {
         val contentValues = ContentValues().apply {
             put(MediaStore.Video.Media.DISPLAY_NAME, "lookbook_${System.currentTimeMillis()}.mp4")

@@ -1,8 +1,12 @@
 package com.kyobi.featurecommon.routes
 
+import androidx.compose.runtime.Composable
 import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavHostController
 import androidx.navigation.navArgument
-import com.kyobi.core.utils.ImageUtils.encodeBase64
+import com.kyobi.core.utils.CoreUtils.decodeBase64
+import com.kyobi.core.utils.CoreUtils.encodeBase64
 
 sealed class Screen(
     val routeScheme: String,
@@ -25,26 +29,17 @@ sealed class Screen(
         arguments = emptyList(),
     )
 
-    data object VideoUi : Screen(
-        routeScheme = "create-reel?scene={scene}",
-        arguments = listOf(
-            navArgument("scene") {
-                nullable = true
-                defaultValue = null
-            },
-        ),
-    )
-
     // EditorVideoScreen
     data object EditorVideo : Screen(
-        routeScheme = "editor-video?sceneUri={sceneUri}&videoUri={videoUri}&userId={userId}",
+        routeScheme = "editor-video?selectType={selectType}&uri={uri}&userId={userId}",
         arguments = listOf(
-            navArgument("sceneUri") {
+            navArgument("selectType") {
                 nullable = false
                 type = androidx.navigation.NavType.StringType
             },
-            navArgument("videoUri") {
-                nullable = false
+            navArgument("uri") {
+                nullable = true
+                defaultValue = null
                 type = androidx.navigation.NavType.StringType
             },
             navArgument("userId") {
@@ -70,3 +65,17 @@ sealed class Screen(
         const val BASE_64_URL_PREFIX = "data:text/plain;base64,"
     }
 }
+
+fun NavBackStackEntry.getDecodedUserId(): String? {
+    return this.arguments?.getString("userId")?.decodeBase64(Screen.BASE_64_URL_PREFIX)
+}
+
+fun NavBackStackEntry.getDecodedByKey(key: String): String? {
+    return this.arguments?.getString(key)?.decodeBase64(Screen.BASE_64_URL_PREFIX)
+}
+
+
+@Composable
+fun <T> NavHostController.getParcelable(key: String): T? = previousBackStackEntry
+    ?.savedStateHandle
+    ?.get<T>(key)

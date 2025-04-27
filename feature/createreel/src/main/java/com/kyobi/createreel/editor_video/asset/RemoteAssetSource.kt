@@ -1,4 +1,4 @@
-package com.kyobi.createreel.asset
+package com.kyobi.createreel.editor_video.asset
 
 import com.kyobi.domain.model.Assets
 import com.kyobi.domain.model.DomainNetworkResult

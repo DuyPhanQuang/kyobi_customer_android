@@ -6,8 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import com.kyobi.customer.ui.RequestNotificationPermissionIfNeeded
-import com.kyobi.domain.usecase.AssetSourceUsecase
-import com.kyobi.domain.usecase.AssetUsecase
 import com.kyobi.featurecommon.auth.session.SessionEventBus
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch

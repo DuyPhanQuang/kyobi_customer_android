@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.kyobi.createreel.editor_video.ui.EditorVideoOverlay
 import com.kyobi.createreel.editor_video.ui.buildEditorVideoNavigationBarList
+import com.kyobi.createreel.editor_video.ui.editorVideoDock
 import ly.img.editor.EditorConfiguration
 import ly.img.editor.EditorUiMode
 import ly.img.editor.EditorUiState

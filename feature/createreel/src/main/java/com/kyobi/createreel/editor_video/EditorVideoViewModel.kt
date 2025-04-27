@@ -3,15 +3,14 @@ package com.kyobi.createreel.editor_video
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import android.app.Activity
-import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kyobi.createreel.VideoUtils.saveVideoToGallery
+import com.kyobi.createreel.CreateReelUtils.saveVideoToGallery
 import com.kyobi.domain.usecase.AssetSourceUsecase
 import com.kyobi.domain.usecase.AssetUsecase
 import com.kyobi.feature.createreel.R
-import com.kyobi.createreel.asset.addGiphyAssetSources
+import com.kyobi.createreel.editor_video.asset.addGiphyAssetSources
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,11 +73,7 @@ class EditorVideoViewModel @Inject constructor(
         )
     }
 
-    fun configureEngine(
-        engine: Engine,
-        eventHandler: EditorEventHandler,
-        sceneUri: Uri
-    ) {
+    fun configureEngine(engine: Engine) {
         viewModelScope.launch {
             val isVideoScene = engine.scene.getMode() == SceneMode.VIDEO
             Timber.tag("engineConfiguration").d("isVideoScene $isVideoScene")

@@ -38,6 +38,7 @@
             <option value="$PROJECT_DIR$/featurecommon" />
             <option value="$PROJECT_DIR$/featurecommon/auth" />
             <option value="$PROJECT_DIR$/featurecommon/monitor" />
+            <option value="$PROJECT_DIR$/featurecommon/routes" />
           </set>
         </option>
       </GradleProjectSettings>

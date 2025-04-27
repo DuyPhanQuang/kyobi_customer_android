@@ -1,4 +1,4 @@
-package com.kyobi.createreel.editor_video
+package com.kyobi.createreel.editor_video.ui
 
 import androidx.compose.runtime.Composable
 import ly.img.editor.core.component.Dock
