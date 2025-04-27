@@ -1,7 +1,6 @@
 package com.kyobi.customer
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -12,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
@@ -32,6 +30,7 @@ import ly.img.editor.core.theme.EditorTheme
 import timber.log.Timber
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.kyobi.createreel.editor_video.EditorVideoScreen
 import com.kyobi.createreel.editor_video.EditorVideoViewModel
 import com.kyobi.createreel.editor_video.SelectMediaType
@@ -52,14 +51,16 @@ fun RootApp(
     editorVideoViewModel: EditorVideoViewModel = hiltViewModel()
 ) {
     val tag = "RootApp"
-    val context = LocalContext.current
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val shouldShowBottomBar = currentRoute != Screen.EditorVideo.routeScheme
 
     AppTheme {
         Scaffold(
             bottomBar = {
-                BottomNavigationBar(
-                    navController = navController,
-                )
+                if (shouldShowBottomBar) {
+                    BottomNavigationBar(navController = navController)
+                }
             },
         ) { innerPadding ->
             Timber.tag(tag).d("Inner padding: top=${innerPadding.calculateTopPadding()}, bottom=${innerPadding.calculateBottomPadding()}")

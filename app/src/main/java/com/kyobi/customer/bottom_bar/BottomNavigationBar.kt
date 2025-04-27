@@ -45,11 +45,15 @@ import com.kyobi.createreel.editor_video.SelectMediaType
 import com.kyobi.customer.R
 import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.featurecommon.routes.Screen
+import com.kyobi.theme.Colors
 import com.kyobi.theme.kyobiTheme
+import ly.img.camera.core.CameraConfiguration
+import ly.img.camera.core.CameraMode
 import ly.img.camera.core.CameraResult
 import ly.img.camera.core.CaptureVideo
 import ly.img.camera.core.EngineConfiguration
 import timber.log.Timber
+import kotlin.time.Duration.Companion.seconds
 
 enum class NavBarItemType {
     HOME,
@@ -289,7 +293,13 @@ fun BottomNavigationBar(
                     showBottomSheet = false
                     val cameraInput = CaptureVideo.Input(
                         engineConfiguration = EngineConfiguration(license = Secrets.license, userId = userId),
-                    )
+                        cameraMode = CameraMode.Standard(),
+                        cameraConfiguration = CameraConfiguration(
+                            recordingColor = Colors().logo,
+                            maxTotalDuration = 180.seconds,
+                            allowExceedingMaxDuration = false
+                        )
+                        )
                     cameraLauncher.launch(cameraInput)
                 },
                 modifier = Modifier

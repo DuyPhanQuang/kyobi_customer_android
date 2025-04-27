@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import ly.img.editor.DismissCloseConfirmationDialogEvent
 import ly.img.editor.EditorDefaults
 import ly.img.editor.EditorUiState
 import ly.img.editor.HideLoading
@@ -37,6 +36,9 @@ import ly.img.engine.SceneMode
 import ly.img.engine.populateAssetSource
 import timber.log.Timber
 import androidx.core.net.toUri
+import ly.img.editor.DismissVideoExportEvent
+import ly.img.engine.AssetDefinition
+import ly.img.engine.AssetPayload
 
 @HiltViewModel
 class EditorVideoViewModel @Inject constructor(
@@ -68,16 +70,86 @@ class EditorVideoViewModel @Inject constructor(
         )
         val customStickers = LibraryCategory.Stickers.addSection(giphySection)
         Timber.tag(tag).d("Configuring AssetLibrary with Giphy section, sourceId: giphy-stickers")
+
+        // Section cho Custom Audio
+        val customAudioAssetSourceType = AssetSourceType("custom-audio")
+        val audioSection = LibraryContent.Section(
+            titleRes = R.string.audio,
+            sourceTypes = listOf(customAudioAssetSourceType),
+            assetType = AssetType.Audio,
+        )
+        val customAudios = LibraryCategory.Audio.addSection(audioSection)
+        Timber.tag(tag).d("Configuring AssetLibrary with Custom Audio section, sourceId: custom-audio")
+
         return AssetLibrary.getDefault(
             tabs = listOf(
                 AssetLibrary.Tab.VIDEOS,
+                AssetLibrary.Tab.IMAGES,
                 AssetLibrary.Tab.AUDIOS,
                 AssetLibrary.Tab.TEXT,
                 AssetLibrary.Tab.SHAPES,
                 AssetLibrary.Tab.STICKERS,
             ),
-            stickers = customStickers
+            stickers = customStickers,
+            audios = customAudios
         )
+    }
+
+    private fun configureAudioAssetSource(engine: Engine) {
+        // Tạo source cho audio
+        val audioSourceId = "custom-audio"
+        engine.asset.addLocalSource(
+            sourceId = audioSourceId,
+            supportedMimeTypes = listOf("audio/mp3") // Hỗ trợ MP3, có thể thêm WAV nếu cần
+        )
+
+        // Thêm từng audio asset
+        val audioAssets = listOf(
+            AssetDefinition(
+                id = "audio1",
+                label = mapOf(
+                    "en" to "Background Music 1",
+                    "es" to "Música de fondo 1"
+                ),
+                tags = mapOf(
+                    "en" to listOf("background", "music", "relaxing"),
+                    "es" to listOf("fondo", "música", "relajante")
+                ),
+                meta = mapOf(
+                    "uri" to "file:///android_asset/audio/background_music1.mp3",
+                    "thumbUri" to "file:///android_asset/audio/background_music1_thumb.png", // Thumbnail nếu có
+                    "mimeType" to "audio/mp3",
+                    "duration" to "120" // Thời lượng (giây), tùy chọn
+                ),
+                payload = AssetPayload() // Không cần payload đặc biệt cho audio
+            ),
+            AssetDefinition(
+                id = "audio2",
+                label = mapOf(
+                    "en" to "Background Music 2",
+                    "es" to "Música de fondo 2"
+                ),
+                tags = mapOf(
+                    "en" to listOf("background", "music", "upbeat"),
+                    "es" to listOf("fondo", "música", "alegre")
+                ),
+                meta = mapOf(
+                    "uri" to "file:///android_asset/audio/background_music2.mp3",
+                    "thumbUri" to "file:///android_asset/audio/background_music2_thumb.png",
+                    "mimeType" to "audio/mp3",
+                    "duration" to "150"
+                ),
+                payload = AssetPayload()
+            )
+        )
+
+        // Thêm từng asset vào source
+        audioAssets.forEach { asset ->
+            engine.asset.addAsset(
+                sourceId = audioSourceId,
+                asset = asset
+            )
+        }
     }
 
     fun configureEngine(engine: Engine) {
@@ -95,11 +167,14 @@ class EditorVideoViewModel @Inject constructor(
                         jsonUri = "https://cdn.img.ly/assets/demo/v2/ly.img.sticker.misc/content.json".toUri(),
                         replaceBaseUri = "https://cdn.img.ly/assets/demo/v2/ly.img.sticker.misc".toUri(),
                     )
+
+                    configureAudioAssetSource(engine)
+                    Timber.tag(tag).d("Added Audio asset source successfully")
                 } catch (e: Exception) {
-                    Timber.tag(tag).e("Error configuring Giphy: ${e.message}")
+                    Timber.tag(tag).e("Error configuring Giphy, Audio : ${e.message}")
                 }
             } else {
-                Timber.tag(tag).w("Not a video scene, skipping Giphy asset source registration")
+                Timber.tag(tag).w("Not a video scene, skipping Giphy, Audio asset source registration")
             }
         }
     }
@@ -118,14 +193,10 @@ class EditorVideoViewModel @Inject constructor(
                 Timber.tag(tag).d("Hiding loading indicator")
                 state.copy(showLoading = false)
             }
-            is DismissCloseConfirmationDialogEvent -> {
+            is DismissVideoExportEvent -> {
                 val hasChanges = true
                 if (hasChanges) {
-                    Toast.makeText(
-                        activity,
-                        "You have unsaved changes. Are you sure you want to exit?",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(activity, "Export Cancelled", Toast.LENGTH_SHORT).show()
                 }
                 EditorDefaults.onEvent(activity, state, event)
             }
