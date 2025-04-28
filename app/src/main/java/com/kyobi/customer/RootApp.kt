@@ -1,7 +1,6 @@
 package com.kyobi.customer
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,12 +11,8 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.navDeepLink
 import com.kyobi.customer.bottom_bar.BottomNavigationBar
 import com.kyobi.customer.ui.RootUpdateVersionDialog
 import com.kyobi.featurecommon.auth.AuthViewModel
@@ -33,6 +28,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.kyobi.createreel.editor_video.EditorVideoScreen
 import com.kyobi.createreel.editor_video.EditorVideoViewModel
 import com.kyobi.createreel.editor_video.SelectMediaType
+import com.kyobi.customer.extension.composable
 import com.kyobi.featurecommon.routes.Screen
 import com.kyobi.featurecommon.routes.getDecodedByKey
 import com.kyobi.featurecommon.routes.getDecodedUserId
@@ -116,16 +112,4 @@ fun RootApp(
             }
         }
     }
-}
-
-fun NavGraphBuilder.composable(
-    screen: Screen,
-    content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit
-) {
-    composable(
-        route = screen.routeScheme,
-        deepLinks = listOf(navDeepLink { uriPattern = screen.deeplinkScheme }),
-        arguments = screen.arguments,
-        content = content,
-    )
 }
