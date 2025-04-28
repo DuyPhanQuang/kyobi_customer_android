@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.Dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.common.util.UnstableApi
@@ -12,6 +13,7 @@ import androidx.navigation.NavController
 import androidx.recyclerview.widget.RecyclerView
 import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.trend.model.Reel
+import com.kyobi.trend.test_ui.ReelListNew
 import com.kyobi.trend.ui.ReelList
 
 @OptIn(UnstableApi::class)
@@ -20,6 +22,8 @@ fun TrendTab(
     navController: NavController,
     viewModel: TrendTabViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
+    topPadding: Dp,
+    bottomPadding: Dp,
 ) {
     val authUiState by authViewModel.authUiState.collectAsStateWithLifecycle()
     val uiState = viewModel.trendTabUiState
@@ -80,6 +84,13 @@ fun TrendTab(
     ReelList(
         reels = mockData,
         mediaCache,
-        recyclerViewRef = recyclerViewRef
+        recyclerViewRef = recyclerViewRef,
+        topSystemBarHeight = topPadding,
+        bottomNavBarHeight = bottomPadding
     )
+
+//    ReelListNew(
+//        topSystemBarHeight = topPadding,
+//        bottomNavBarHeight = bottomPadding
+//    )
 }

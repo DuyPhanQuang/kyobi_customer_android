@@ -20,7 +20,7 @@ class RootApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        val debug = true
+        val debug = BuildConfig.DEBUG
         if (debug) {
             Timber.plant(Timber.DebugTree())
         }

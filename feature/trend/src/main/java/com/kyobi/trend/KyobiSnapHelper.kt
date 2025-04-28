@@ -5,10 +5,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.abs
+import kotlin.math.sign
 
-class KyobiSnapHelper: LinearSnapHelper() {
+class KyobiSnapHelper : LinearSnapHelper() {
     private var recyclerView: RecyclerView? = null
-    private var lastSnapPosition: Int = -1 // Lưu vị trí snap trước đó
+    private var lastSnapPosition: Int = -1
+    private var lastVelocityY: Int = 0
 
     override fun attachToRecyclerView(recyclerView: RecyclerView?) {
         super.attachToRecyclerView(recyclerView)
@@ -32,12 +34,10 @@ class KyobiSnapHelper: LinearSnapHelper() {
         val lm = layoutManager as? LinearLayoutManager ?: return null
         val firstVisiblePosition = lm.findFirstVisibleItemPosition()
         val lastVisiblePosition = lm.findLastVisibleItemPosition()
-        if (firstVisiblePosition == RecyclerView.NO_POSITION ||
-            lastVisiblePosition == RecyclerView.NO_POSITION) {
+        if (firstVisiblePosition == RecyclerView.NO_POSITION || lastVisiblePosition == RecyclerView.NO_POSITION) {
             return null
         }
 
-        // Tìm view gần nhất với trung tâm màn hình
         var closestDistanceToCenter = Int.MAX_VALUE
         var snapView: View? = null
         for (pos in firstVisiblePosition..lastVisiblePosition) {
@@ -49,25 +49,30 @@ class KyobiSnapHelper: LinearSnapHelper() {
             }
         }
 
-        // Đảm bảo snap chính xác ngay cả khi fling nhanh
         if (snapView != null) {
-            val snapPosition = lm.getPosition(snapView)
-            // Chỉ gọi smoothScrollToPosition nếu vị trí snap thay đổi
-            if (snapPosition != lastSnapPosition) {
-                lastSnapPosition = snapPosition
+            if (lastSnapPosition != -1 && abs(lastVelocityY) > 3000) {
+                val direction = lastVelocityY.sign
+                val targetPosition = lastSnapPosition + direction
+                if (targetPosition in firstVisiblePosition..lastVisiblePosition) {
+                    val targetView = lm.findViewByPosition(targetPosition)
+                    if (targetView != null) {
+                        snapView = targetView
+                    }
+                }
+            }
+
+            val finalSnapPosition = lm.getPosition(snapView)
+            if (finalSnapPosition != lastSnapPosition) {
+                lastSnapPosition = finalSnapPosition
             }
         }
         return snapView
     }
 
     override fun calculateScrollDistance(velocityX: Int, velocityY: Int): IntArray {
-        val out = super.calculateScrollDistance(velocityX, velocityY)
-        if (recyclerView?.layoutManager?.canScrollVertically() == true) {
-            // TikTok: ~0.1f-0.15f
-            // Giảm quán tính fling
-            val scaledVelocity = (velocityY * 0.15f).toInt()
-            out[1] = scaledVelocity
-        }
+        val out = IntArray(2)
+        out[1] = (velocityY * 0.3f).toInt()
+        lastVelocityY = velocityY
         return out
     }
 

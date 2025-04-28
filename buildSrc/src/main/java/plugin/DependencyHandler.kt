@@ -161,6 +161,8 @@ fun DependencyHandler.baseDependencies() {
 
     //Semver
     implementation(Libraries.Semver.semver)
+
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
 }
 
 fun DependencyHandler.testDependencies() {

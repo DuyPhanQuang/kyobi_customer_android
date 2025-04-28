@@ -1,6 +1,9 @@
 package com.kyobi.trend.ui
 
+import android.widget.EdgeEffect
 import androidx.annotation.OptIn
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
@@ -8,20 +11,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
-import com.kyobi.trend.KyobiSnapHelper
 import com.kyobi.featurecommon.monitor.network.NetworkUtils
 import com.kyobi.trend.cache.MediaCache
 import com.kyobi.trend.config.ReelConfigViewModel
 import com.kyobi.trend.model.Reel
 import com.kyobi.featurecommon.monitor.network.NetworkMonitor
+import com.kyobi.trend.test_ui.CenterSnapHelper
 import timber.log.Timber
 import kotlin.math.abs
 
@@ -30,7 +35,9 @@ import kotlin.math.abs
 fun ReelList(
     reels: List<Reel>,
     mediaCache: MediaCache,
-    recyclerViewRef: MutableState<RecyclerView?>? = null
+    recyclerViewRef: MutableState<RecyclerView?>? = null,
+    topSystemBarHeight: Dp = Dp(0f),
+    bottomNavBarHeight: Dp = Dp(0f)
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -51,43 +58,13 @@ fun ReelList(
     }
 
     AndroidView(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 0.dp, bottom = bottomNavBarHeight),
         factory = { context2 ->
             RecyclerView(context2).apply {
-                layoutManager = object : LinearLayoutManager(context2, VERTICAL, false) {
-                    override fun smoothScrollToPosition(
-                        recyclerView: RecyclerView,
-                        state: RecyclerView.State,
-                        position: Int) {
-                        val smoothScroller = object : LinearSmoothScroller(recyclerView.context) {
-                            override fun calculateSpeedPerPixel(displayMetrics: android.util.DisplayMetrics): Float {
-                                return 90f / displayMetrics.densityDpi // Tốc độ cuộn chậm, mượt hơn
-                            }
-                            override fun calculateTimeForDeceleration(dx: Int): Int {
-                                return 80 // Thời gian giảm tốc cố định, tạo cảm giác mượt
-                            }
-                            override fun getVerticalSnapPreference(): Int {
-                                return SNAP_TO_START // Đảm bảo snap vào đầu view
-                            }
-                            override fun calculateDtToFit(
-                                viewStart: Int,
-                                viewEnd: Int,
-                                boxStart: Int,
-                                boxEnd: Int,
-                                snapPreference: Int
-                            ): Int {
-                                // Đảm bảo dừng chính xác tại vị trí mong muốn, không nhún
-                                return boxStart - viewStart
-                            }
-                        }
-                        smoothScroller.targetPosition = position
-                        startSmoothScroll(smoothScroller)
-                    }
-                    override fun scrollVerticallyBy(dy: Int, recycler: RecyclerView.Recycler?, state: RecyclerView.State?): Int {
-                        return super.scrollVerticallyBy(dy, recycler, state)
-                    }
-                } .apply {
-                    // Thiết lập số lượng item prefetch ban đầu (thay thế cho getExtraLayoutSpace)
-                    initialPrefetchItemCount = 5// Prefetch 5 item để cuộn mượt
+                layoutManager = LinearLayoutManager(context2, RecyclerView.VERTICAL, false).apply {
+                    initialPrefetchItemCount = 5
                 }
                 // khởi tạo và gán adapter
                 adapter.value = ReelAdapter(
@@ -108,72 +85,31 @@ fun ReelList(
                 setRecycledViewPool(RecyclerView.RecycledViewPool().apply {
                     setMaxRecycledViews(0, 5)
                 })
-                val snapHelper = KyobiSnapHelper()
+                val snapHelper = CenterSnapHelper()
                 snapHelper.attachToRecyclerView(this)
-                // auto play video when snap
-                addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                    private var lastVisiblePosition = -1 // Lưu visiblePosition để tránh xử lý lặp lại
-                    private var isProgrammaticScroll = false // Biến để kiểm soát cuộn tự động
-                    private var lastPlayTime = 0L // thời gian lần gần nhất play
-                    private val playDebounceDuration = 300L
-                    private var lastScrollTime = 0L
-                    private val scrollDebounceDuration = 100L // thời gian lần gần nhất scroll
 
-                    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                        super.onScrollStateChanged(recyclerView, newState)
-                        if (newState == RecyclerView.SCROLL_STATE_IDLE && !isProgrammaticScroll) {
-                            val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                            val firstVisiblePosition = layoutManager.findFirstVisibleItemPosition()
-                            val lastVisiblePosition = layoutManager.findLastVisibleItemPosition()
-                            if (firstVisiblePosition == RecyclerView.NO_POSITION ||
-                                lastVisiblePosition == RecyclerView.NO_POSITION) {
-                                Timber.tag("ReelList").w("No visible position found")
-                                return
+                // hiệu ứng kéo-nhả giống TikTok (ở đầu/cuối danh sách)
+                edgeEffectFactory = object : RecyclerView.EdgeEffectFactory() {
+                    override fun createEdgeEffect(recyclerView: RecyclerView, direction: Int): EdgeEffect {
+                        return object : EdgeEffect(recyclerView.context) {
+                            override fun onPull(deltaDistance: Float) {
+                                super.onPull(deltaDistance)
+                                recyclerView.translationY = deltaDistance * recyclerView.height * 0.2f
                             }
-                            var visiblePosition = firstVisiblePosition
-                            var closestDistanceToCenter = Int.MAX_VALUE
-                            // Tìm view gần trung tâm nhất
-                            for (i in firstVisiblePosition..lastVisiblePosition) {
-                                val child = layoutManager.findViewByPosition(i) ?: continue
-                                val viewCenter = (child.top + child.bottom) / 2
-                                val containerCenter = recyclerView.height / 2
-                                val distanceToCenter = abs(viewCenter - containerCenter)
-                                if (distanceToCenter < closestDistanceToCenter) {
-                                    closestDistanceToCenter = distanceToCenter
-                                    visiblePosition = i
-                                }
+                            override fun onRelease() {
+                                super.onRelease()
+                                recyclerView.animate().translationY(0f).setDuration(200).start()
                             }
-                            // Kiểm tra xem view có cần snap không
-                            // set ngưỡng để snap nhạy hơn
-                            // // TikTok: ~15-20% chiều cao màn hình
-                            val snapThreshold = recyclerView.height / 5
-                            val snapView = layoutManager.findViewByPosition(visiblePosition)
-                            if (snapView != null) {
-                                val viewCenter = (snapView.top + snapView.bottom) / 2
-                                val containerCenter = recyclerView.height / 2
-                                val distanceToCenter = abs(viewCenter - containerCenter)
-                                if (distanceToCenter > snapThreshold) {
-                                    // Tìm vị trí gần trung tâm hơn
-                                    for (i in firstVisiblePosition..lastVisiblePosition) {
-                                        val child = layoutManager.findViewByPosition(i) ?: continue
-                                        val childCenter = (child.top + child.bottom) / 2
-                                        val childDistance = abs(childCenter - containerCenter)
-                                        if (childDistance < distanceToCenter) {
-                                            visiblePosition = i
-                                            break
-                                        }
-                                    }
-                                    // Chỉ gọi snap nếu vị trí thay đổi
-                                    if (visiblePosition != this.lastVisiblePosition) {
-                                        isProgrammaticScroll = true
-                                        recyclerView.smoothScrollToPosition(visiblePosition)
-                                    }
-                                }
-                            }
-                        } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                            isProgrammaticScroll = false // Reset sau khi cuộn tự động hoàn tất
                         }
                     }
+                }
+
+                // auto play video when snap
+                addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                    private var lastPlayTime = 0L // thời gian lần gần nhất play
+                    private val playDebounceDuration = 200L
+                    private var lastScrollTime = 0L
+                    private val scrollDebounceDuration = 100L // thời gian lần gần nhất scroll
 
                     override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                         super.onScrolled(recyclerView, dx, dy)
@@ -194,7 +130,7 @@ fun ReelList(
                         // Xác định vị trí video "nổi bật" để play
                         // vị trí nổi bật là vị trí gần trung tâm nhất
                         val targetPosition = determineProminentPosition(recyclerView, firstVisiblePosition, lastVisiblePosition)
-                        // Debounce: Chỉ play nếu đã qua 300ms kể từ lần play trước
+                        // Debounce: Chỉ play nếu đã qua 200ms kể từ lần play trước
                         if (targetPosition != RecyclerView.NO_POSITION &&
                             targetPosition != currentPlayingPosition &&
                             (currentTime - lastPlayTime) > playDebounceDuration) {
@@ -213,19 +149,14 @@ fun ReelList(
                         val centerY = screenHeight / 2
                         var closestPosition = RecyclerView.NO_POSITION
                         var minDistanceToCenter = Int.MAX_VALUE
-                        // Duyệt qua các view hiện tại trên màn hình
+
                         for (position in firstVisiblePosition..lastVisiblePosition) {
-                            val view = recyclerView.findViewHolderForAdapterPosition(position)?.itemView
-                            if (view != null) {
-                                val viewTop = view.top
-                                val viewBottom = view.bottom
-                                val viewCenterY = (viewTop + viewBottom) / 2
-                                // Tính khoảng cách từ trung tâm của view đến trung tâm màn hình
-                                val distanceToCenter = abs(viewCenterY - centerY)
-                                if (distanceToCenter < minDistanceToCenter) {
-                                    minDistanceToCenter = distanceToCenter
-                                    closestPosition = position
-                                }
+                            val view = recyclerView.findViewHolderForAdapterPosition(position)?.itemView ?: continue
+                            val viewCenterY = (view.top + view.bottom) / 2
+                            val distanceToCenter = abs(viewCenterY - centerY)
+                            if (distanceToCenter < minDistanceToCenter) {
+                                minDistanceToCenter = distanceToCenter
+                                closestPosition = position
                             }
                         }
                         return closestPosition

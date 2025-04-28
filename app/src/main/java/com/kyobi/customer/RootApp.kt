@@ -4,15 +4,12 @@ import android.annotation.SuppressLint
 import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -123,9 +120,6 @@ fun RootApp(
             NavHost(
                 navController = navController,
                 startDestination = "home",
-                modifier = Modifier
-                    .fillMaxSize().padding(
-                        bottom = innerPadding.calculateBottomPadding())
             ) {
                 composable(screen = Screen.Home) {
                     HomeTab()
@@ -161,7 +155,11 @@ fun RootApp(
                     }
                 }
                 composable(screen = Screen.Trend) {
-                    TrendTab(navController = navController)
+                    TrendTab(
+                        navController = navController,
+                        topPadding = innerPadding.calculateTopPadding(),
+                        bottomPadding = innerPadding.calculateBottomPadding()
+                    )
                 }
                 composable(screen = Screen.Profile) {
                     ProfileTab(navController = navController)

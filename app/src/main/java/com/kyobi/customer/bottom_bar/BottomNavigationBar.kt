@@ -168,22 +168,20 @@ fun BottomNavigationBar(
                                 painter = painterResource(id = R.drawable.ic_category_tab),
                                 contentDescription = "Lookbook",
                                 modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg),
-                                tint = MaterialTheme.kyobiTheme.colors.text.neutral50
                             )
                         },
                         label = {
                             Text(
                                 text = "Lookbook",
                                 style = MaterialTheme.kyobiTheme.typography.labelSmall,
-                                color = MaterialTheme.kyobiTheme.colors.secondary
                             )
                         },
                         alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.kyobiTheme.colors.primary,
-                            unselectedIconColor = MaterialTheme.kyobiTheme.colors.secondary,
-                            selectedTextColor = MaterialTheme.kyobiTheme.colors.primary,
-                            unselectedTextColor = MaterialTheme.kyobiTheme.colors.secondary,
+                            selectedIconColor = MaterialTheme.kyobiTheme.colors.text.neutral950,
+                            unselectedIconColor = MaterialTheme.kyobiTheme.colors.text.neutral500,
+                            selectedTextColor = MaterialTheme.kyobiTheme.colors.text.neutral950,
+                            unselectedTextColor = MaterialTheme.kyobiTheme.colors.text.neutral500,
                         )
                     )
                 }
@@ -235,7 +233,6 @@ fun BottomNavigationBar(
                                             if (selected) MaterialTheme.kyobiTheme.icon.lg
                                             else MaterialTheme.kyobiTheme.icon.lg
                                         ),
-                                        tint = MaterialTheme.kyobiTheme.colors.text.neutral50
                                     )
                                 }
                             }
@@ -244,16 +241,14 @@ fun BottomNavigationBar(
                             Text(
                                 text = item.label,
                                 style = MaterialTheme.kyobiTheme.typography.labelSmall,
-                                color = if (isSelected) MaterialTheme.kyobiTheme.colors.primary
-                                else MaterialTheme.kyobiTheme.colors.secondary
                             )
                         },
                         alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.kyobiTheme.colors.primary,
-                            unselectedIconColor = MaterialTheme.kyobiTheme.colors.secondary,
-                            selectedTextColor = MaterialTheme.kyobiTheme.colors.primary,
-                            unselectedTextColor = MaterialTheme.kyobiTheme.colors.secondary,
+                            selectedIconColor = MaterialTheme.kyobiTheme.colors.text.neutral950,
+                            unselectedIconColor = MaterialTheme.kyobiTheme.colors.text.neutral500,
+                            selectedTextColor = MaterialTheme.kyobiTheme.colors.text.neutral950,
+                            unselectedTextColor = MaterialTheme.kyobiTheme.colors.text.neutral500,
                         )
                     )
                 }

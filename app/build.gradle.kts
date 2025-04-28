@@ -68,6 +68,7 @@ android {
         getByName("debug") {
             isDebuggable = true
             isMinifyEnabled = false
+            isShrinkResources = false
             initWith(getByName("debug"))
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -83,6 +84,7 @@ android {
         getByName("release") {
             isDebuggable = false
             isMinifyEnabled = true
+            isShrinkResources = true
             initWith(getByName("release"))
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
