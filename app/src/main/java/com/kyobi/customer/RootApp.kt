@@ -1,12 +1,15 @@
 package com.kyobi.customer
 
 import android.annotation.SuppressLint
+import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -42,6 +45,7 @@ val LocalAuthViewModel = compositionLocalOf<AuthViewModel> { error("No AuthViewM
 @Composable
 fun RootApp(
     navController: NavHostController,
+    deepLinkState: State<Uri?>,
     authViewModel: AuthViewModel = hiltViewModel(),
     editorVideoViewModel: EditorVideoViewModel = hiltViewModel()
 ) {
@@ -49,6 +53,61 @@ fun RootApp(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val shouldShowBottomBar = currentRoute != Screen.EditorVideo.routeScheme
+
+    // Xử lý deep link
+    LaunchedEffect(deepLinkState.value) {
+        val deepLinkUri = deepLinkState.value
+        if (deepLinkUri != null) {
+            Timber.tag(tag).d("Handling deep link with URI: $deepLinkUri")
+            try {
+                when (deepLinkUri.path) {
+                    "/" -> {
+                        navController.navigate(Screen.Home.routeScheme) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                    "/home" -> {
+                        navController.navigate(Screen.Home.routeScheme) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                    "/trend" -> {
+                        navController.navigate(Screen.Trend.routeScheme) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                    "/profile" -> {
+                        navController.navigate(Screen.Profile.routeScheme) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                    else -> {
+                        Timber.tag(tag).w("Unknown deeplink path: ${deepLinkUri.path}, falling back to Home")
+                        navController.navigate(Screen.Home.routeScheme) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.tag(tag).e(e, "Failed to navigate with deep link: $deepLinkUri")
+            }
+        }
+    }
 
     AppTheme {
         Scaffold(
@@ -58,8 +117,6 @@ fun RootApp(
                 }
             },
         ) { innerPadding ->
-            Timber.tag(tag).d("Inner padding: top=${innerPadding.calculateTopPadding()}, bottom=${innerPadding.calculateBottomPadding()}")
-
             // show popup update version dialog
             RootUpdateVersionDialog()
 

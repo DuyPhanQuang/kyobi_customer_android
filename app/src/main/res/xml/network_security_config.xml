@@ -4,5 +4,6 @@
         <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">127.0.0.1</domain>
         <domain includeSubdomains="true">10.0.2.2</domain> <!-- Địa chỉ đặc biệt để emulator truy cập localhost -->
+        <domain includeSubdomains="true">192.168.148.2</domain> <!-- ip local -->
     </domain-config>
 </network-security-config>

@@ -1,16 +1,17 @@
 package com.kyobi.customer
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.kyobi.customer.ui.RequestNotificationPermissionIfNeeded
 import com.kyobi.featurecommon.auth.session.SessionEventBus
-import com.kyobi.featurecommon.routes.Screen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -20,18 +21,27 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
     private val tag = "MainActivity"
     private var navController: NavHostController? = null
+    private var deepLinkState = mutableStateOf<Uri?>(null)
 
     @Inject
     lateinit var sessionEventBus: SessionEventBus
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Timber.tag(tag).d("onCreate called with intent: $intent")
+
+        deepLinkState.value = intent.data
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             val navController = rememberNavController()
             this.navController = navController
+
+            RootApp(
+                navController = navController,
+                deepLinkState = deepLinkState
+            )
 
             // xin cấp quyền thông báo
             RequestNotificationPermissionIfNeeded(
@@ -46,31 +56,24 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             )
-            RootApp(
-                navController = navController
-            )
         }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        handleDeepLink(intent)
+        Timber.tag(tag).d("onNewIntent called with intent: $intent")
+        setIntent(intent)
+        deepLinkState.value = intent.data
     }
 
-    private fun handleDeepLink(intent: Intent) {
+    override fun onResume() {
+        super.onResume()
+        Timber.tag(tag).d("onResume called with intent: $intent")
+        // Kiểm tra intent mới trong onResume (phòng trường hợp onNewIntent không được gọi)
         val uri = intent.data
-        Timber.d("Received deeplink: $uri")
-        val navController = this.navController ?: run {
-            Timber.e("NavController is null, cannot handle deeplink")
-            return
-        }
-        when (uri?.path) {
-            "/home" -> navController.navigate(Screen.Home.routeScheme)
-            "/trend" -> navController.navigate(Screen.Trend.routeScheme)
-            else -> {
-                Timber.w("Unknown deeplink path: ${uri?.path}, falling back to Home")
-                navController.navigate(Screen.Home.routeScheme)
-            }
+        if (uri != null && deepLinkState.value != uri) {
+            Timber.tag(tag).d("Found deep link in onResume: $uri")
+            deepLinkState.value = uri
         }
     }
 }
