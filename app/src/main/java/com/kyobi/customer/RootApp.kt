@@ -17,7 +17,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navDeepLink
 import com.kyobi.customer.bottom_bar.BottomNavigationBar
 import com.kyobi.customer.ui.RootUpdateVersionDialog
@@ -46,7 +45,7 @@ val LocalAuthViewModel = compositionLocalOf<AuthViewModel> { error("No AuthViewM
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun RootApp(
-    navController: NavHostController = rememberNavController(),
+    navController: NavHostController,
     authViewModel: AuthViewModel = hiltViewModel(),
     editorVideoViewModel: EditorVideoViewModel = hiltViewModel()
 ) {

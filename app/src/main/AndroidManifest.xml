@@ -37,13 +37,13 @@
             </intent-filter>
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-
                 <data
-                    android:host="ubq.page.link"
-                    android:scheme="https" />
+                    android:host="10.0.2.2"
+                    android:port="3000"
+                    android:scheme="http"
+                    android:pathPrefix="/" />
             </intent-filter>
         </activity>
 

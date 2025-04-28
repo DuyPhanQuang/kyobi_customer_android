@@ -1,0 +1,22 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.kyobi.customer.dev",
+      "sha256_cert_fingerprints": [
+        "9F:2A:91:05:15:7A:00:8B:3B:07:35:EE:1A:7C:3B:FD:9E:76:54:53:9D:88:C2:70:61:1A:DE:C5:77:F6:08:02"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.kyobi.customer",
+      "sha256_cert_fingerprints": [
+        "9F:2A:91:05:15:7A:00:8B:3B:07:35:EE:1A:7C:3B:FD:9E:76:54:53:9D:88:C2:70:61:1A:DE:C5:77:F6:08:02"
+      ]
+    }
+  }
+]
