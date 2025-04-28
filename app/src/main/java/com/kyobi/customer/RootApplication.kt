@@ -12,6 +12,8 @@ const val ENGINE_ID = "1"
 
 @HiltAndroidApp
 class RootApplication : Application() {
+    private val tag = "MyApplication"
+
     @Inject
     lateinit var networkMonitor: NetworkMonitor
 
@@ -25,7 +27,7 @@ class RootApplication : Application() {
 
         // Global Crash Handler
         CrashReporter.initGlobalHandler()
-        Timber.tag("MyApplication").d("Initiated global crash handler")
+        Timber.tag(tag).d("Initiated global crash handler")
 
         // Init Imgly Engine
         Engine.init(this)
@@ -34,6 +36,6 @@ class RootApplication : Application() {
     override fun onTerminate() {
         super.onTerminate()
         networkMonitor.cleanup()
-        Timber.tag("MyApplication").d("Cleaned up NetworkMonitor")
+        Timber.tag(tag).d("Cleaned up NetworkMonitor")
     }
 }

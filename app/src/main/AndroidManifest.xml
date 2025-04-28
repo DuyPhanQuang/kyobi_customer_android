@@ -35,14 +35,32 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Xử lý official url -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
-                    android:host="10.0.2.2"
+                    android:host="192.168.148.2"
                     android:port="3000"
                     android:scheme="http"
+                    android:pathPrefix="/" />
+            </intent-filter>
+            <!-- Xử lý intent:// -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="intent" />
+            </intent-filter>
+            <!-- Xử lý kyobi:// -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="kyobi"
+                    android:host="*"
                     android:pathPrefix="/" />
             </intent-filter>
         </activity>

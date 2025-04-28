@@ -29,7 +29,7 @@ fun TrendTab(
     val mockData = listOf(
         Reel(
             id = "reel_1",
-            videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1744549928872.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NDU0OTkyODg3Mi5tcDQiLCJpYXQiOjE3NDUxNDYyNjksImV4cCI6MTc0NTc1MTA2OX0.Ebac4L5rtd4bxIxCtL1WgC7KkeWF5riEkr0MtI3mYFo",
+            videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/9b52e1b2-59b8-4421-9c4c-395b35a311f7/video-1744688854378.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy85YjUyZTFiMi01OWI4LTQ0MjEtOWM0Yy0zOTViMzVhMzExZjcvdmlkZW8tMTc0NDY4ODg1NDM3OC5tcDQiLCJpYXQiOjE3NDU4MTEwOTcsImV4cCI6MTc0ODQwMzA5N30.P_6QrbrC933k5zuHGKaJ4V57aAvtwRGg0s7oYW6HlCE",
             status = "PUBLISHED",
             likeCount = 1200,
             commentCount = 150,
@@ -41,7 +41,7 @@ fun TrendTab(
         ),
         Reel(
             id = "reel_2",
-            videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1744549928872.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NDU0OTkyODg3Mi5tcDQiLCJpYXQiOjE3NDUxNDYyNjksImV4cCI6MTc0NTc1MTA2OX0.Ebac4L5rtd4bxIxCtL1WgC7KkeWF5riEkr0MtI3mYFo",
+            videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/9b52e1b2-59b8-4421-9c4c-395b35a311f7/video-1744688854378.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy85YjUyZTFiMi01OWI4LTQ0MjEtOWM0Yy0zOTViMzVhMzExZjcvdmlkZW8tMTc0NDY4ODg1NDM3OC5tcDQiLCJpYXQiOjE3NDU4MTEwOTcsImV4cCI6MTc0ODQwMzA5N30.P_6QrbrC933k5zuHGKaJ4V57aAvtwRGg0s7oYW6HlCE",
             status = "PUBLISHED",
             likeCount = 800,
             commentCount = 90,

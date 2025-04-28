@@ -61,7 +61,7 @@ sealed class Screen(
     )
 
     companion object {
-        private const val BASE_URL = "http://10.0.2.2:3000"
+        private const val BASE_URL = "http://192.168.148.2:3000"
         const val BASE_64_URL_PREFIX = "data:text/plain;base64,"
     }
 }
