@@ -105,7 +105,8 @@ object Libraries {
     }
 
     object Lottie {
-        const val lottie = "com.airbnb.android:lottie-compose:${Version.Lottie}"
+        const val lottieCompose = "com.airbnb.android:lottie-compose:${Version.Lottie}"
+        const val lottie = "com.airbnb.android:lottie:${Version.Lottie}"
     }
 
     object SquareUp {

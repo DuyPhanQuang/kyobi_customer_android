@@ -19,6 +19,20 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:surface_type="surface_view" />
 
+    <!-- Loading animation -->
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/loading_animation"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:visibility="gone"
+        app:lottie_rawRes="@raw/reel_loading_spinner"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <!-- info -->
     <TextView
         android:id="@+id/tv_reel_info"

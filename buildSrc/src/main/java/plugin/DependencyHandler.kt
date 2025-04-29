@@ -114,6 +114,7 @@ fun DependencyHandler.baseDependencies() {
     implementation(Libraries.AndroidX.workManager)
 
     //Lottie
+    implementation(Libraries.Lottie.lottieCompose)
     implementation(Libraries.Lottie.lottie)
 
     implementation(Libraries.Google.gson)

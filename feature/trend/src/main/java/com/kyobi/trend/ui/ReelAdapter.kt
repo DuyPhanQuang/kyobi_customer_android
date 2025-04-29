@@ -13,6 +13,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
+import com.airbnb.lottie.LottieAnimationView
 import com.kyobi.feature.trend.R
 import com.kyobi.trend.config.ReelConfigViewModel
 import com.kyobi.trend.model.Reel
@@ -56,6 +57,7 @@ class ReelAdapter(
                 Timber.tag(tag).d("Paused player at position $position during onViewRecycled")
             }
             holder.isSurfaceReady = false
+            holder.hideLoading()
             playbackViewModel.updateSurfaceReadyState(position, false) // Cập nhật trạng thái surface khi recycle
         }
     }
@@ -101,6 +103,7 @@ class ReelAdapter(
 
     inner class ReelViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val playerView: PlayerView = itemView.findViewById(R.id.player_view)
+        private val loadingAnimation: LottieAnimationView = itemView.findViewById(R.id.loading_animation)
         private val tvReelInfo: TextView = itemView.findViewById(R.id.tv_reel_info)
         var player: ExoPlayer? = null
         var isSurfaceReady = false
@@ -114,7 +117,41 @@ class ReelAdapter(
                         playbackViewModel.updateSurfaceReadyState(bindingAdapterPosition, true) // Thông báo cho ReelPlaybackViewModel rằng surface đã sẵn sàng
                     }
                 }
+                override fun onPlaybackStateChanged(state: Int) {
+                    Timber.tag(tag).d("Playback state changed for position $bindingAdapterPosition: $state")
+                    when (state) {
+                        Player.STATE_BUFFERING -> {
+                            showLoading()
+                        }
+                        Player.STATE_READY -> {
+                            if (player?.isPlaying == true) {
+                                hideLoading()
+                            }
+                        }
+                        Player.STATE_ENDED, Player.STATE_IDLE -> {
+                            hideLoading()
+                        }
+                    }
+                }
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    Timber.tag(tag).d("IsPlaying changed for position $bindingAdapterPosition: $isPlaying")
+                    if (isPlaying && player?.playbackState == Player.STATE_READY) {
+                        hideLoading()
+                    }
+                }
             })
+        }
+
+        fun showLoading() {
+            loadingAnimation.visibility = View.VISIBLE
+            loadingAnimation.playAnimation()
+            Timber.tag(tag).d("Showing loading animation for position $bindingAdapterPosition")
+        }
+
+        fun hideLoading() {
+            loadingAnimation.visibility = View.GONE
+            loadingAnimation.cancelAnimation()
+            Timber.tag(tag).d("Hiding loading animation for position $bindingAdapterPosition")
         }
 
         fun bind(reel: Reel, position: Int) {
