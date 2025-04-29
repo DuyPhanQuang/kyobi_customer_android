@@ -14,7 +14,7 @@ import javax.inject.Inject
 class TrendTabViewModel
 @OptIn(UnstableApi::class)
 @Inject constructor(
-    val mediaCache: MediaCache
+    private val mediaCache: MediaCache
 ): ViewModel() {
     var trendTabUiState by mutableStateOf(TrendTabUiState())
         private set

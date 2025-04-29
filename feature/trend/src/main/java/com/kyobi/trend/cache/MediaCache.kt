@@ -20,7 +20,7 @@ class MediaCache @Inject constructor(
     private var cache: SimpleCache? = null
     private val cacheDir = File(context.cacheDir, "media_cache")
 
-    private val cacheSizeMb = 50
+    private val cacheSizeMb = 200
 
     init {
         clearCacheIfOld()

@@ -16,6 +16,10 @@ import androidx.viewpager2.widget.ViewPager2
 import com.kyobi.feature.trend.R
 import com.kyobi.trend.config.ReelConfigViewModel
 import com.kyobi.trend.model.Reel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @UnstableApi
@@ -25,9 +29,11 @@ class ReelAdapter(
     lifecycleOwner: LifecycleOwner,
     private val configViewModel: ReelConfigViewModel,
     private val viewPager: ViewPager2,
-    private val playbackViewModel: ReelPlaybackViewModel
+    private val playbackViewModel: ReelPlaybackViewModel,
+    private val onPlayerReady: (position: Int, player: ExoPlayer, isSurfaceReady: Boolean) -> Unit
 ) : RecyclerView.Adapter<ReelAdapter.ReelViewHolder>() {
     private val tag = "ReelAdapter"
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReelViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -57,10 +63,26 @@ class ReelAdapter(
     override fun onBindViewHolder(holder: ReelViewHolder, position: Int) {
         holder.bind(reels[position], position)
         if (holder.player == null) {
-            holder.player = ExoPlayer.Builder(context).build()
-            holder.playerView.player = holder.player
-            configPlayerView(holder.playerView)
-            holder.setupPlayerListener()
+            coroutineScope.launch(Dispatchers.Default) {
+                val player = ExoPlayer.Builder(context).build()
+                withContext(Dispatchers.Main) {
+                    holder.player = player
+                    holder.playerView.player = player
+                    configPlayerView(holder.playerView)
+                    holder.setupPlayerListener()
+                    // Chuẩn bị ExoPlayer để đảm bảo surface được tạo
+                    player.prepare()
+                    // Buộc PlayerView render
+                    holder.playerView.requestLayout()
+                    holder.playerView.invalidate()
+                    holder.playerView.post {
+                        Timber.tag(tag).d("PlayerView size for position $position: ${holder.playerView.width}x${holder.playerView.height}")
+                    }
+                    // callback player đã sẵn sàng
+                    onPlayerReady(position, player, holder.isSurfaceReady)
+                    Timber.tag(tag).d("Player initialized for position $position")
+                }
+            }
         }
     }
 
@@ -99,10 +121,6 @@ class ReelAdapter(
             Timber.tag(tag).d("Binding position: $position")
             tvReelInfo.text = """
                 ID: ${reel.id}
-                Likes: ${reel.likeCount}
-                Comments: ${reel.commentCount}
-                Views: ${reel.viewCount}
-                Tags: ${reel.tags?.joinToString() ?: "None"}
             """.trimIndent()
         }
     }

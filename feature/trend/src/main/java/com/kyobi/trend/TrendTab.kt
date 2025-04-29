@@ -13,7 +13,6 @@ import androidx.navigation.NavController
 import androidx.recyclerview.widget.RecyclerView
 import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.trend.model.Reel
-import com.kyobi.trend.test_ui.ReelListNew
 import com.kyobi.trend.ui.ReelList
 
 @OptIn(UnstableApi::class)
@@ -85,9 +84,4 @@ fun TrendTab(
         topSystemBarHeight = topPadding,
         bottomNavBarHeight = bottomPadding
     )
-
-//    ReelListNew(
-//        topSystemBarHeight = topPadding,
-//        bottomNavBarHeight = bottomPadding
-//    )
 }
