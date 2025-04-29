@@ -2,8 +2,10 @@ package com.kyobi.trend.ui
 
 import android.widget.EdgeEffect
 import androidx.annotation.OptIn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
@@ -26,6 +28,7 @@ import com.kyobi.trend.cache.MediaCache
 import com.kyobi.trend.config.ReelConfigViewModel
 import com.kyobi.trend.model.Reel
 import com.kyobi.featurecommon.monitor.network.NetworkMonitor
+import com.kyobi.theme.kyobiTheme
 import com.kyobi.trend.test_ui.CenterSnapHelper
 import timber.log.Timber
 import kotlin.math.abs
@@ -39,6 +42,7 @@ fun ReelList(
     topSystemBarHeight: Dp = Dp(0f),
     bottomNavBarHeight: Dp = Dp(0f)
 ) {
+    val tag = "ReelList"
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val configViewModel: ReelConfigViewModel = hiltViewModel()
@@ -50,15 +54,16 @@ fun ReelList(
     // Observer network change
     val isConnected by networkMonitor.observeNetwork { isConnected ->
         if (isConnected) {
-            Timber.tag("ReelList").d("Network connected, retrying downloads")
+            Timber.tag(tag).d("Network connected, retrying downloads")
             adapter.value?.retryDownloads()
         } else {
-            Timber.tag("ReelList").d("Network disconnected")
+            Timber.tag(tag).d("Network disconnected")
         }
     }
 
     AndroidView(
         modifier = Modifier
+            .background(MaterialTheme.kyobiTheme.colors.primary)
             .fillMaxSize()
             .padding(top = 0.dp, bottom = bottomNavBarHeight),
         factory = { context2 ->
@@ -127,14 +132,16 @@ fun ReelList(
                         }
 
                         val currentPlayingPosition = adapter.value?.currentPlayingPosition
-                        // Xác định vị trí video "nổi bật" để play
-                        // vị trí nổi bật là vị trí gần trung tâm nhất
                         val targetPosition = determineProminentPosition(recyclerView, firstVisiblePosition, lastVisiblePosition)
-                        // Debounce: Chỉ play nếu đã qua 200ms kể từ lần play trước
-                        if (targetPosition != RecyclerView.NO_POSITION &&
+                        val nextPositionToPlay = determineEarlyPlayPosition(recyclerView, firstVisiblePosition, lastVisiblePosition, dy)
+                        // Phát sớm khi video lộ ra 1/4 chiều cao
+                        if (nextPositionToPlay != RecyclerView.NO_POSITION &&
+                            (currentTime - lastPlayTime) > playDebounceDuration) {
+                            adapter.value?.playVideoAtPosition(nextPositionToPlay)
+                            lastPlayTime = currentTime
+                        } else if (targetPosition != RecyclerView.NO_POSITION &&
                             targetPosition != currentPlayingPosition &&
                             (currentTime - lastPlayTime) > playDebounceDuration) {
-                            // Auto play video với vị trí nổi bật
                             adapter.value?.playVideoAtPosition(targetPosition)
                             lastPlayTime = currentTime
                         }
@@ -143,7 +150,45 @@ fun ReelList(
                         (recyclerView.adapter as? ReelAdapter)?.preloadVideos(firstVisiblePosition, lastVisiblePosition)
                     }
 
-                    // Hàm xác định vị trí video "nổi bật" (gần trung tâm màn hình nhất)
+                    /**
+                     * Xác định vị trí video cần phát sớm (khi video tiếp theo lộ ra 1/4 chiều cao từ cạnh màn hình).
+                     * @param dy: Hướng scroll (dy > 0: scroll xuống, dy < 0: scroll lên).
+                     */
+                    private fun determineEarlyPlayPosition(
+                        recyclerView: RecyclerView,
+                        firstVisiblePosition: Int,
+                        lastVisiblePosition: Int,
+                        dy: Int
+                    ): Int {
+                        val recyclerViewHeight = recyclerView.height
+                        for (position in firstVisiblePosition..lastVisiblePosition) {
+                            val child = recyclerView.findViewHolderForAdapterPosition(position)?.itemView ?: continue
+                            val childTop = child.top
+                            val childBottom = child.bottom
+                            val childHeight = childBottom - childTop
+
+                            // Khi scroll xuống (dy > 0), phát video tiếp theo khi nó lộ ra 1/4 từ cạnh dưới
+                            if (dy > 0 && position == firstVisiblePosition + 1) {
+                                val visibleHeight = recyclerViewHeight - childTop // Phần chiều cao của video lộ ra từ cạnh dưới
+                                if (visibleHeight >= childHeight / 4) { // Lộ ra 1/4 chiều cao video
+                                    Timber.tag(tag).d("Early play triggered at position $position (scroll down, 1/4 height visible)")
+                                    return position
+                                }
+                            }
+                            // Khi scroll lên (dy < 0), phát video trước đó khi nó lộ ra 1/4 từ cạnh trên
+                            else if (dy < 0 && position == lastVisiblePosition - 1) {
+                                val visibleHeight = childBottom // Phần chiều cao của video lộ ra từ cạnh trên
+                                if (visibleHeight >= childHeight / 4) { // Lộ ra 1/4 chiều cao video
+                                    Timber.tag(tag).d("Early play triggered at position $position (scroll up, 1/4 height visible)")
+                                    return position
+                                }
+                            }
+                        }
+                        return RecyclerView.NO_POSITION
+                    }
+
+                    // chỉ được sử dụng như một "phương án dự phòng" khi không có nextPositionToPlay
+                    // xác định vị trí video "nổi bật" (gần trung tâm màn hình nhất)
                     private fun determineProminentPosition(recyclerView: RecyclerView, firstVisiblePosition: Int, lastVisiblePosition: Int): Int {
                         val screenHeight = recyclerView.height
                         val centerY = screenHeight / 2
@@ -168,7 +213,7 @@ fun ReelList(
                         if (reelAdapter.currentPlayingPosition == RecyclerView.NO_POSITION) {
                             reelAdapter.playVideoAtPosition(0)
                         } else {
-                            Timber.tag("ReelList").d("Video at position 0 is already playing, skipping play")
+                            Timber.tag(tag).d("Video at position 0 is already playing, skipping play")
                         }
                     }
                 }

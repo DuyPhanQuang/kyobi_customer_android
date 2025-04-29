@@ -80,10 +80,10 @@ class ReelConfigViewModel @Inject constructor(
         }
 
         val (bufferMinMs, bufferMaxMs, bufferPlaybackMs, bufferRebufferMs) = when (networkType) {
-            NetworkType.WIFI -> listOf(3000, 50000, 3000, 3000)
-            NetworkType.FIVE_G -> listOf(4000, 40000, 4000, 4000)
-            NetworkType.FOUR_G -> listOf(5000, 30000, 5000, 5000)
-            else -> listOf(10000, 20000, 10000, 10000)
+            NetworkType.WIFI -> listOf(300, 900, 300, 300)
+            NetworkType.FIVE_G -> listOf(400, 1200, 400, 400)
+            NetworkType.FOUR_G -> listOf(500, 1500, 500, 500)
+            else -> listOf(150, 450, 150, 150)
         }
 
         val cacheSizeMb = when {
