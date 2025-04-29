@@ -27,7 +27,6 @@ fun TrendTab(
 ) {
     val authUiState by authViewModel.authUiState.collectAsStateWithLifecycle()
     val uiState = viewModel.trendTabUiState
-    val mediaCache = viewModel.mediaCache
     val recyclerViewRef = remember { mutableStateOf<RecyclerView?>(null) }
 
     val mockData = listOf(
@@ -83,8 +82,6 @@ fun TrendTab(
 
     ReelList(
         reels = mockData,
-        mediaCache,
-        recyclerViewRef = recyclerViewRef,
         topSystemBarHeight = topPadding,
         bottomNavBarHeight = bottomPadding
     )

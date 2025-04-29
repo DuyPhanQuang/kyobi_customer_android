@@ -9,10 +9,10 @@
     <!-- Video player -->
     <androidx.media3.ui.PlayerView
         android:id="@+id/player_view"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:background="@android:color/transparent"
-        app:resize_mode="fill"
+        app:resize_mode="fit"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -23,7 +23,7 @@
         android:id="@+id/tv_reel_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/white"
         android:textSize="16sp"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"

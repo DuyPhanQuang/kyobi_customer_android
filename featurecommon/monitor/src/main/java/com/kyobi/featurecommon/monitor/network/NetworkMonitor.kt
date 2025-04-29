@@ -12,11 +12,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.MainScope
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -38,6 +41,7 @@ class NetworkMonitor @Inject constructor(
     val networkType: StateFlow<NetworkType> = _networkType.asStateFlow()
 
     private var isNetworkCallbackRegistered = false
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
@@ -58,6 +62,7 @@ class NetworkMonitor @Inject constructor(
             Timber.tag("NetworkMonitor").d("Network capabilities changed: ${_networkType.value}")
         }
     }
+
     private fun updateNetworkType() {
         val network = connectivityManager.activeNetwork
         val capabilities = connectivityManager.getNetworkCapabilities(network)
@@ -88,17 +93,20 @@ class NetworkMonitor @Inject constructor(
         }
     }
 
-
     @Composable
     fun observeNetwork(onNetworkChange: (Boolean) -> Unit): State<Boolean> {
         val isConnectedState = remember { mutableStateOf(_isConnected.value) }
         val onNetworkChangeCallback = rememberUpdatedState(onNetworkChange)
 
         DisposableEffect(this) {
-            val job = MainScope().launch {
-                _isConnected.collect { isConnected ->
-                    isConnectedState.value = isConnected
-                    onNetworkChangeCallback.value(isConnected)
+            val job = scope.launch {
+                try {
+                    _isConnected.collect { isConnected ->
+                        isConnectedState.value = isConnected
+                        onNetworkChangeCallback.value(isConnected)
+                    }
+                } catch (e: Exception) {
+                    Timber.tag("NetworkMonitor").e(e, "Error collecting isConnected in observeNetwork")
                 }
             }
 
@@ -120,5 +128,6 @@ class NetworkMonitor @Inject constructor(
                 Timber.tag("NetworkMonitor").e(e, "Failed to unregister NetworkCallback")
             }
         }
+        scope.cancel()
     }
 }
