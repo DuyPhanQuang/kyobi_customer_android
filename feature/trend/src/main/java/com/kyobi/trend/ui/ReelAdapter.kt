@@ -145,9 +145,17 @@ class ReelAdapter(
                 override fun onPlaybackStateChanged(state: Int) {
                     Timber.tag(tag).d("Playback state changed for position $bindingAdapterPosition: $state")
                     when (state) {
-                        Player.STATE_BUFFERING -> showLoading()
-                        Player.STATE_READY -> if (player?.isPlaying == true) hideLoading()
-                        Player.STATE_ENDED, Player.STATE_IDLE -> hideLoading()
+                        Player.STATE_BUFFERING -> {
+                            showLoading()
+                        }
+                        Player.STATE_READY -> {
+                            if (player?.isPlaying == true) {
+                                hideLoading()
+                            }
+                        }
+                        Player.STATE_ENDED, Player.STATE_IDLE -> {
+                            hideLoading()
+                        }
                     }
                 }
                 override fun onIsPlayingChanged(isPlaying: Boolean) {

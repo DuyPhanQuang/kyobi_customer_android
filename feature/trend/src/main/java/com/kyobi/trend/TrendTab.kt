@@ -38,7 +38,7 @@ fun TrendTab(
             shareCount = 50,
             viewCount = 5000,
             createdAt = "2025-04-20T10:00:00Z",
-            thumbnailUrl = null,
+            thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
             tags = listOf("fashion", "trend")
         ),
         Reel(
@@ -50,7 +50,7 @@ fun TrendTab(
             shareCount = 30,
             viewCount = 3200,
             createdAt = "2025-04-19T15:30:00Z",
-            thumbnailUrl = null,
+            thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
             tags = listOf("style", "kyobi")
         ),
         Reel(
@@ -62,7 +62,7 @@ fun TrendTab(
             shareCount = 100,
             viewCount = 10000,
             createdAt = "2025-04-18T09:00:00Z",
-            thumbnailUrl = null,
+            thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
             tags = listOf("fashion", "sale")
         ),
         Reel(
@@ -74,7 +74,7 @@ fun TrendTab(
             shareCount = 0,
             viewCount = 0,
             createdAt = "2025-04-17T12:00:00Z",
-            thumbnailUrl = null,
+            thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
             tags = null
         ),
         Reel(
@@ -86,7 +86,7 @@ fun TrendTab(
             shareCount = 0,
             viewCount = 0,
             createdAt = "2025-04-17T12:00:00Z",
-            thumbnailUrl = null,
+            thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
             tags = null
         ),
         Reel(
@@ -98,7 +98,7 @@ fun TrendTab(
             shareCount = 100,
             viewCount = 10000,
             createdAt = "2025-04-18T09:00:00Z",
-            thumbnailUrl = null,
+            thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
             tags = listOf("fashion", "sale")
         ),
         Reel(
@@ -110,7 +110,7 @@ fun TrendTab(
             shareCount = 0,
             viewCount = 0,
             createdAt = "2025-04-17T12:00:00Z",
-            thumbnailUrl = null,
+            thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
             tags = null
         )
     )

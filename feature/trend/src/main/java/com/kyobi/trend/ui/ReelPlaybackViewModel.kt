@@ -1,6 +1,7 @@
 package com.kyobi.trend.ui
 
 import android.content.Context
+import android.widget.ImageView
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -25,11 +26,11 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.PlayerView
 import com.kyobi.trend.model.Reel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.kyobi.feature.trend.R
 
 @UnstableApi
 @HiltViewModel
@@ -44,12 +45,12 @@ class ReelPlaybackViewModel @Inject constructor(
     private val reels = mutableListOf<Reel>()
     private val playLock = ReentrantLock()
     private val preparedMediaItems = mutableMapOf<Int, MediaItem>()
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
     private val playerPool = mutableListOf<ExoPlayer>() // Pool chứa các ExoPlayer tái sử dụng
     private val playerPoolSize = 3 // Giới hạn pool là 3 player
     private val usedPlayers = mutableMapOf<Int, ExoPlayer>() // Map theo dõi position -> ExoPlayer đang sử dụng
     private val positionsToKeepRange = 2 // Preload 5 video (position - 2 đến position + 2)
     private val playerViews = mutableMapOf<Int, PlayerView>() // Thêm map để lưu PlayerView
+    private val preloadedMediaSourcePositions = mutableSetOf<Int>() // Thêm để theo dõi các position đã preload MediaSource
 
     init {
         // Lắng nghe trạng thái mạng để preload lại khi network restored
@@ -57,7 +58,7 @@ class ReelPlaybackViewModel @Inject constructor(
             networkMonitor.isConnected.collectLatest { isConnected ->
                 if (isConnected && currentPlayingPosition >= 0) {
                     Timber.tag(tag).d("Network restored, preloading around position $currentPlayingPosition")
-                    preloadMediaItemsAroundPosition(currentPlayingPosition)
+                    preloadMediaItemsAndMediaSource(currentPlayingPosition)
                     checkAndReplayVideoAfterNetworkRestored()
                 }
             }
@@ -98,7 +99,7 @@ class ReelPlaybackViewModel @Inject constructor(
                     val farthestPlayer = usedPlayers.remove(farthestPos)
                     surfaceReadyStates.remove(farthestPos)
                     farthestPlayer?.let {
-                        coroutineScope.launch {
+                        viewModelScope.launch {
                             withContext(Dispatchers.Default) {
                                 if (it.isPlaying || it.playbackState == Player.STATE_READY || it.playbackState == Player.STATE_BUFFERING) {
                                     it.repeatMode = Player.REPEAT_MODE_OFF
@@ -117,7 +118,7 @@ class ReelPlaybackViewModel @Inject constructor(
                 }
             }
             // Reset player trước khi tái sử dụng
-            coroutineScope.launch {
+            viewModelScope.launch {
                 withContext(Dispatchers.Default) {
                     selectedPlayer.clearMediaItems()
                     selectedPlayer.setPlaybackSpeed(1f)
@@ -139,9 +140,11 @@ class ReelPlaybackViewModel @Inject constructor(
         Timber.tag(tag).d("Setting reels, size: ${newReels.size}")
         reels.clear()
         reels.addAll(newReels)
+        preparedMediaItems.clear()
+        preloadedMediaSourcePositions.clear()
         // Tạo MediaItem cho các reel ngay cả khi không có mạng
-        coroutineScope.launch {
-            for (index in 0 until minOf(reels.size, positionsToKeepRange * 2 + 1)) {
+        viewModelScope.launch {
+            for (index in 0 until minOf(reels.size, positionsToKeepRange * 2 + 2)) {
                 if (!preparedMediaItems.containsKey(index)) {
                     val reel = reels[index]
                     val mediaItem = MediaItem.fromUri(reel.videoUrl.toUri()).buildUpon()
@@ -150,10 +153,6 @@ class ReelPlaybackViewModel @Inject constructor(
                     Timber.tag(tag).d("Created MediaItem for position $index (no preload due to network state)")
                 }
             }
-        }
-        // Preload video tại position 0 và các position lân cận
-        if (reels.isNotEmpty()) {
-            preloadMediaItemsAroundPosition(0)
         }
     }
 
@@ -205,60 +204,97 @@ class ReelPlaybackViewModel @Inject constructor(
     }
 
     private fun preloadVideoDataIntoCache(mediaSource: MediaSource, index: Int) {
-        coroutineScope.launch {
-            try {
-                val cache = mediaCache.getCache()
-                val dataSourceFactory = DefaultDataSource.Factory(context)
-                val cacheDataSourceFactory = CacheDataSource.Factory()
-                    .setCache(cache)
-                    .setUpstreamDataSourceFactory(dataSourceFactory)
-                    .setFlags(0)
-                // Tạo một CacheDataSource để preload dữ liệu
-                val cacheDataSource = cacheDataSourceFactory.createDataSource()
-                // Tải trước một phần dữ liệu video (ví dụ: 5MB đầu tiên)
-                val uri = mediaSource.mediaItem.localConfiguration?.uri
-                if (uri != null) {
-                    val dataSpec = DataSpec(uri, 0, 5 * 1024 * 1024) // Tải 1MB đầu tiên
-                    cacheDataSource.open(dataSpec)
-                    val buffer = ByteArray(1024)
-                    var bytesRead: Int
-                    while (cacheDataSource.read(buffer, 0, buffer.size).also { bytesRead = it } != C.RESULT_END_OF_INPUT) {
-                        // Đọc dữ liệu để ghi vào cache, nhưng không cần xử lý dữ liệu ở đây
-                    }
-                    cacheDataSource.close()
-                    Timber.tag(tag).d("Preloaded 5MB of video data into cache for position $index")
-                } else {
-                    Timber.tag(tag).w("Cannot preload data for position $index: Invalid URI")
+        Timber.tag(tag).d("Starting preload for position $index")
+        try {
+            val cache = mediaCache.getCache()
+            val dataSourceFactory = DefaultDataSource.Factory(context)
+            val cacheDataSourceFactory = CacheDataSource.Factory()
+                .setCache(cache)
+                .setUpstreamDataSourceFactory(dataSourceFactory)
+                .setFlags(0)
+            // Tạo một CacheDataSource để preload dữ liệu
+            val cacheDataSource = cacheDataSourceFactory.createDataSource()
+            // Tải trước một phần dữ liệu video (ví dụ: 5MB đầu tiên)
+            val uri = mediaSource.mediaItem.localConfiguration?.uri
+            if (uri != null) {
+                // Tải 2 giây đầu tiên (giả sử bitrate trung bình là 1Mbps = 125KB/s)
+                val bytesToLoad = 125 * 1024 * 2 // 2 giây = 250KB
+                val dataSpec = DataSpec(uri, 0, bytesToLoad.toLong())
+                cacheDataSource.open(dataSpec)
+                val buffer = ByteArray(1024)
+                var bytesRead: Int
+                var totalBytesRead = 0L
+                while (cacheDataSource.read(buffer, 0, buffer.size).also { bytesRead = it } != C.RESULT_END_OF_INPUT) {
+                    totalBytesRead += bytesRead
+                    if (totalBytesRead >= bytesToLoad) break // Dừng khi tải đủ 2 giây
                 }
-            } catch (e: Exception) {
-                Timber.tag(tag).e(e, "Failed to preload data for position $index: ${e.message}")
+                cacheDataSource.close()
+                Timber.tag(tag).d("Preloaded 2 seconds of video data into cache for position $index")
+            } else {
+                Timber.tag(tag).w("Cannot preload data for position $index: Invalid URI")
             }
+        } catch (e: Exception) {
+            Timber.tag(tag).e(e, "Failed to preload data for position $index: ${e.message}")
         }
     }
 
-    private fun preloadMediaItemsAroundPosition(position: Int) {
+    // Thực hiện 1. chuẩn bị MediaItem cho các position trong phạm vi
+    // Thực hiện 2. chuẩn bị MediaSource cho 3 video tiếp theo kể từ position trên background thread
+    // (vd: position = 0 thì chuẩn bị 1,2,3 -> preloadedDataPositions = 0,1,2,3,
+    // position = 1 thì chuẩn bị 2,3,4 -> preloadedDataPositions = 0,1,2,3,4)
+    private fun preloadMediaItemsAndMediaSource(position: Int) {
         if (!networkMonitor.isConnected.value) {
             Timber.tag(tag).w("No network connection, skipping preload for positions around $position")
             return
         }
-        val start = 0 // Preload từ đầu
-        val end = reels.size - 1 // Preload đến cuối
-        Timber.tag(tag).d("Preloading media items from position $start to $end")
-        coroutineScope.launch {
-            for (index in start..end) {
-                if (preparedMediaItems.containsKey(index)) {
-                    Timber.tag(tag).d("MediaItem already preloaded for position $index, skipping")
-                    continue
+        val start = maxOf(0, position - positionsToKeepRange)
+        val end = minOf(reels.size - 1, position + positionsToKeepRange)
+        val bufferEnd = minOf(reels.size - 1, position + 3) // Preload 3 video tiếp theo
+
+        Timber.tag(tag).d("Preloading media items from $start to $end, buffer from $position to $bufferEnd")
+        Timber.tag(tag).d("Current preloadedMediaSourcePositions: $preloadedMediaSourcePositions")
+
+        viewModelScope.launch {
+            // Bước 1: Chuẩn bị MediaItem cho các position trong phạm vi
+            for (index in start..bufferEnd) {
+                if (!preparedMediaItems.containsKey(index)) {
+                    try {
+                        val reel = reels[index]
+                        val mediaItem = MediaItem.fromUri(reel.videoUrl.toUri()).buildUpon()
+                            .setMediaId(reel.videoUrl).build()
+                        preparedMediaItems[index] = mediaItem
+                        Timber.tag(tag).d("Prepared MediaItem for position $index")
+                    } catch (e: Exception) {
+                        Timber.tag(tag).e(e, "Failed to prepare MediaItem for position $index")
+                    }
+                } else {
+                    Timber.tag(tag).d("MediaItem already exists for position $index")
                 }
-                try {
-                    val reel = reels[index]
-                    val mediaItem = MediaItem.fromUri(reel.videoUrl.toUri()).buildUpon()
-                        .setMediaId(reel.videoUrl).build()
-                    preparedMediaItems[index] = mediaItem
-                    Timber.tag(tag).d("Preloaded MediaItem and MediaSource for position $index")
-                } catch (e: Exception) {
-                    Timber.tag(tag).e(e, "Failed to preload MediaItem for position $index: ${e.message}")
+            }
+            // Bước 2: Preload dữ liệu cho 3 video tiếp theo trên background thread
+            Timber.tag(tag).d("Starting preload loop from $position to $bufferEnd")
+            if (position <= bufferEnd) {
+                withContext(Dispatchers.IO) { // Chuyển sang Dispatchers.IO để thực hiện network operation
+                    for (index in position..bufferEnd) {
+                        Timber.tag(tag).d("Checking position $index")
+                        if (!preparedMediaItems.containsKey(index)) {
+                            Timber.tag(tag).w("Cannot preload data for position $index: MediaItem not prepared")
+                            continue
+                        }
+                        if (index in preloadedMediaSourcePositions) {
+                            Timber.tag(tag).d("Skipped preload for position $index: already preloaded")
+                            continue
+                        }
+                        Timber.tag(tag).d("Preloading data for position $index")
+                        val mediaItem = preparedMediaItems[index]!!
+                        val mediaSource = startCreateMediaSource(mediaItem)
+                        preloadVideoDataIntoCache(mediaSource, index)
+                        preloadedMediaSourcePositions.add(index)
+                        Timber.tag(tag).d("Added position $index to preloadedMediaSourcePositions")
+                    }
                 }
+            } else {
+                Timber.tag(tag).w("Invalid range for preload: position $position > bufferEnd $bufferEnd")
             }
         }
     }
@@ -287,7 +323,7 @@ class ReelPlaybackViewModel @Inject constructor(
         val start = maxOf(0, position - positionsToKeepRange)
         val end = minOf(reels.size - 1, position + positionsToKeepRange)
         Timber.tag(tag).d("Managing players: keeping players from position $start to $end")
-        coroutineScope.launch {
+        viewModelScope.launch {
             playLock.lock()
             try {
                 val iterator = usedPlayers.iterator()
@@ -337,9 +373,10 @@ class ReelPlaybackViewModel @Inject constructor(
         }
         playLock.lock()
         try {
+            // Dừng các player khác
             usedPlayers.forEach { (pos, p) ->
                 if (pos != position && (p.isPlaying || p.playbackState == Player.STATE_READY)) {
-                    CoroutineScope(Dispatchers.Main).launch {
+                    viewModelScope.launch(Dispatchers.Main) {
                         p.repeatMode = Player.REPEAT_MODE_OFF
                         p.pause()
                         p.volume = 0f
@@ -353,7 +390,8 @@ class ReelPlaybackViewModel @Inject constructor(
             surfaceReadyStates[position] = isSurfaceReady
             Timber.tag(tag).d("Assigned player to position $position, usedPlayers size: ${usedPlayers.size}")
             currentPlayingPosition = position
-            preloadMediaItemsAroundPosition(position)
+            // Gọi preload cho position mới
+            preloadMediaItemsAndMediaSource(position)
             managePlayersAroundPosition(position)
             // Luôn cố gắng phát video, ngay cả khi surface chưa sẵn sàng
             val playerView = playerViews[position]
@@ -381,7 +419,11 @@ class ReelPlaybackViewModel @Inject constructor(
             preparedMediaItems[position] = mediaItem
         }
         Timber.tag(tag).d("preparedMediaItems: $preparedMediaItems")
-        CoroutineScope(Dispatchers.Main).launch {
+        // Bước 1: Tắt UI loading mặc định của PlayerView
+        playerView.useController = false
+        // Tìm ImageView thumbnail_view trong layout của PlayerView
+        val thumbnailView = playerView.findViewById<ImageView>(R.id.thumbnail_view)
+        viewModelScope.launch(Dispatchers.Main) {
             try {
                 player.clearMediaItems()
                 val mediaSource = startCreateMediaSource(mediaItem)
@@ -393,7 +435,7 @@ class ReelPlaybackViewModel @Inject constructor(
                         Timber.tag(tag).e(error, "Playback error at position $position: ${error.message}")
                         if (error.message?.contains("Unexpected start code prefix") == true) {
                             // Retry phát lại video nếu gặp lỗi PesReader
-                            CoroutineScope(Dispatchers.Main).launch {
+                            viewModelScope.launch(Dispatchers.Main) {
                                 player.clearMediaItems()
                                 val newMediaSource = startCreateMediaSource(mediaItem)
                                 player.setMediaSource(newMediaSource)
@@ -429,7 +471,7 @@ class ReelPlaybackViewModel @Inject constructor(
         playLock.lock()
         try {
             usedPlayers[position]?.let { player ->
-                CoroutineScope(Dispatchers.Main).launch {
+                viewModelScope.launch(Dispatchers.Main) {
                     if (player.isPlaying || player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING) {
                         player.repeatMode = Player.REPEAT_MODE_OFF
                         player.volume = 0f
@@ -459,19 +501,20 @@ class ReelPlaybackViewModel @Inject constructor(
         playLock.lock()
         try {
             usedPlayers.forEach { (pos, player) ->
-                CoroutineScope(Dispatchers.Main).launch {
+                viewModelScope.launch(Dispatchers.Main) {
                     safelyReleasePlayer(player, pos, "active")
                 }
             }
             usedPlayers.clear()
             playerPool.forEachIndexed { index, player ->
-                CoroutineScope(Dispatchers.Main).launch {
+                viewModelScope.launch(Dispatchers.Main) {
                     safelyReleasePlayer(player, index, "pool")
                 }
             }
             playerPool.clear()
             surfaceReadyStates.clear()
             preparedMediaItems.clear()
+            preloadedMediaSourcePositions.clear()
         } finally {
             playLock.unlock()
         }
