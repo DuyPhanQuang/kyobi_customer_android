@@ -72,6 +72,8 @@ class ReelAdapter(
                         playbackViewModel.updateSurfaceReadyState(position = position, isReady = false)
                         playbackViewModel.onPlayerReleased(position)
                         playbackViewModel.removePlayerView(position)
+                        holder.playerView.requestLayout()
+                        holder.playerView.invalidate()
                     }
                 }
             }
@@ -91,6 +93,10 @@ class ReelAdapter(
         holder.setupPlayerListener()
         // Lưu PlayerView vào ViewModel
         playbackViewModel.setPlayerView(position, holder.playerView)
+        // Kiểm tra xem surface đã sẵn sàng chưa
+        val isSurfaceReady = holder.playerView.width > 0 && holder.playerView.height > 0
+        holder.isSurfaceReady = isSurfaceReady
+        Timber.tag(tag).d("Surface ready on bind for position $position: $isSurfaceReady")
         // Chuẩn bị ExoPlayer để đảm bảo surface được tạo
         player.prepare()
         // Buộc PlayerView làm mới surface

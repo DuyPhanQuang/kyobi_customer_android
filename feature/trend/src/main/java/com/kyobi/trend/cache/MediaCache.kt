@@ -19,8 +19,8 @@ class MediaCache @Inject constructor(
 ) {
     private var cache: SimpleCache? = null
     private val cacheDir = File(context.cacheDir, "media_cache")
-
     private val cacheSizeMb = 100
+    private var isCacheInUse = false // Thêm biến để theo dõi trạng thái sử dụng cache
 
     init {
         clearCacheIfOld()
@@ -39,12 +39,17 @@ class MediaCache @Inject constructor(
                 LeastRecentlyUsedCacheEvictor(cacheSizeMb * 1024 * 1024L),
                 StandaloneDatabaseProvider(context)
             )
-            Timber.tag("MediaCache").d("Reinitialized cache with size 50MB")
+            Timber.tag("MediaCache").d("Reinitialized cache with size ${cacheSizeMb}MB")
         }
+        isCacheInUse = true // Đánh dấu cache đang được sử dụng
         return cache!!
     }
 
     private fun clearCache() {
+        if (isCacheInUse) {
+            Timber.tag("MediaCache").d("Cache is in use, skipping clear")
+            return
+        }
         cache?.release()
         cache = null
         if (cacheDir.exists()) {
@@ -68,6 +73,7 @@ class MediaCache @Inject constructor(
     fun release() {
         cache?.release()
         cache = null
+        isCacheInUse = false // Đặt lại trạng thái khi release
         if (BuildConfig.DEBUG) {
             if (cacheDir.exists()) {
                 cacheDir.deleteRecursively()
