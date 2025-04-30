@@ -55,7 +55,7 @@ fun TrendTab(
         ),
         Reel(
             id = "reel_3",
-            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+            videoUrl = "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
             status = "PUBLISHED",
             likeCount = 2000,
             commentCount = 300,
@@ -67,7 +67,7 @@ fun TrendTab(
         ),
         Reel(
             id = "reel_4",
-            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+            videoUrl = "https://devstreaming-cdn.apple.com/videos/streaming/examples/adv_dv_atmos/main.m3u8",
             status = "DRAFT",
             likeCount = 0,
             commentCount = 0,
@@ -77,6 +77,42 @@ fun TrendTab(
             thumbnailUrl = null,
             tags = null
         ),
+        Reel(
+            id = "reel_5",
+            videoUrl = "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8",
+            status = "DRAFT",
+            likeCount = 0,
+            commentCount = 0,
+            shareCount = 0,
+            viewCount = 0,
+            createdAt = "2025-04-17T12:00:00Z",
+            thumbnailUrl = null,
+            tags = null
+        ),
+        Reel(
+            id = "reel_6",
+            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+            status = "PUBLISHED",
+            likeCount = 2000,
+            commentCount = 300,
+            shareCount = 100,
+            viewCount = 10000,
+            createdAt = "2025-04-18T09:00:00Z",
+            thumbnailUrl = null,
+            tags = listOf("fashion", "sale")
+        ),
+        Reel(
+            id = "reel_7",
+            videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+            status = "DRAFT",
+            likeCount = 0,
+            commentCount = 0,
+            shareCount = 0,
+            viewCount = 0,
+            createdAt = "2025-04-17T12:00:00Z",
+            thumbnailUrl = null,
+            tags = null
+        )
     )
 
     ReelList(

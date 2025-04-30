@@ -1,6 +1,7 @@
 package com.kyobi.customer
 
 import android.app.Application
+import android.os.StrictMode
 import com.kyobi.customer.global.crashlytics.CrashReporter
 import com.kyobi.featurecommon.monitor.network.NetworkMonitor
 import dagger.hilt.android.HiltAndroidApp
@@ -23,6 +24,22 @@ class RootApplication : Application() {
         val debug = BuildConfig.DEBUG
         if (debug) {
             Timber.plant(Timber.DebugTree())
+        }
+
+        // Bật StrictMode để phát hiện tác vụ nặng trên main thread
+        if (!debug) {
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectAll() // Phát hiện tất cả vấn đề (I/O, network, v.v.)
+                    .penaltyLog() // Ghi log vào Logcat
+                    .build()
+            )
+            StrictMode.setVmPolicy(
+                StrictMode.VmPolicy.Builder()
+                    .detectAll() // Phát hiện tất cả vi phạm (leak, v.v.)
+                    .penaltyLog() // Ghi log vào Logcat
+                    .build()
+            )
         }
 
         // Global Crash Handler

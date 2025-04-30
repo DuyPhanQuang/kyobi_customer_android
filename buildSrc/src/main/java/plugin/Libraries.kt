@@ -147,6 +147,7 @@ object Libraries {
 
     object MediaPlayer {
         const val media3ExoPlayer = "androidx.media3:media3-exoplayer:${Version.MediaPlayer}"
+        const val media3ExoPlayerHls = "androidx.media3:media3-exoplayer-hls:${Version.MediaPlayer}"
         const val media3Ui = "androidx.media3:media3-ui:${Version.MediaPlayer}"
         const val media3ExoPlayerDash = "androidx.media3:media3-exoplayer-dash:${Version.MediaPlayer}"
     }

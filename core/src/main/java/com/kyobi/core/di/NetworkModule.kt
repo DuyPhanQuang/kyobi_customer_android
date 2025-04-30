@@ -1,5 +1,6 @@
 package com.kyobi.core.di
 
+import android.net.TrafficStats
 import com.kyobi.core.network.NeedsAuthHeaders
 import com.kyobi.core.network.WithAuthHeaders
 import com.kyobi.core.storage.TokenStorage
@@ -27,8 +28,19 @@ object NetworkModule {
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
+        // Interceptor để gắn tag socket
+        val trafficStatsInterceptor = Interceptor { chain ->
+            // Gắn tag cho socket
+            TrafficStats.setThreadStatsTag(0x5678) // Tag bất kỳ (có thể thay đổi)
+            try {
+                chain.proceed(chain.request())
+            } finally {
+                TrafficStats.clearThreadStatsTag() // Xóa tag sau khi hoàn thành
+            }
+        }
         return OkHttpClient.Builder()
             .addInterceptor(logging)
+            .addInterceptor(trafficStatsInterceptor)
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(60, TimeUnit.SECONDS)
@@ -42,6 +54,17 @@ object NetworkModule {
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
+        // Interceptor để gắn tag socket
+        val trafficStatsInterceptor = Interceptor { chain ->
+            // Gắn tag cho socket
+            TrafficStats.setThreadStatsTag(0x1234) // Tag bất kỳ (có thể thay đổi)
+            try {
+                chain.proceed(chain.request())
+            } finally {
+                TrafficStats.clearThreadStatsTag() // Xóa tag sau khi hoàn thành
+            }
+        }
+
         // Interceptor để kiểm tra annotation và gán tag NeedsAuthHeaders
         val authHeaderInterceptor = Interceptor { chain ->
             val originalRequest = chain.request()
@@ -81,6 +104,7 @@ object NetworkModule {
 
         return OkHttpClient.Builder()
             .addInterceptor(logging)
+            .addInterceptor(trafficStatsInterceptor)
             .addInterceptor(authHeaderInterceptor) // Thêm Interceptor kiểm tra annotation
             .addInterceptor(tokenInterceptor) // Thêm Interceptor xử lý header
             .connectTimeout(30, TimeUnit.SECONDS)

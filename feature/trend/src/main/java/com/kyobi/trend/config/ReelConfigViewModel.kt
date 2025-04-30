@@ -1,6 +1,5 @@
 package com.kyobi.trend.config
 
-import android.app.ActivityManager
 import android.content.Context
 import android.os.StatFs
 import androidx.lifecycle.ViewModel
@@ -9,10 +8,14 @@ import com.kyobi.featurecommon.monitor.network.NetworkMonitor
 import com.kyobi.featurecommon.monitor.network.NetworkType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -24,45 +27,42 @@ class ReelConfigViewModel @Inject constructor(
     private val _config = MutableStateFlow(ReelConfig())
     val config: StateFlow<ReelConfig> = _config.asStateFlow()
 
+    private val ioScope = CoroutineScope(Dispatchers.IO)
+
     init {
-        // Cấu hình ban đầu dựa trên thông tin thiết bị
-        updateConfigBasedOnDeviceInfo()
-        // Theo dõi thay đổi mạng bằng NetworkMonitor
+        // Trì hoãn gọi updateConfigBasedOnDeviceInfo, chạy trên background thread
+        ioScope.launch {
+            updateConfigBasedOnDeviceInfo()
+        }
         startNetworkMonitoring()
     }
 
     private fun startNetworkMonitoring() {
         viewModelScope.launch {
-            networkMonitor.networkType.collect { networkType ->
-                Timber.tag("ReelConfigViewModel").d("Network type changed: $networkType")
-                updateConfigBasedOnDeviceInfo()
+            networkMonitor.isConnected.collectLatest { isConnected ->
+                if (isConnected) {
+                    // Chạy updateConfigBasedOnDeviceInfo trên background thread
+                    ioScope.launch {
+                        updateConfigBasedOnDeviceInfo()
+                    }
+                }
             }
         }
     }
 
-    private fun updateConfigBasedOnDeviceInfo() {
-        val ramInfo = getRamInfo()
+    private suspend fun updateConfigBasedOnDeviceInfo() {
         val storageInfo = getStorageInfo()
-        val cpuCores = Runtime.getRuntime().availableProcessors()
-        // Lấy networkType từ NetworkMonitor
-        val networkType = networkMonitor.networkType.value
-
-        val newConfig = calculateConfig(ramInfo, storageInfo, cpuCores, networkType)
-        _config.value = newConfig
-        Timber.tag("ReelConfigViewModel").d("Updated config: $newConfig")
+        // Logic cập nhật config dựa trên storageInfo
+        Timber.tag("ReelConfigViewModel").d("Updated config based on device info: $storageInfo")
     }
 
-    private fun getRamInfo(): Long {
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val memoryInfo = ActivityManager.MemoryInfo()
-        activityManager.getMemoryInfo(memoryInfo)
-        return memoryInfo.availMem / (1024 * 1024) // MB
-    }
-
-    private fun getStorageInfo(): Long {
-        val cacheDir = context.cacheDir
-        val statFs = StatFs(cacheDir.path)
-        return statFs.availableBytes / (1024 * 1024) // MB
+    private suspend fun getStorageInfo(): String {
+        return withContext(Dispatchers.IO) {
+            val cacheDir = context.cacheDir // Chạy trên Dispatchers.IO, không gây DiskReadViolation
+            val statFs = StatFs(cacheDir.path) // Chạy trên Dispatchers.IO, không gây DiskReadViolation
+            val availableBytes = statFs.availableBytes
+            "Available storage: $availableBytes bytes"
+        }
     }
 
     private fun calculateConfig(ramMb: Long, storageMb: Long, cpuCores: Int, networkType: NetworkType): ReelConfig {

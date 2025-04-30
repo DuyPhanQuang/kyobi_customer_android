@@ -18,6 +18,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import com.kyobi.trend.model.Reel
@@ -41,9 +42,11 @@ class ReelPlaybackViewModel @Inject constructor(
     private val reels = mutableListOf<Reel>()
     private val playLock = ReentrantLock()
     private val preparedMediaItems = mutableMapOf<Int, MediaItem>()
+    private val preparedMediaSources = mutableMapOf<Int, MediaSource>() // Lưu MediaSource để dùng khi phát
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
-    private val positionsToKeepRange = 2
+    private val positionsToKeepRange = 20
     private val preloadPlayers = mutableMapOf<Int, ExoPlayer>() // Quản lý các ExoPlayer dùng để preload
+    private val playersPendingRelease = mutableSetOf<Int>() // Lưu các position cần release nhưng chưa thành công
 
     init {
         // Lắng nghe trạng thái mạng để preload lại khi network restored
@@ -126,17 +129,38 @@ class ReelPlaybackViewModel @Inject constructor(
             .setCache(cache)
             .setUpstreamDataSourceFactory(dataSourceFactory)
             .setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE)
-        val mediaSource: MediaSource = ProgressiveMediaSource.Factory(cacheDataSourceFactory)
-            .createMediaSource(mediaItem)
-        return mediaSource
+        val uri = mediaItem.localConfiguration?.uri?.toString() ?: ""
+        return if (uri.endsWith(".m3u8", ignoreCase = true)) {
+            // Nếu là HLS, dùng HlsMediaSource
+            Timber.tag(tag).d("Creating HlsMediaSource for URI: $uri")
+            HlsMediaSource.Factory(cacheDataSourceFactory)
+                .createMediaSource(mediaItem)
+        } else {
+            Timber.tag(tag).d("Creating ProgressiveMediaSource for URI: $uri")
+            ProgressiveMediaSource.Factory(cacheDataSourceFactory)
+                .createMediaSource(mediaItem)
+        }
     }
 
-    // Tải trước dữ liệu video vào cache. thực hiện trên main thread
+    // Tải trước dữ liệu video vào cache. thực hiện
+    // trên main thread
     private fun preloadVideoDataIntoCache(mediaSource: MediaSource, index: Int) {
+        // Giới hạn số lượng preload players để tránh tạo quá nhiều
+        if (preloadPlayers.size >= positionsToKeepRange * 2 + 1) {
+            val oldestPosition = preloadPlayers.keys.minOrNull()
+            oldestPosition?.let { pos ->
+                preloadPlayers[pos]?.let { player ->
+                    safelyReleasePlayer(player, pos, "preload")
+                    preloadPlayers.remove(pos)
+                    Timber.tag(tag).d("Released oldest preload player at position $pos to limit resource usage")
+                }
+            }
+        }
         val preloadPlayer = ExoPlayer.Builder(context).build()
         preloadPlayer.setMediaSource(mediaSource)
-        preloadPlayer.prepare()
+        // Không gọi prepare() ở đây, chỉ lưu player để dùng sau
         preloadPlayers[index] = preloadPlayer
+        Timber.tag(tag).d("Preloaded video data for position $index (MediaSource prepared, player not yet prepared)")
     }
 
     private fun preloadMediaItemsAroundPosition(position: Int) {
@@ -150,7 +174,7 @@ class ReelPlaybackViewModel @Inject constructor(
         // Chạy preload trên Background thread để tạo MediaItem và MediaSource
         coroutineScope.launch {
             for (index in start..end) {
-                if (preparedMediaItems.containsKey(index)) {
+                if (preparedMediaSources.containsKey(index)) {
                     Timber.tag(tag).d("MediaItem already preloaded for position $index, skipping")
                     continue
                 }
@@ -161,14 +185,38 @@ class ReelPlaybackViewModel @Inject constructor(
                     preparedMediaItems[index] = mediaItem
                     // Tạo MediaSource trên Background thread
                     val mediaSource = startCreateMediaSource(mediaItem)
-                    // Chuyển sang Main thread để preload
+                    preparedMediaSources[index] = mediaSource
+                    // Chuyển sang Main thread để preload (chỉ lưu player, không prepare)
                     withContext(Dispatchers.Main) {
                         preloadVideoDataIntoCache(mediaSource, index)
                     }
-                    Timber.tag(tag).d("Preloaded MediaItem and data for position $index")
+                    Timber.tag(tag).d("Preloaded MediaItem and MediaSource for position $index")
                 } catch (e: Exception) {
                     Timber.tag(tag).e(e, "Failed to preload MediaItem for position $index: ${e.message}")
                 }
+            }
+        }
+    }
+
+    private fun safelyReleasePlayer(player: ExoPlayer, position: Int, type: String) {
+        try {
+            // Kiểm tra xem player có còn ở trạng thái có thể release không
+            if (player.playbackState != Player.STATE_IDLE || player.isPlaying || player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING) {
+                if (player.isPlaying || player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING) {
+                    player.repeatMode = Player.REPEAT_MODE_OFF
+                    player.stop()
+                    player.clearMediaItems()
+                    Timber.tag(tag).d("Stopped player at position $position ($type) before release")
+                }
+                player.release()
+                Timber.tag(tag).d("Successfully released player at position $position ($type)")
+            } else {
+                Timber.tag(tag).d("Player at position $position ($type) already released or in idle state, skipping release")
+            }
+        } catch (e: Exception) {
+            Timber.tag(tag).w(e, "Failed to release player at position $position ($type), marking for retry")
+            if (type == "active") {
+                playersPendingRelease.add(position)
             }
         }
     }
@@ -177,21 +225,33 @@ class ReelPlaybackViewModel @Inject constructor(
         val start = maxOf(0, position - positionsToKeepRange)
         val end = minOf(reels.size - 1, position + positionsToKeepRange)
         Timber.tag(tag).d("Managing players: keeping players from position $start to $end")
-        // thực hiện trên background thread
+        // Thực hiện trên background thread, nhưng chuyển sang main thread khi cần truy cập ExoPlayer
         coroutineScope.launch {
             playLock.lock()
             try {
+                // Retry releasing players that failed previously
+                val pendingIterator = playersPendingRelease.iterator()
+                while (pendingIterator.hasNext()) {
+                    val pos = pendingIterator.next()
+                    if (pos < start || pos > end) {
+                        activePlayers[pos]?.let { player ->
+                            withContext(Dispatchers.Main) {
+                                safelyReleasePlayer(player, pos, "active")
+                                activePlayers.remove(pos)
+                            }
+                        }
+                        pendingIterator.remove()
+                    }
+                }
                 // Release các active players ngoài phạm vi
                 val iterator = activePlayers.iterator()
                 while (iterator.hasNext()) {
                     val (pos, player) = iterator.next()
                     if (pos < start || pos > end) {
-                        if (player.isPlaying || player.playbackState == Player.STATE_READY) {
-                            player.pause()
-                            player.volume = 0f
-                            Timber.tag(tag).d("Paused player at position $pos before release")
+                        // Chuyển sang main thread
+                        withContext(Dispatchers.Main) {
+                            safelyReleasePlayer(player, pos, "active")
                         }
-                        player.release()
                         iterator.remove()
                         surfaceReadyStates.remove(pos)
                         Timber.tag(tag).d("Released player at position $pos")
@@ -202,7 +262,11 @@ class ReelPlaybackViewModel @Inject constructor(
                 while (preloadIterator.hasNext()) {
                     val (pos, preloadPlayer) = preloadIterator.next()
                     if (pos < start || pos > end) {
-                        preloadPlayer.release()
+                        // Chuyển sang main thread
+                        withContext(Dispatchers.Main) {
+                            safelyReleasePlayer(preloadPlayer, pos, "preload")
+                            preloadIterator.remove()
+                        }
                         preloadIterator.remove()
                         Timber.tag(tag).d("Released preload player at position $pos")
                     }
@@ -224,9 +288,12 @@ class ReelPlaybackViewModel @Inject constructor(
             // Dừng tất cả player khác
             activePlayers.forEach { (pos, p) ->
                 if (pos != position && (p.isPlaying || p.playbackState == Player.STATE_READY)) {
-                    p.pause()
-                    p.volume = 0f
-                    Timber.tag(tag).d("Paused player at position: $pos")
+                    CoroutineScope(Dispatchers.Main).launch {
+                        p.repeatMode = Player.REPEAT_MODE_OFF
+                        p.pause()
+                        p.volume = 0f
+                        Timber.tag(tag).d("Paused player at position: $pos")
+                    }
                 }
             }
             activePlayers[position] = player
@@ -238,7 +305,7 @@ class ReelPlaybackViewModel @Inject constructor(
             currentPlayingPosition = position
             preloadMediaItemsAroundPosition(position)  // Preload các video lân cận
             managePlayersAroundPosition(position)    // Quản lý player: giữ player trong phạm vi, release player ở xa
-            // Phát video ngay lập tức, bỏ qua kiểm tra surface
+            // Phát video ngay lập tức, bỏ qua kiểm tra surface vì player được tạo ở background thread
             playVideoAtPositionInternal(position, player)
             if (!isSurfaceReady) {
                 Timber.tag(tag).d("Surface not ready at position $position, but attempted to play anyway")
@@ -253,26 +320,33 @@ class ReelPlaybackViewModel @Inject constructor(
     private fun playVideoAtPositionInternal(position: Int, player: ExoPlayer) {
         val mediaItem = preparedMediaItems[position]
         if (mediaItem != null) {
-            if (!player.isPlaying || player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
-                player.clearMediaItems() // Reset player nếu ở trạng thái lỗi hoặc kết thúc
-                val mediaSource = startCreateMediaSource(mediaItem)
-                player.setMediaSource(mediaSource)
-                player.prepare()
-                Timber.tag(tag).d("Prepared ExoPlayer for position $position")
-            }
-            player.addListener(object : Player.Listener {
-                override fun onPlayerError(error: PlaybackException) {
-                    Timber.tag(tag).e(error, "Playback error at position $position: ${error.message}")
-                    // TODO: Thông báo cho người dùng (ví dụ: hiển thị Toast hoặc UI lỗi)
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    if (!player.isPlaying || player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                        player.clearMediaItems() // Reset player nếu ở trạng thái lỗi hoặc kết thúc
+                        // Lấy MediaSource từ map nếu đã preload, nếu không thì tạo mới
+                        val mediaSource = preparedMediaSources[position] ?: startCreateMediaSource(mediaItem)
+                        player.setMediaSource(mediaSource)
+                        player.prepare() // Chỉ gọi prepare() khi thực sự cần phát
+                        Timber.tag(tag).d("Prepared ExoPlayer for position $position")
+                    }
+                    player.addListener(object : Player.Listener {
+                        override fun onPlayerError(error: PlaybackException) {
+                            Timber.tag(tag).e(error, "Playback error at position $position: ${error.message}")
+                            // TODO: Thông báo cho người dùng (ví dụ: hiển thị Toast hoặc UI lỗi)
+                        }
+                    })
+                    player.volume = 1f
+                    player.repeatMode = Player.REPEAT_MODE_ONE
+                    if (!player.isPlaying) {
+                        player.play()
+                        Timber.tag(tag).d("Playing video at position $position, state: ${player.playbackState}, isPlaying: ${player.isPlaying}")
+                    } else {
+                        Timber.tag(tag).d("Video at position $position is already playing, skipping play")
+                    }
+                } catch (e: IllegalStateException) {
+                    Timber.tag(tag).e(e, "Failed to play video at position $position: ${e.message}")
                 }
-            })
-            player.volume = 1f
-            player.repeatMode = Player.REPEAT_MODE_ONE
-            if (!player.isPlaying) {
-                player.play()
-                Timber.tag(tag).d("Playing video at position $position, state: ${player.playbackState}, isPlaying: ${player.isPlaying}")
-            } else {
-                Timber.tag(tag).d("Video at position $position is already playing, skipping play")
             }
         } else {
             Timber.tag(tag).e("MediaItem not preloaded for position $position")
@@ -280,20 +354,39 @@ class ReelPlaybackViewModel @Inject constructor(
         }
     }
 
+    fun onPlayerReleased(position: Int) {
+        playLock.lock()
+        try {
+            activePlayers.remove(position)
+            preloadPlayers.remove(position)
+            playersPendingRelease.remove(position)
+            surfaceReadyStates.remove(position)
+            Timber.tag(tag).d("Player at position $position removed from activePlayers and preloadPlayers after release in onViewRecycled")
+        } finally {
+            playLock.unlock()
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         playLock.lock()
         try {
-            activePlayers.forEach { (_, player) ->
-                player.release()
+            activePlayers.forEach { (pos, player) ->
+                CoroutineScope(Dispatchers.Main).launch {
+                    safelyReleasePlayer(player, pos, "active")
+                }
             }
             activePlayers.clear()
             surfaceReadyStates.clear()
             preparedMediaItems.clear()
-            preloadPlayers.forEach { (_, player) ->
-                player.release()
+            preparedMediaSources.clear()
+            preloadPlayers.forEach { (pos, player) ->
+                CoroutineScope(Dispatchers.Main).launch {
+                    safelyReleasePlayer(player, pos, "preload")
+                }
             }
             preloadPlayers.clear()
+            playersPendingRelease.clear()
         } finally {
             playLock.unlock()
         }

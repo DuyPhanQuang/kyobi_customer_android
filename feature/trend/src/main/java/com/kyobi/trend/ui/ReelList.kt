@@ -22,7 +22,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.util.UnstableApi
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
-import com.kyobi.trend.config.ReelConfigViewModel
 import com.kyobi.trend.model.Reel
 import com.kyobi.theme.kyobiTheme
 import timber.log.Timber
@@ -37,12 +36,12 @@ fun ReelList(
     val tag = "ReelList"
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val configViewModel: ReelConfigViewModel = hiltViewModel()
     val playbackViewModel: ReelPlaybackViewModel = hiltViewModel()
     val currentReels by rememberUpdatedState(reels)
     val adapter = remember { mutableStateOf<ReelAdapter?>(null) }
     val pendingPlayPositions = remember { mutableSetOf<Int>() } // Lưu các position chờ phát
     var lastPlayedPosition by remember { mutableIntStateOf(-1) } // Theo dõi position cuối cùng đã phát
+    var currentSnappedPosition by remember { mutableIntStateOf(-1) } // Theo dõi position hiện tại dựa trên snap
 
     AndroidView(
         modifier = Modifier
@@ -56,16 +55,20 @@ fun ReelList(
                     reels = currentReels,
                     context = context2,
                     lifecycleOwner = lifecycleOwner,
-                    configViewModel = configViewModel,
                     viewPager = this,
                     playbackViewModel = playbackViewModel,
                     onPlayerReady = { position, player, isSurfaceReady ->
                         // Khi player sẵn sàng, kiểm tra xem position này có đang chờ phát không
                         if (pendingPlayPositions.contains(position)) {
-                            playbackViewModel.playVideoAtPosition(position, player, isSurfaceReady)
-                            pendingPlayPositions.remove(position)
-                            lastPlayedPosition = position
-                            Timber.tag(tag).d("Played video at position $position after player ready")
+                            // Chỉ phát nếu position này là position hiện tại được snap
+                            if (position == currentSnappedPosition) {
+                                playbackViewModel.playVideoAtPosition(position, player, isSurfaceReady)
+                                lastPlayedPosition = position
+                                pendingPlayPositions.remove(position)
+                                Timber.tag(tag).d("Played video at position $position after player ready")
+                            } else {
+                                Timber.tag(tag).d("Player ready for position $position, but not current snapped position ($currentSnappedPosition), keeping in pending")
+                            }
                         }
                     }
                 )
@@ -73,21 +76,29 @@ fun ReelList(
                 offscreenPageLimit = 1 // Giới hạn preload 1 item trước/sau
                 playbackViewModel.setReels(currentReels)
                 registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                    override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+                        super.onPageScrolled(position, positionOffset, positionOffsetPixels)
+                        // Tính toán position hiện tại dựa trên vị trí snap
+                        val newPosition = if (positionOffset < 0.5f) position else position + 1
+                        if (newPosition != currentSnappedPosition && newPosition >= 0 && newPosition < currentReels.size) {
+                            Timber.tag(tag).d("Snapped to position: $newPosition (offset: $positionOffset)")
+                            currentSnappedPosition = newPosition
+                        }
+                    }
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
                         Timber.tag(tag).d("Page selected: $position")
-
                         if (position != lastPlayedPosition && currentReels.isNotEmpty()) {
                             val recyclerView = getChildAt(0) as? RecyclerView
                             if (recyclerView != null) {
                                 val holder = recyclerView.findViewHolderForAdapterPosition(position) as? ReelAdapter.ReelViewHolder
-                                holder?.let {
-                                    if (it.player != null) {
-                                        // Nếu player đã sẵn sàng, phát ngay
-                                        playbackViewModel.playVideoAtPosition(position, it.player!!, it.isSurfaceReady)
+                                holder?.let { h ->
+                                    if (h.player != null) {
+                                        // Phát video khi page đã được snap hoàn toàn
+                                        playbackViewModel.playVideoAtPosition(position, h.player!!, h.isSurfaceReady)
                                         lastPlayedPosition = position
                                         pendingPlayPositions.remove(position)
-                                        Timber.tag(tag).d("Playing video at position $position")
+                                        Timber.tag(tag).d("Playing video at position $position after page selected")
                                     } else {
                                         // Nếu player chưa sẵn sàng, thêm vào danh sách chờ
                                         pendingPlayPositions.add(position)
@@ -113,10 +124,10 @@ fun ReelList(
                             val recyclerView = viewPager.getChildAt(0) as? RecyclerView
                             if (recyclerView != null) {
                                 val holder = recyclerView.findViewHolderForAdapterPosition(0) as? ReelAdapter.ReelViewHolder
-                                holder?.let {
-                                    if (it.player != null) {
+                                holder?.let { h->
+                                    if (h.player != null) {
                                         // Nếu player đã sẵn sàng, phát ngay
-                                        playbackViewModel.playVideoAtPosition(0, it.player!!, it.isSurfaceReady)
+                                        playbackViewModel.playVideoAtPosition(0, h.player!!, h.isSurfaceReady)
                                         lastPlayedPosition = 0
                                         pendingPlayPositions.remove(0)
                                         Timber.tag(tag).d("Playing video at position 0 during update")

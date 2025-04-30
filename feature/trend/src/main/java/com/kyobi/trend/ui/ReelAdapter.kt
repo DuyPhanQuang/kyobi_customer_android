@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.airbnb.lottie.LottieAnimationView
 import com.kyobi.feature.trend.R
-import com.kyobi.trend.config.ReelConfigViewModel
 import com.kyobi.trend.model.Reel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +27,6 @@ class ReelAdapter(
     val reels: List<Reel>,
     private val context: Context,
     lifecycleOwner: LifecycleOwner,
-    private val configViewModel: ReelConfigViewModel,
     private val viewPager: ViewPager2,
     private val playbackViewModel: ReelPlaybackViewModel,
     private val onPlayerReady: (position: Int, player: ExoPlayer, isSurfaceReady: Boolean) -> Unit
@@ -51,14 +49,25 @@ class ReelAdapter(
         super.onViewRecycled(holder)
         val position = holder.bindingAdapterPosition
         if (position != RecyclerView.NO_POSITION && position != playbackViewModel.getCurrentPlayingPosition()) {
-            if (holder.player?.isPlaying == true || holder.player?.playbackState == Player.STATE_READY) {
-                holder.player?.pause()
-                holder.player?.volume = 0f
-                Timber.tag(tag).d("Paused player at position $position during onViewRecycled")
+            // Dừng và giải phóng player trên main thread
+            CoroutineScope(Dispatchers.Main).launch {
+                holder.player?.let { player ->
+                    if (player.isPlaying || player.playbackState == Player.STATE_READY) {
+                        player.volume = 0f
+                        player.pause()
+                        Timber.tag(tag).d("Paused player at position $position during onViewRecycled")
+                    }
+                    player.repeatMode = Player.REPEAT_MODE_OFF
+                    player.stop()
+                    player.release()
+                    holder.player = null
+                    Timber.tag(tag).d("Released player at position $position during onViewRecycled")
+                }
+                holder.isSurfaceReady = false
+                holder.hideLoading()
+                playbackViewModel.updateSurfaceReadyState(position, false)
+                playbackViewModel.onPlayerReleased(position)
             }
-            holder.isSurfaceReady = false
-            holder.hideLoading()
-            playbackViewModel.updateSurfaceReadyState(position, false) // Cập nhật trạng thái surface khi recycle
         }
     }
 
