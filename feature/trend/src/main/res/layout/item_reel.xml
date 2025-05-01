@@ -6,28 +6,12 @@
     android:layout_height="match_parent"
     android:background="@android:color/transparent">
 
-    <!-- Video player -->
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/player_view"
+    <!-- Container for PlayerView -->
+    <FrameLayout
+        android:id="@+id/player_view_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@android:color/transparent"
-        app:resize_mode="fit"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:surface_type="texture_view" />
-
-    <!-- Thumbnail ImageView -->
-    <ImageView
-        android:id="@+id/thumbnail_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:contentDescription="thumbnail desc"
-        android:scaleType="centerCrop"
-        android:visibility="visible"
-        android:elevation="10dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

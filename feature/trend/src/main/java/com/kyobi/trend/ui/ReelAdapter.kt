@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.lifecycle.LifecycleOwner
 import androidx.media3.common.Player
@@ -30,10 +31,27 @@ class ReelAdapter(
     lifecycleOwner: LifecycleOwner,
     private val viewPager: ViewPager2,
     private val playbackViewModel: ReelPlaybackViewModel,
-    private val onPlayerReady: (position: Int, player: ExoPlayer, isSurfaceReady: Boolean) -> Unit
 ) : RecyclerView.Adapter<ReelAdapter.ReelViewHolder>() {
     private val tag = "ReelAdapter"
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
+
+    init {
+        playbackViewModel.onRefreshSurface = { position ->
+            val holder = findViewHolderForAdapterPosition(position)
+            if (holder is ReelViewHolder) {
+                holder.playerViewContainer.requestLayout()
+                holder.playerViewContainer.invalidate()
+                Timber.tag(tag).d("Refreshed UI via onRefreshSurface called")
+            } else {
+                Timber.tag(tag).d("holder not found")
+            }
+        }
+    }
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        this.recyclerView = recyclerView
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReelViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -50,87 +68,86 @@ class ReelAdapter(
         super.onViewRecycled(holder)
         val position = holder.bindingAdapterPosition
         if (position != RecyclerView.NO_POSITION && position != playbackViewModel.getCurrentPlayingPosition()) {
-            coroutineScope.launch {
-                withContext(Dispatchers.Default) { // Chuyển tác vụ nặng sang background thread
-                    holder.player?.let { player ->
-                        if (player.isPlaying || player.playbackState == Player.STATE_READY) {
-                            player.volume = 0f
-                            player.pause()
-                            Timber.tag(tag).d("Paused player at position $position during onViewRecycled")
-                        }
-                        player.repeatMode = Player.REPEAT_MODE_OFF
-                        player.stop()
-                        player.clearMediaItems()
-                        Timber.tag(tag).d("Cleared player at position $position during onViewRecycled")
-                        // Đặt player của PlayerView về null để xóa surface
-                        holder.playerView.player = null
-                        holder.player = null
-                    }
-                    holder.isSurfaceReady = false
-                    holder.hideLoading()
-                    withContext(Dispatchers.Main) { // Quay lại main thread để cập nhật UI và ViewModel
-                        playbackViewModel.updateSurfaceReadyState(position = position, isReady = false)
-                        playbackViewModel.onPlayerReleased(position)
-                        playbackViewModel.removePlayerView(position)
-                        holder.playerView.requestLayout()
-                        holder.playerView.invalidate()
-                    }
+            holder.player?.let { player ->
+                if (player.isPlaying || player.playbackState == Player.STATE_READY) {
+                    player.volume = 0f
+                    player.pause()
+                    player.stop()
+                    player.clearMediaItems()
+                    Timber.tag(tag).d("Paused player at position $position during onViewRecycled")
                 }
             }
+            holder.isSurfaceReady = false
+            holder.hideLoading()
+            playbackViewModel.updateSurfaceReadyState(position = position, isReady = false)
+            playbackViewModel.onPlayerReleased(position)
+            holder.playerViewContainer.removeAllViews()
+            holder.playerViewContainer.requestLayout()
+            holder.playerViewContainer.post { holder.playerViewContainer.invalidate() }
+            Timber.tag(tag).d("Triggered onViewRecycled at position $position")
         }
     }
 
     override fun onBindViewHolder(holder: ReelViewHolder, position: Int) {
         holder.bind(reels[position], position)
-        // Đảm bảo PlayerView được xóa sạch trước khi gán player mới
-        holder.playerView.player = null
-        holder.player = null
-        // Lấy ExoPlayer từ ReelPlaybackViewModel
+        holder.playerViewContainer.removeAllViews()
         val player = playbackViewModel.getOrCreatePlayerForPosition(position)
+        val preloadedView = playbackViewModel.getPlayerView(position)
+        if (preloadedView != null) {
+            holder.attachPreloadedPlayerView(preloadedView)
+        } else {
+            val playerView = PlayerView(context).apply {
+                setBackgroundColor(Color.TRANSPARENT)
+                useController = false
+                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                setKeepContentOnPlayerReset(true)
+                setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+            playerView.player = player
+            holder.attachPreloadedPlayerView(playerView)
+            playbackViewModel.setPlayerView(position, playerView)
+        }
         holder.player = player
-        holder.playerView.player = player
-        configPlayerView(holder.playerView)
         holder.setupPlayerListener()
-        // Lưu PlayerView vào ViewModel
-        playbackViewModel.setPlayerView(position, holder.playerView)
-        // Kiểm tra xem surface đã sẵn sàng chưa
-        val isSurfaceReady = holder.playerView.width > 0 && holder.playerView.height > 0
+        playbackViewModel.createDrawMeasureVideoAtPosition(position, player, holder.isSurfaceReady)
+        // Cập nhật isSurfaceReady dựa trên kích thước của PlayerView đã preload
+        val isSurfaceReady = preloadedView?.let { it.width > 0 && it.height > 0 } ?: false
         holder.isSurfaceReady = isSurfaceReady
         Timber.tag(tag).d("Surface ready on bind for position $position: $isSurfaceReady")
-        // Chuẩn bị ExoPlayer để đảm bảo surface được tạo
-        player.prepare()
-        // Buộc PlayerView làm mới surface
-        holder.playerView.requestLayout()
-        holder.playerView.invalidate()
-        holder.playerView.post {
-            Timber.tag(tag).d("PlayerView size for position $position: ${holder.playerView.width}x${holder.playerView.height}")
-            Timber.tag(tag).d("Cleared and invalidated PlayerView on recycle for position ${holder.bindingAdapterPosition}")
+        holder.playerViewContainer.requestLayout()
+        holder.playerViewContainer.post { holder.playerViewContainer.invalidate() }
+        holder.playerViewContainer.post {
+            Timber.tag(tag).d("PlayerView size for position $position: ${holder.playerViewContainer.width}x${holder.playerViewContainer.height}")
         }
-        // Callback player đã sẵn sàng
-        onPlayerReady(position, holder.player!!, holder.isSurfaceReady)
         Timber.tag(tag).d("Player initialized for position $position")
     }
 
     override fun getItemCount(): Int = reels.size
 
-    private fun configPlayerView(playerView: PlayerView) {
-        playerView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
-        playerView.setBackgroundColor(Color.TRANSPARENT)
-        playerView.setKeepContentOnPlayerReset(true)
-        playerView.setUseController(false)
-        playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-        playerView.layoutParams = ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
-        )
+    private var recyclerView: RecyclerView? = null
+
+    private fun findViewHolderForAdapterPosition(position: Int): RecyclerView.ViewHolder? {
+        return recyclerView?.findViewHolderForAdapterPosition(position)
     }
 
     inner class ReelViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val playerView: PlayerView = itemView.findViewById(R.id.player_view)
+        val playerViewContainer: FrameLayout = itemView.findViewById(R.id.player_view_container)
         private val loadingAnimation: LottieAnimationView = itemView.findViewById(R.id.loading_animation)
         private val tvReelInfo: TextView = itemView.findViewById(R.id.tv_reel_info)
         var player: ExoPlayer? = null
         var isSurfaceReady = false
+
+        fun attachPreloadedPlayerView(preloadedView: PlayerView) {
+            playerViewContainer.removeAllViews()
+            playerViewContainer.addView(preloadedView)
+            player = preloadedView.player as? ExoPlayer
+            isSurfaceReady = preloadedView.width > 0 && preloadedView.height > 0
+            Timber.tag(tag).d("Attached preloaded PlayerView for position $bindingAdapterPosition")
+        }
 
         fun setupPlayerListener() {
             player?.addListener(object : Player.Listener {
@@ -138,7 +155,6 @@ class ReelAdapter(
                     if (width > 0 && height > 0 && bindingAdapterPosition != RecyclerView.NO_POSITION) {
                         isSurfaceReady = true
                         Timber.tag(tag).d("Surface ready for position $bindingAdapterPosition: $width x $height")
-                        // Thông báo cho ReelPlaybackViewModel rằng surface đã sẵn sàng
                         playbackViewModel.updateSurfaceReadyState(position = bindingAdapterPosition, isReady = true)
                     }
                 }
@@ -146,7 +162,9 @@ class ReelAdapter(
                     Timber.tag(tag).d("Playback state changed for position $bindingAdapterPosition: $state")
                     when (state) {
                         Player.STATE_BUFFERING -> {
-                            showLoading()
+                            if (bindingAdapterPosition == playbackViewModel.getCurrentPlayingPosition()) {
+                                showLoading()
+                            }
                         }
                         Player.STATE_READY -> {
                             if (player?.isPlaying == true) {

@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
@@ -39,9 +37,6 @@ fun ReelList(
     val playbackViewModel: ReelPlaybackViewModel = hiltViewModel()
     val currentReels by rememberUpdatedState(reels)
     val adapter = remember { mutableStateOf<ReelAdapter?>(null) }
-    val pendingPlayPositions = remember { mutableSetOf<Int>() } // Lưu các position chờ phát
-    var lastPlayedPosition by remember { mutableIntStateOf(-1) } // Theo dõi position cuối cùng đã phát
-    var currentSnappedPosition by remember { mutableIntStateOf(-1) } // Theo dõi position hiện tại dựa trên snap
 
     AndroidView(
         modifier = Modifier
@@ -57,59 +52,25 @@ fun ReelList(
                     lifecycleOwner = lifecycleOwner,
                     viewPager = this,
                     playbackViewModel = playbackViewModel,
-                    onPlayerReady = { position, player, isSurfaceReady ->
-                        // Khi player sẵn sàng, kiểm tra xem position này có đang chờ phát không
-                        if (pendingPlayPositions.contains(position)) {
-                            // Chỉ phát nếu position này là position hiện tại được snap
-                            if (position == currentSnappedPosition) {
-                                playbackViewModel.playVideoAtPosition(position, player, isSurfaceReady)
-                                lastPlayedPosition = position
-                                pendingPlayPositions.remove(position)
-                                Timber.tag(tag).d("Played video at position $position after player ready")
-                            } else {
-                                Timber.tag(tag).d("Player ready for position $position, but not current snapped position ($currentSnappedPosition), keeping in pending")
-                            }
-                        }
-                    }
                 )
                 this.adapter = adapter.value
-                offscreenPageLimit = 1 // Giới hạn preload 1 item trước/sau
+                offscreenPageLimit = 10 // Giới hạn preload 10 item trước/sau
                 playbackViewModel.setReels(currentReels)
                 registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-                    override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
-                        super.onPageScrolled(position, positionOffset, positionOffsetPixels)
-                        // Tính toán position hiện tại dựa trên vị trí snap
-                        val newPosition = if (positionOffset < 0.5f) position else position + 1
-                        if (newPosition != currentSnappedPosition && newPosition >= 0 && newPosition < currentReels.size) {
-                            Timber.tag(tag).d("Snapped to position: $newPosition (offset: $positionOffset)")
-                            currentSnappedPosition = newPosition
-                        }
-                    }
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
-                        Timber.tag(tag).d("Page selected: $position")
-                        if (position != lastPlayedPosition && currentReels.isNotEmpty()) {
-                            val recyclerView = getChildAt(0) as? RecyclerView
-                            if (recyclerView != null) {
-                                val holder = recyclerView.findViewHolderForAdapterPosition(position) as? ReelAdapter.ReelViewHolder
-                                holder?.let { h ->
-                                    if (h.player != null) {
-                                        // Phát video khi page đã được snap hoàn toàn
-                                        playbackViewModel.playVideoAtPosition(position, h.player!!, h.isSurfaceReady)
-                                        lastPlayedPosition = position
-                                        pendingPlayPositions.remove(position)
-                                        Timber.tag(tag).d("Playing video at position $position after page selected")
-                                    } else {
-                                        // Nếu player chưa sẵn sàng, thêm vào danh sách chờ
-                                        pendingPlayPositions.add(position)
-                                        Timber.tag(tag).d("Player not ready for position $position, added to pending play")
-                                    }
-                                } ?: run {
-                                    Timber.tag(tag).w("Holder not found for position $position, skipping play")
+                        val recyclerView = getChildAt(0) as? RecyclerView
+                        if (recyclerView != null) {
+                            val holder = recyclerView.findViewHolderForAdapterPosition(position) as? ReelAdapter.ReelViewHolder
+                            holder?.let { h ->
+                                if (h.player != null) {
+                                    playbackViewModel.onPageSelected(position, h.player!!)
                                 }
-                            } else {
-                                Timber.tag(tag).w("RecyclerView not found in ViewPager2, skipping play at position $position")
+                            } ?: run {
+                                Timber.tag(tag).w("Holder not found for position $position, skipping play")
                             }
+                        } else {
+                            Timber.tag(tag).w("RecyclerView not found in ViewPager2, skipping play at position $position")
                         }
                     }
                 })
@@ -126,15 +87,7 @@ fun ReelList(
                                 val holder = recyclerView.findViewHolderForAdapterPosition(0) as? ReelAdapter.ReelViewHolder
                                 holder?.let { h->
                                     if (h.player != null) {
-                                        // Nếu player đã sẵn sàng, phát ngay
-                                        playbackViewModel.playVideoAtPosition(0, h.player!!, h.isSurfaceReady)
-                                        lastPlayedPosition = 0
-                                        pendingPlayPositions.remove(0)
-                                        Timber.tag(tag).d("Playing video at position 0 during update")
-                                    } else {
-                                        // Nếu player chưa sẵn sàng, thêm vào danh sách chờ
-                                        pendingPlayPositions.add(0)
-                                        Timber.tag(tag).d("Player not ready for position 0 during update, added to pending play")
+                                        playbackViewModel.onPageSelected(0, h.player!!)
                                     }
                                 } ?: run {
                                     Timber.tag(tag).w("Holder not found for position 0 during update")
