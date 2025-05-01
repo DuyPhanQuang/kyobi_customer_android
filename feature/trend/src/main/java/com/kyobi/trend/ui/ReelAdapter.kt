@@ -77,7 +77,8 @@ class ReelAdapter(
                     player.pause()
                     player.stop()
                     player.clearMediaItems()
-                    Timber.tag(tag).d("Paused player at position $position during onViewRecycled")
+                    player.release()
+                    Timber.tag(tag).d("Paused Stopped Released player at position $position during onViewRecycled")
                 }
             }
             holder.isSurfaceReady = false

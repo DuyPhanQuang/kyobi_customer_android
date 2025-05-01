@@ -174,6 +174,7 @@ class ReelPlaybackViewModel @Inject constructor(
         if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
             player.setPriority(C.PRIORITY_PLAYBACK_PRELOAD)
             player.prepare()
+            player.playWhenReady = false
             Timber.tag(tag).d("Prepared player for keyframe at nextPosition: $nextPosition")
         }
     }
