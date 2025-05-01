@@ -10,7 +10,9 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.lifecycle.LifecycleOwner
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
@@ -96,13 +98,21 @@ class ReelAdapter(
     override fun onBindViewHolder(holder: ReelViewHolder, position: Int) {
         holder.bind(reels[position], position)
         holder.playerViewContainer.removeAllViews()
-        val preloadedMediaItem = preloadedMediaItems[position]
-        val preloadedMediaSource = preloadedMediaSources[position]
-        playbackViewModel.setPreloadedMediaItem(position, preloadedMediaItem)
-        playbackViewModel.setPreloadedMediaSource(position, preloadedMediaSource)
-        val preloadedView = playbackViewModel.getPlayerView(position)
-        if (preloadedView != null) {
-            holder.attachPreloadedPlayerView(preloadedView)
+
+        // 1. Cung cấp mediaItem và mediaSource cho ViewModel
+        playbackViewModel.setPreloadedMediaItem(position, preloadedMediaItems[position])
+        playbackViewModel.setPreloadedMediaSource(position, preloadedMediaSources[position])
+        val existingView = playbackViewModel.getPlayerView(position)
+        if (existingView != null) {
+            // Nếu view đã tạo nhưng chưa chắc đã ready, ta check:
+            if (playbackViewModel.isReady(position)) {
+                holder.attachPlayerView(existingView)
+            } else {
+                playbackViewModel.registerWhenReady(position) {
+                    val readyView = playbackViewModel.getPlayerView(position)!!
+                    holder.attachPlayerView(readyView)
+                }
+            }
         } else {
             val playerView = PlayerView(context).apply {
                 setBackgroundColor(Color.TRANSPARENT)
@@ -112,34 +122,31 @@ class ReelAdapter(
                 setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
+                    ViewGroup.LayoutParams.MATCH_PARENT)
             }
-            val player = ExoPlayer.Builder(context).setLoadControl(
-                DefaultLoadControl.Builder()
-                    .setBufferDurationsMs(1000, 5000, 500, 1000)
-                .build()).build().also {
-                Timber.tag(tag).d("Created new player for position $position")
-            }
-            // dùng textureView thay vì surfaceView. gán vào player của exoplayer và player của media3
+            val player = ExoPlayer.Builder(context)
+                .setLoadControl(
+                    DefaultLoadControl.Builder()
+                        .setBufferDurationsMs(1000, 5000, 500, 1000)
+                        .build()).build().also { Timber.tag(tag).d("Created new player for pos $position") }
+            // Gán TextureView cho cả Player và PlayerView
             val textureView = TextureView(context)
             player.setVideoTextureView(textureView)
+            // Set mediaItem & source để nó tự chuẩn bị (prepare)
+            player.setMediaItem(preloadedMediaItems[position]!!)
+            player.setMediaSource(preloadedMediaSources[position]!!)
+            // Gán player vào view, và lưu vào ViewModel
             playerView.player = player
-            holder.attachPreloadedPlayerView(playerView)
+            holder.attachPlayerView(playerView)
             playbackViewModel.setPlayerView(position, playerView)
         }
-        holder.setupPlayerListener()
-        playbackViewModel.createDrawMeasureVideoAtPosition(position, holder.isSurfaceReady)
-        // Cập nhật isSurfaceReady dựa trên kích thước của PlayerView đã preload
-        val isSurfaceReady = preloadedView?.let { it.width > 0 && it.height > 0 } ?: false
-        holder.isSurfaceReady = isSurfaceReady
-        Timber.tag(tag).d("Surface ready on bind for position $position: $isSurfaceReady")
+        holder.setupPlayerListener() // 2. Luôn set listener cho loading / surface change
+        // 3. Cập nhật kích thước Surface lần đầu (nếu có)
+        holder.isSurfaceReady = existingView?.let { it.width > 0 && it.height > 0 } ?: false
+        playbackViewModel.updateSurfaceReadyState(position, holder.isSurfaceReady)
+        // 4. Refresh UI
         holder.playerViewContainer.requestLayout()
         holder.playerViewContainer.post { holder.playerViewContainer.invalidate() }
-        holder.playerViewContainer.post {
-            Timber.tag(tag).d("PlayerView size for position $position: ${holder.playerViewContainer.width}x${holder.playerViewContainer.height}")
-        }
-        Timber.tag(tag).d("Player initialized for position $position")
     }
 
     override fun getItemCount(): Int = reels.size
@@ -155,24 +162,35 @@ class ReelAdapter(
         private val loadingAnimation: LottieAnimationView = itemView.findViewById(R.id.loading_animation)
         private val tvReelInfo: TextView = itemView.findViewById(R.id.tv_reel_info)
         var player: ExoPlayer? = null
+        var playerView: PlayerView? = null
         var isSurfaceReady = false
 
-        fun attachPreloadedPlayerView(preloadedView: PlayerView) {
+        fun attachPlayerView(attachedPlayerView: PlayerView) {
             playerViewContainer.removeAllViews()
-            playerViewContainer.addView(preloadedView)
-            player = preloadedView.player as? ExoPlayer
-            isSurfaceReady = preloadedView.width > 0 && preloadedView.height > 0
-            Timber.tag(tag).d("Attached preloaded PlayerView for position $bindingAdapterPosition")
+            playerViewContainer.addView(attachedPlayerView)
+            playerView = attachedPlayerView
+            player = attachedPlayerView.player as? ExoPlayer
+            isSurfaceReady = attachedPlayerView.width > 0 && attachedPlayerView.height > 0
+            Timber.tag(tag).d("Attached PlayerView for position $bindingAdapterPosition")
         }
 
         fun setupPlayerListener() {
             player?.addListener(object : Player.Listener {
+                override fun onRenderedFirstFrame() {
+                    Timber.tag(tag).d("createDrawMeasureVideoAtPosition - First frame rendered for position $position")
+                    playerView?.post { playerView?.invalidate() }
+                }
+                override fun onVideoSizeChanged(videoSize: VideoSize) {
+                    Timber.tag(tag).d("createDrawMeasureVideoAtPosition - Video size changed for position $position: ${videoSize.width}x${videoSize.height}")
+                    playerView?.requestLayout()
+                    playerView?.post { playerView?.invalidate() }
+                }
                 override fun onSurfaceSizeChanged(width: Int, height: Int) {
-                    if (width > 0 && height > 0 && bindingAdapterPosition != RecyclerView.NO_POSITION) {
-                        isSurfaceReady = true
-                        Timber.tag(tag).d("Surface ready for position $bindingAdapterPosition: $width x $height")
-                        playbackViewModel.updateSurfaceReadyState(position = bindingAdapterPosition, isReady = true)
-                    }
+                    isSurfaceReady = width > 0 && height > 0
+                    Timber.tag(tag).d("Surface ready for position $bindingAdapterPosition: $width x $height")
+                    playbackViewModel.updateSurfaceReadyState(
+                        position = bindingAdapterPosition,
+                        isReady = width > 0 && height > 0)
                 }
                 override fun onPlaybackStateChanged(state: Int) {
                     Timber.tag(tag).d("Playback state changed for position $bindingAdapterPosition: $state")
@@ -196,6 +214,15 @@ class ReelAdapter(
                     Timber.tag(tag).d("IsPlaying changed for position $bindingAdapterPosition: $isPlaying")
                     if (isPlaying && player?.playbackState == Player.STATE_READY) {
                         hideLoading()
+                    }
+                }
+                override fun onPlayerError(error: PlaybackException) {
+                    Timber.tag(tag).e(error, "Playback error at position $bindingAdapterPosition: ${error.message}")
+                    if (error.message?.contains("Unexpected start code prefix") == true) {
+                        if (player != null && playerView != null) {
+                            playbackViewModel.startPlayerPlay(player!!, playerView!!)
+                            Timber.tag(tag).d("Retried playing video at position $bindingAdapterPosition after PesReader error")
+                        }
                     }
                 }
             })
