@@ -3,6 +3,7 @@ package com.kyobi.trend.ui
 import android.content.Context
 import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -120,6 +121,9 @@ class ReelAdapter(
                 .build()).build().also {
                 Timber.tag(tag).d("Created new player for position $position")
             }
+            // dùng textureView thay vì surfaceView. gán vào player của exoplayer và player của media3
+            val textureView = TextureView(context)
+            player.setVideoTextureView(textureView)
             playerView.player = player
             holder.attachPreloadedPlayerView(playerView)
             playbackViewModel.setPlayerView(position, playerView)

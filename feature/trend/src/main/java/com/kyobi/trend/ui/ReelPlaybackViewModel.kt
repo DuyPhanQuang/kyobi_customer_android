@@ -111,9 +111,7 @@ class ReelPlaybackViewModel @Inject constructor(
                 val player = playerView.player as? ExoPlayer
                 player?.let {
                     it.pause()
-//                    it.stop()
-//                    it.clearMediaItems()
-                    Timber.tag(tag).d("Paused stopped player and cleared media items at position $pos")
+                    Timber.tag(tag).d("Paused media items at position $pos")
                     setMediaItemAndSourceForAnotherPlayer(pos, it)
                 }
             }
