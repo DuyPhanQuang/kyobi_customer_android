@@ -1,16 +1,11 @@
 package com.kyobi.trend.ui
 
 import android.content.Context
-import android.graphics.Color
-import android.view.View
-import android.view.ViewGroup
-import android.view.ViewTreeObserver
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.kyobi.trend.cache.MediaCache
 import com.kyobi.featurecommon.monitor.network.NetworkMonitor
@@ -40,12 +35,12 @@ class ReelPlaybackViewModel @Inject constructor(
     private val networkMonitor: NetworkMonitor,
 ) : ViewModel() {
     private val tag = "ReelPlaybackViewModel"
-    private var currentPlayingPosition: Int = -1
+    private var currentPlayingPosition: Int = 0
     private val surfaceReadyStates = mutableMapOf<Int, Boolean>()
     private val reels = mutableListOf<Reel>()
     private val preparedMediaItems = mutableMapOf<Int, MediaItem>()
     private val playerViews = mutableMapOf<Int, PlayerView>()
-    private val players = mutableMapOf<Int, ExoPlayer>()
+    private val preloadedMediaSources = mutableMapOf<Int, MediaSource>()
     var onRefreshSurface: ((position: Int) -> Unit)? = null
 
     fun setPlayerView(position: Int, playerView: PlayerView) {
@@ -57,28 +52,10 @@ class ReelPlaybackViewModel @Inject constructor(
         return playerViews[position]
     }
 
-    fun getOrCreatePlayerForPosition(position: Int): ExoPlayer {
-        return players.getOrPut(position) {
-            ExoPlayer.Builder(context).build().also {
-                Timber.tag(tag).d("Created new player for position $position")
-            }
-        }
-    }
-
     fun setReels(newReels: List<Reel>) {
         Timber.tag(tag).d("Setting reels, size: ${newReels.size}")
         reels.clear()
         reels.addAll(newReels)
-        preparedMediaItems.clear()
-        viewModelScope.launch {
-            for (index in newReels.indices) {
-                val reel = newReels[index]
-                val mediaItem = MediaItem.fromUri(reel.videoUrl.toUri()).buildUpon()
-                    .setMediaId(reel.videoUrl).build()
-                preparedMediaItems[index] = mediaItem
-                Timber.tag(tag).d("Created MediaItem for position $index")
-            }
-        }
     }
 
     fun getCurrentPlayingPosition(): Int = currentPlayingPosition
@@ -116,53 +93,47 @@ class ReelPlaybackViewModel @Inject constructor(
         }
     }
 
-    fun onPageSelected(position: Int, player: ExoPlayer) {
+    fun onPageSelected(position: Int) {
         if (position < 0 || position >= reels.size) {
             Timber.tag(tag).d("Invalid position: $position, skipping onPageSelected")
             return
         }
-        if (position != currentPlayingPosition) {
-            players[currentPlayingPosition]?.volume = 0f
-            players[currentPlayingPosition]?.pause()
+        playerViews.forEach { (pos, playerView) ->
+            if (pos != position) {
+                val player = playerView.player as? ExoPlayer
+                player?.let {
+                    it.pause()
+                    it.stop()
+                    it.clearMediaItems()
+                    Timber.tag(tag).d("Paused stopped player and cleared media items at position $pos")
+                }
+            }
         }
-        currentPlayingPosition = position
-        val playerView = playerViews[position]
-        if (playerView != null) {
-            playVideoAtPositionInternal(position, playerView, player)
+        val newPlayerView = playerViews[position]
+        if (newPlayerView != null) {
+            surfaceReadyStates[position] = newPlayerView.width > 0 && newPlayerView.height > 0
+            Timber.tag(tag).d("Checking size of PlayerView at position: $position: ${newPlayerView.width}x${newPlayerView.height}")
+            val newPlayer = newPlayerView.player as? ExoPlayer
+            newPlayer?.let { p ->
+                playVideoAtPositionInternal(position, newPlayerView, p)
+            }
         } else {
             Timber.tag(tag).w("No PlayerView found for position $position")
         }
+        currentPlayingPosition = position
     }
 
-    fun createDrawMeasureVideoAtPosition(position: Int, player: ExoPlayer, isSurfaceReady: Boolean) {
+    fun createDrawMeasureVideoAtPosition(position: Int, isSurfaceReady: Boolean) {
         Timber.tag(tag).d("createDrawMeasureVideoAtPosition called for position $position, reels size: ${reels.size}")
         if (position < 0 || position >= reels.size) {
             Timber.tag(tag).d("Invalid position: $position, skipping createDrawMeasureVideoAtPosition")
             return
         }
+        val playerView = playerViews[position] ?: return
         try {
+            val player = playerView.player as ExoPlayer
             surfaceReadyStates[position] = isSurfaceReady
-            var playerView = playerViews[position]
-            if (playerView == null) {
-                playerView = PlayerView(context).apply {
-                    setBackgroundColor(Color.TRANSPARENT)
-                    useController = false
-                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-                    setKeepContentOnPlayerReset(true)
-                    setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                }
-                playerView.player = player
-                setPlayerView(position, playerView)
-                val widthSpec = View.MeasureSpec.makeMeasureSpec(context.resources.displayMetrics.widthPixels, View.MeasureSpec.EXACTLY)
-                val heightSpec = View.MeasureSpec.makeMeasureSpec(context.resources.displayMetrics.heightPixels, View.MeasureSpec.EXACTLY)
-                playerView.measure(widthSpec, heightSpec)
-                playerView.layout(0, 0, playerView.measuredWidth, playerView.measuredHeight)
-                Timber.tag(tag).d("Created new PlayerView for position $position")
-            }
+            warmupPlayerNearbyPosition(position, player)
             player.addListener(object : Player.Listener {
                 override fun onRenderedFirstFrame() {
                     Timber.tag(tag).d("createDrawMeasureVideoAtPosition - First frame rendered for position $position")
@@ -178,66 +149,71 @@ class ReelPlaybackViewModel @Inject constructor(
                     surfaceReadyStates[position] = width > 0 && height > 0
                 }
             })
-            playerView.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-                override fun onGlobalLayout() {
-                    startPlayerPrepare(position, player)
-                    Timber.tag(tag).d("createDrawMeasureVideoAtPosition - Delayed playback started for position $position")
-                    playerView.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                }
-            })
-            Timber.tag(tag).d("Used PlayerView at position $position")
         } catch (e: Exception) {
             Timber.tag(tag).e(e, "Error in createDrawMeasureVideoAtPosition for position $position: ${e.message}")
         }
     }
 
-    private fun startPlayerPrepare(position: Int, player: ExoPlayer) {
-        val mediaItem = preparedMediaItems[position]
-        if (mediaItem != null) {
-            val mediaSource = startCreateMediaSource(mediaItem)
-            if (mediaSource != null) {
-                player.setMediaSource(mediaSource)
-                player.prepare()
-                Timber.tag(tag).d("Prepared player for position $position")
+    fun warmupPlayerNearbyPositions(visiblePositions: List<Int>) {
+        Timber.tag(tag).d("Preparing players for nearby positions: $visiblePositions")
+        visiblePositions.forEach { position ->
+            if (position >= 0 && position < reels.size) {
+                val playerView = playerViews[position]
+                val nearPlayer = playerView?.player as? ExoPlayer
+                val mediaItem = preparedMediaItems[position]
+                val mediaSource = preloadedMediaSources[position]
+                if (nearPlayer != null && mediaItem != null && mediaSource != null) {
+                    nearPlayer.clearMediaItems()
+                    nearPlayer.setMediaItem(mediaItem)
+                    nearPlayer.setMediaSource(mediaSource)
+                    nearPlayer.prepare()
+                    Timber.tag(tag).d("Prepared player with preloaded MediaItem MediaSource for keyframe at position $position")
+                }
             }
-        } else {
-            Timber.tag(tag).w("No MediaItem for position $position")
         }
     }
 
-    private fun startPlayerPlay(player: ExoPlayer) {
+    // tải trước MediaItem và MediaSource cho các position
+    private fun warmupPlayerNearbyPosition(position: Int, player: ExoPlayer) {
+        if (position >= 0 && position < reels.size && !preloadedMediaSources.containsKey(position)) {
+            val reel = reels[position]
+            val mediaItem = MediaItem.fromUri(reel.videoUrl.toUri()).buildUpon()
+                .setMediaId(reel.videoUrl).build()
+            preparedMediaItems[position] = mediaItem
+            Timber.tag(tag).d("Preloaded mediaItem for position $position")
+            player.setMediaItem(mediaItem)
+            val mediaSource = startCreateMediaSource(mediaItem) ?: return
+            preloadedMediaSources[position] = mediaSource
+            Timber.tag(tag).d("Preloaded mediaSource for position $position")
+            player.setMediaSource(mediaSource)
+        }
+    }
+
+    private fun startPlayerPlay(player: ExoPlayer, playerView: PlayerView) {
+        if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+            player.prepare()
+            Timber.tag(tag).d("Prepared player due to IDLE or ENDED state")
+        }
         player.volume = 1f
         player.repeatMode = Player.REPEAT_MODE_ONE
         player.play()
+        playerView.requestLayout()
+        playerView.post { playerView.invalidate() }
+        onRefreshSurface?.invoke(currentPlayingPosition)
     }
 
     private fun playVideoAtPositionInternal(position: Int, playerView: PlayerView, player: ExoPlayer) {
-        var mediaItem = preparedMediaItems[position]
-        if (mediaItem == null) {
-            Timber.tag(tag).w("MediaItem not preloaded for position $position, creating now")
-            val reel = reels[position]
-            mediaItem = MediaItem.fromUri(reel.videoUrl.toUri()).buildUpon()
-                .setMediaId(reel.videoUrl).build()
-            preparedMediaItems[position] = mediaItem
+        if (surfaceReadyStates[position] == false) {
+            Timber.tag(tag).w("Surface at position $position not ready")
+            return
         }
         try {
-            val mediaSource = startCreateMediaSource(mediaItem)
-            if (mediaSource != null) {
-                player.setMediaSource(mediaSource)
-            }
+            startPlayerPlay(player, playerView)
             player.addListener(object : Player.Listener {
                 override fun onPlayerError(error: PlaybackException) {
                     Timber.tag(tag).e(error, "Playback error at position $position: ${error.message}")
                     if (error.message?.contains("Unexpected start code prefix") == true) {
-                        player.clearMediaItems()
-                        val newMediaSource = startCreateMediaSource(mediaItem)
-                        if (newMediaSource != null) {
-                            player.setMediaSource(newMediaSource)
-                        }
-                        startPlayerPlay(player)
-                        playerView.requestLayout()
-                        playerView.post { playerView.invalidate() }
-                        onRefreshSurface?.invoke(position)
+                        startPlayerPlay(player, playerView)
                         Timber.tag(tag).d("Retried playing video at position $position after PesReader error")
                     }
                 }
@@ -260,30 +236,9 @@ class ReelPlaybackViewModel @Inject constructor(
                 }
                 override fun onSurfaceSizeChanged(width: Int, height: Int) {
                     Timber.tag(tag).d("Surface size changed for position $position: ${width}x${height}")
-                    if (width > 0 && height > 0) {
-                        surfaceReadyStates[position] = true
-                    }
+                    surfaceReadyStates[position] = width > 0 && height > 0
                 }
             })
-            if (surfaceReadyStates[position] == true) {
-                startPlayerPlay(player)
-                Timber.tag(tag).d("Playing video at position $position, state: ${player.playbackState}, isPlaying: ${player.isPlaying}")
-            } else {
-                Timber.tag(tag).d("Surface not ready for position $position, delaying playback")
-                playerView.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-                    override fun onGlobalLayout() {
-                        if (playerView.width > 0 && playerView.height > 0) {
-                            surfaceReadyStates[position] = true
-                            startPlayerPlay(player)
-                            Timber.tag(tag).d("Delayed playback started for position $position")
-                            playerView.viewTreeObserver.removeOnGlobalLayoutListener(this)
-                        }
-                    }
-                })
-            }
-            playerView.requestLayout()
-            playerView.post { playerView.invalidate() }
-            onRefreshSurface?.invoke(position)
         } catch (e: IllegalStateException) {
             Timber.tag(tag).e(e, "Failed to play video at position $position: ${e.message}")
         }
@@ -300,21 +255,17 @@ class ReelPlaybackViewModel @Inject constructor(
     }
 
     fun onPlayerReleased(position: Int) {
-        players[position]?.let { player ->
+        playerViews[position]?.let { playerView ->
+            val player = playerView.player as ExoPlayer
             startPlayerEnd(position, player)
-            players.remove(position)
             surfaceReadyStates.remove(position)
+            preloadedMediaSources.remove(position)
             playerViews.remove(position)?.player = null
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        players.forEach { (position, player) ->
-            startPlayerEnd(position, player)
-            Timber.tag(tag).d("Ended Player at position $position")
-        }
-        players.clear()
         playerViews.forEach { (position, playerView) ->
             playerView.player = null
             Timber.tag(tag).d("Cleared PlayerView at position $position")
@@ -322,5 +273,6 @@ class ReelPlaybackViewModel @Inject constructor(
         playerViews.clear()
         surfaceReadyStates.clear()
         preparedMediaItems.clear()
+        preloadedMediaSources.clear()
     }
 }

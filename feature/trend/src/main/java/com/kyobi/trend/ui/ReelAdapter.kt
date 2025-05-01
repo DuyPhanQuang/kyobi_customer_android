@@ -41,7 +41,7 @@ class ReelAdapter(
             if (holder is ReelViewHolder) {
                 holder.playerViewContainer.requestLayout()
                 holder.playerViewContainer.invalidate()
-                Timber.tag(tag).d("Refreshed UI via onRefreshSurface called")
+                Timber.tag(tag).d("Refreshed UI via onRefreshSurface called for position: $position")
             } else {
                 Timber.tag(tag).d("holder not found")
             }
@@ -91,7 +91,6 @@ class ReelAdapter(
     override fun onBindViewHolder(holder: ReelViewHolder, position: Int) {
         holder.bind(reels[position], position)
         holder.playerViewContainer.removeAllViews()
-        val player = playbackViewModel.getOrCreatePlayerForPosition(position)
         val preloadedView = playbackViewModel.getPlayerView(position)
         if (preloadedView != null) {
             holder.attachPreloadedPlayerView(preloadedView)
@@ -107,13 +106,15 @@ class ReelAdapter(
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
             }
+            val player = ExoPlayer.Builder(context).build().also {
+                Timber.tag(tag).d("Created new player for position $position")
+            }
             playerView.player = player
             holder.attachPreloadedPlayerView(playerView)
             playbackViewModel.setPlayerView(position, playerView)
         }
-        holder.player = player
         holder.setupPlayerListener()
-        playbackViewModel.createDrawMeasureVideoAtPosition(position, player, holder.isSurfaceReady)
+        playbackViewModel.createDrawMeasureVideoAtPosition(position, holder.isSurfaceReady)
         // Cập nhật isSurfaceReady dựa trên kích thước của PlayerView đã preload
         val isSurfaceReady = preloadedView?.let { it.width > 0 && it.height > 0 } ?: false
         holder.isSurfaceReady = isSurfaceReady

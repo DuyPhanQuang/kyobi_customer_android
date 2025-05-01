@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -22,6 +24,8 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.kyobi.trend.model.Reel
 import com.kyobi.theme.kyobiTheme
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import timber.log.Timber
 
 @OptIn(UnstableApi::class)
@@ -37,6 +41,7 @@ fun ReelList(
     val playbackViewModel: ReelPlaybackViewModel = hiltViewModel()
     val currentReels by rememberUpdatedState(reels)
     val adapter = remember { mutableStateOf<ReelAdapter?>(null) }
+    val offscreenPageNumber = 6
 
     AndroidView(
         modifier = Modifier
@@ -54,24 +59,40 @@ fun ReelList(
                     playbackViewModel = playbackViewModel,
                 )
                 this.adapter = adapter.value
-                offscreenPageLimit = 10 // Giới hạn preload 10 item trước/sau
+                offscreenPageLimit = offscreenPageNumber // Giới hạn preload 20 item trước/sau
                 playbackViewModel.setReels(currentReels)
                 registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                    override fun onPageScrolled(
+                        position: Int,
+                        positionOffset: Float,
+                        positionOffsetPixels: Int
+                    ) {
+                        val mutex = Mutex()
+                        if (mutex.tryLock()) {
+                            try {
+                                val currentPosition = currentItem
+                                val range = offscreenPageNumber / 2
+                                val nearbyPositions = (-range..range).map { currentPosition + it }
+                                    .filter { it >= 0 && it < (adapter.value?.itemCount ?: 0) }
+                                val batchMutex = Mutex()
+                                nearbyPositions.chunked(1).forEach { batch ->
+                                    if (batchMutex.tryLock()) {
+                                        try {
+                                            playbackViewModel.warmupPlayerNearbyPositions(batch)
+                                            Timber.tag(tag).d("onPageScrolled: Prepared batch $batch")
+                                        } finally {
+                                            batchMutex.unlock()
+                                        }
+                                    }
+                                }
+                            } finally {
+                                mutex.unlock()
+                            }
+                        }
+                    }
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
-                        val recyclerView = getChildAt(0) as? RecyclerView
-                        if (recyclerView != null) {
-                            val holder = recyclerView.findViewHolderForAdapterPosition(position) as? ReelAdapter.ReelViewHolder
-                            holder?.let { h ->
-                                if (h.player != null) {
-                                    playbackViewModel.onPageSelected(position, h.player!!)
-                                }
-                            } ?: run {
-                                Timber.tag(tag).w("Holder not found for position $position, skipping play")
-                            }
-                        } else {
-                            Timber.tag(tag).w("RecyclerView not found in ViewPager2, skipping play at position $position")
-                        }
+                        playbackViewModel.onPageSelected(position)
                     }
                 })
             }
@@ -80,25 +101,6 @@ fun ReelList(
             (viewPager.adapter as? ReelAdapter)?.let { reelAdapter ->
                 if (reelAdapter.reels != currentReels) {
                     playbackViewModel.setReels(currentReels)
-                    viewPager.post {
-                        if (playbackViewModel.getCurrentPlayingPosition() == -1 && currentReels.isNotEmpty()) {
-                            val recyclerView = viewPager.getChildAt(0) as? RecyclerView
-                            if (recyclerView != null) {
-                                val holder = recyclerView.findViewHolderForAdapterPosition(0) as? ReelAdapter.ReelViewHolder
-                                holder?.let { h->
-                                    if (h.player != null) {
-                                        playbackViewModel.onPageSelected(0, h.player!!)
-                                    }
-                                } ?: run {
-                                    Timber.tag(tag).w("Holder not found for position 0 during update")
-                                }
-                            } else {
-                                Timber.tag(tag).w("RecyclerView not found in ViewPager2 during update")
-                            }
-                        } else {
-                            Timber.tag(tag).d("Video at position 0 is already playing, skipping play")
-                        }
-                    }
                 }
             }
         }
