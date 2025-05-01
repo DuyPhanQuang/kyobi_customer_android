@@ -8,9 +8,12 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.lifecycle.LifecycleOwner
+import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.RecyclerView
@@ -20,8 +23,6 @@ import com.kyobi.feature.trend.R
 import com.kyobi.trend.model.Reel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @UnstableApi
@@ -31,6 +32,8 @@ class ReelAdapter(
     lifecycleOwner: LifecycleOwner,
     private val viewPager: ViewPager2,
     private val playbackViewModel: ReelPlaybackViewModel,
+    private val preloadedMediaItems: Map<Int, MediaItem>,
+    private val preloadedMediaSources: Map<Int, MediaSource>
 ) : RecyclerView.Adapter<ReelAdapter.ReelViewHolder>() {
     private val tag = "ReelAdapter"
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
@@ -91,6 +94,10 @@ class ReelAdapter(
     override fun onBindViewHolder(holder: ReelViewHolder, position: Int) {
         holder.bind(reels[position], position)
         holder.playerViewContainer.removeAllViews()
+        val preloadedMediaItem = preloadedMediaItems[position]
+        val preloadedMediaSource = preloadedMediaSources[position]
+        playbackViewModel.setPreloadedMediaItem(position, preloadedMediaItem)
+        playbackViewModel.setPreloadedMediaSource(position, preloadedMediaSource)
         val preloadedView = playbackViewModel.getPlayerView(position)
         if (preloadedView != null) {
             holder.attachPreloadedPlayerView(preloadedView)
@@ -106,7 +113,10 @@ class ReelAdapter(
                     ViewGroup.LayoutParams.MATCH_PARENT
                 )
             }
-            val player = ExoPlayer.Builder(context).build().also {
+            val player = ExoPlayer.Builder(context).setLoadControl(
+                DefaultLoadControl.Builder()
+                    .setBufferDurationsMs(1000, 5000, 500, 1000)
+                .build()).build().also {
                 Timber.tag(tag).d("Created new player for position $position")
             }
             playerView.player = player

@@ -1,7 +1,10 @@
 package com.kyobi.trend.ui
 
 import android.content.Context
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -12,8 +15,6 @@ import com.kyobi.featurecommon.monitor.network.NetworkMonitor
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import timber.log.Timber
-import androidx.core.net.toUri
-import androidx.lifecycle.viewModelScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.VideoSize
 import androidx.media3.datasource.DefaultDataSource
@@ -22,9 +23,6 @@ import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import com.kyobi.trend.model.Reel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @UnstableApi
@@ -38,9 +36,9 @@ class ReelPlaybackViewModel @Inject constructor(
     private var currentPlayingPosition: Int = 0
     private val surfaceReadyStates = mutableMapOf<Int, Boolean>()
     private val reels = mutableListOf<Reel>()
-    private val preparedMediaItems = mutableMapOf<Int, MediaItem>()
+    private val mediaItems = mutableMapOf<Int, MediaItem>()
     private val playerViews = mutableMapOf<Int, PlayerView>()
-    private val preloadedMediaSources = mutableMapOf<Int, MediaSource>()
+    private val mediaSources = mutableMapOf<Int, MediaSource>()
     var onRefreshSurface: ((position: Int) -> Unit)? = null
 
     fun setPlayerView(position: Int, playerView: PlayerView) {
@@ -50,6 +48,16 @@ class ReelPlaybackViewModel @Inject constructor(
 
     fun getPlayerView(position: Int): PlayerView? {
         return playerViews[position]
+    }
+
+    fun setPreloadedMediaItem(position: Int, mediaItem: MediaItem?) {
+        if (mediaItem == null) return
+        mediaItems[position] = mediaItem
+    }
+
+    fun setPreloadedMediaSource(position: Int, mediaSource: MediaSource?) {
+        if (mediaSource == null) return
+        mediaSources[position] = mediaSource
     }
 
     fun setReels(newReels: List<Reel>) {
@@ -65,7 +73,7 @@ class ReelPlaybackViewModel @Inject constructor(
         surfaceReadyStates[position] = isReady
     }
 
-    private fun startCreateMediaSource(mediaItem: MediaItem): MediaSource? {
+    fun startCreateMediaSource(mediaItem: MediaItem): MediaSource? {
         try {
             val cache = mediaCache.getCache()
             val dataSourceFactory = DefaultDataSource.Factory(context)
@@ -103,9 +111,10 @@ class ReelPlaybackViewModel @Inject constructor(
                 val player = playerView.player as? ExoPlayer
                 player?.let {
                     it.pause()
-                    it.stop()
-                    it.clearMediaItems()
+//                    it.stop()
+//                    it.clearMediaItems()
                     Timber.tag(tag).d("Paused stopped player and cleared media items at position $pos")
+                    setMediaItemAndSourceForAnotherPlayer(pos, it)
                 }
             }
         }
@@ -121,6 +130,9 @@ class ReelPlaybackViewModel @Inject constructor(
             Timber.tag(tag).w("No PlayerView found for position $position")
         }
         currentPlayingPosition = position
+        // Start player prepare next position
+        val nextPosition = position + 1
+        startPlayerPrepareAtNextPosition(nextPosition)
     }
 
     fun createDrawMeasureVideoAtPosition(position: Int, isSurfaceReady: Boolean) {
@@ -133,7 +145,7 @@ class ReelPlaybackViewModel @Inject constructor(
         try {
             val player = playerView.player as ExoPlayer
             surfaceReadyStates[position] = isSurfaceReady
-            warmupPlayerNearbyPosition(position, player)
+            warmupMediaItemMediaSourceAtPosition(position, player)
             player.addListener(object : Player.Listener {
                 override fun onRenderedFirstFrame() {
                     Timber.tag(tag).d("createDrawMeasureVideoAtPosition - First frame rendered for position $position")
@@ -154,46 +166,49 @@ class ReelPlaybackViewModel @Inject constructor(
         }
     }
 
-    fun warmupPlayerNearbyPositions(visiblePositions: List<Int>) {
-        Timber.tag(tag).d("Preparing players for nearby positions: $visiblePositions")
-        visiblePositions.forEach { position ->
-            if (position >= 0 && position < reels.size) {
-                val playerView = playerViews[position]
-                val nearPlayer = playerView?.player as? ExoPlayer
-                val mediaItem = preparedMediaItems[position]
-                val mediaSource = preloadedMediaSources[position]
-                if (nearPlayer != null && mediaItem != null && mediaSource != null) {
-                    nearPlayer.clearMediaItems()
-                    nearPlayer.setMediaItem(mediaItem)
-                    nearPlayer.setMediaSource(mediaSource)
-                    nearPlayer.prepare()
-                    Timber.tag(tag).d("Prepared player with preloaded MediaItem MediaSource for keyframe at position $position")
-                }
+    private fun startPlayerPrepareAtNextPosition(nextPosition: Int) {
+        val playerView = playerViews[nextPosition] ?: return
+        val player = playerView.player as? ExoPlayer ?: return
+        val isSurfaceReady = playerView.width > 0 && playerView.height > 0
+        if (!isSurfaceReady) return
+        if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+            player.setPriority(C.PRIORITY_PLAYBACK_PRELOAD)
+            player.prepare()
+            Timber.tag(tag).d("Prepared player for keyframe at nextPosition: $nextPosition")
+        }
+    }
+
+    private fun setMediaItemAndSourceForAnotherPlayer(pos: Int, anotherPlayer: ExoPlayer) {
+        val mediaItem = mediaItems[pos] ?: return
+        val mediaSource = mediaSources[pos] ?: return
+        anotherPlayer.setMediaItem(mediaItem)
+        anotherPlayer.setMediaSource(mediaSource)
+    }
+
+    // tải trước MediaItem và MediaSource cho các position
+    private fun warmupMediaItemMediaSourceAtPosition(
+        position: Int,
+        player: ExoPlayer
+    ) {
+        if (position >= 0 && position < reels.size) {
+            val preloadedMediaItem = mediaItems[position]
+            val preloadedMediaSource = mediaSources[position]
+            if (preloadedMediaItem != null && preloadedMediaSource != null) {
+                mediaItems[position] = preloadedMediaItem
+                player.setMediaItem(preloadedMediaItem)
+                mediaSources[position] = preloadedMediaSource
+                player.setMediaSource(preloadedMediaSource)
+                Timber.tag(tag).d("Using preload data to preloaded mediaItem mediaSource for position $position")
             }
         }
     }
 
-    // tải trước MediaItem và MediaSource cho các position
-    private fun warmupPlayerNearbyPosition(position: Int, player: ExoPlayer) {
-        if (position >= 0 && position < reels.size && !preloadedMediaSources.containsKey(position)) {
-            val reel = reels[position]
-            val mediaItem = MediaItem.fromUri(reel.videoUrl.toUri()).buildUpon()
-                .setMediaId(reel.videoUrl).build()
-            preparedMediaItems[position] = mediaItem
-            Timber.tag(tag).d("Preloaded mediaItem for position $position")
-            player.setMediaItem(mediaItem)
-            val mediaSource = startCreateMediaSource(mediaItem) ?: return
-            preloadedMediaSources[position] = mediaSource
-            Timber.tag(tag).d("Preloaded mediaSource for position $position")
-            player.setMediaSource(mediaSource)
-        }
-    }
-
     private fun startPlayerPlay(player: ExoPlayer, playerView: PlayerView) {
-        if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+        if (currentPlayingPosition == 0) {
             player.prepare()
-            Timber.tag(tag).d("Prepared player due to IDLE or ENDED state")
+            Timber.tag(tag).d("Prepare first player (index = 0)")
         }
+        player.setPriority(C.PRIORITY_PLAYBACK)
         player.volume = 1f
         player.repeatMode = Player.REPEAT_MODE_ONE
         player.play()
@@ -259,7 +274,8 @@ class ReelPlaybackViewModel @Inject constructor(
             val player = playerView.player as ExoPlayer
             startPlayerEnd(position, player)
             surfaceReadyStates.remove(position)
-            preloadedMediaSources.remove(position)
+            mediaItems.remove(position)
+            mediaSources.remove(position)
             playerViews.remove(position)?.player = null
         }
     }
@@ -272,7 +288,7 @@ class ReelPlaybackViewModel @Inject constructor(
         }
         playerViews.clear()
         surfaceReadyStates.clear()
-        preparedMediaItems.clear()
-        preloadedMediaSources.clear()
+        mediaItems.clear()
+        mediaSources.clear()
     }
 }
