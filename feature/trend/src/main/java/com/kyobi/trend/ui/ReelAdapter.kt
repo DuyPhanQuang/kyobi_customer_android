@@ -81,17 +81,12 @@ class ReelAdapter(
         val holder = findViewHolderForAdapterPosition(position) ?: return
         val currentParent = playerView.parent as? ViewGroup
         val targetContainer = holder.playerView
-        // Nếu PlayerView đã ở đúng container, không cần gỡ/thêm
-        if (currentParent != targetContainer) {
-            currentParent?.removeView(playerView)
-            targetContainer.removeAllViews()
-            targetContainer.addView(playerView)
-            Timber.tag(tag).d("Reattached PlayerView at position %d", position)
-            playerView.requestLayout()
-            playerView.post { playerView.invalidate() }
-        } else {
-            Timber.tag(tag).d("PlayerView already attached at position %d", position)
-        }
+        // Nếu PlayerView chưa ở đúng container, gắn
+        currentParent?.removeView(playerView)
+        targetContainer.removeAllViews()
+        targetContainer.addView(playerView)
+        playerView.requestLayout()
+        playerView.post { playerView.invalidate() }
     }
 
     private fun findViewHolderForAdapterPosition(position: Int): ReelViewHolder? {

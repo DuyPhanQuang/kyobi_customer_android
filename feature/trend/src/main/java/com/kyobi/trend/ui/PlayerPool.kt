@@ -2,6 +2,7 @@ package com.kyobi.trend.ui
 
 import android.content.Context
 import android.graphics.Color
+import android.view.SurfaceHolder
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
@@ -12,28 +13,31 @@ import androidx.media3.ui.PlayerView
 import androidx.media3.ui.PlayerView.SHOW_BUFFERING_NEVER
 import timber.log.Timber
 
+private val TAG = "PlayerPool"
+
 @UnstableApi
 class PlayerPool(ctx: Context) {
     var prevPlayer: ExoPlayer = ExoPlayer.Builder(ctx).setLoadControl(
         DefaultLoadControl.Builder()
-            .setBufferDurationsMs(500, 2000, 250, 500)
+            .setBufferDurationsMs(1000, 3000, 1000, 1000)
             .setPrioritizeTimeOverSizeThresholds(true).build()
     ).build()
     var currentPlayer: ExoPlayer = ExoPlayer.Builder(ctx).setLoadControl(
         DefaultLoadControl.Builder()
-            .setBufferDurationsMs(500, 2000, 250, 500)
+            .setBufferDurationsMs(1000, 3000, 1000, 1000)
             .setPrioritizeTimeOverSizeThresholds(true).build()
     ).build()
     var nextPlayer: ExoPlayer = ExoPlayer.Builder(ctx).setLoadControl(
         DefaultLoadControl.Builder()
-            .setBufferDurationsMs(500, 2000, 250, 500)
+            .setBufferDurationsMs(1000, 3000, 1000, 1000)
             .setPrioritizeTimeOverSizeThresholds(true).build()
     ).build()
+
+    val surfaceHolders = mutableMapOf<ExoPlayer, SurfaceHolder>()
 
     var prevPlayerView: PlayerView = createPlayerView(ctx, prevPlayer)
     var currentPlayerView: PlayerView = createPlayerView(ctx, currentPlayer)
     var nextPlayerView: PlayerView = createPlayerView(ctx, nextPlayer)
-    val tag = "PlayerPool"
 
     @OptIn(UnstableApi::class)
     private fun createPlayerView(context: Context, player: ExoPlayer): PlayerView {
@@ -58,5 +62,6 @@ class PlayerPool(ctx: Context) {
         prevPlayer.release()
         currentPlayer.release()
         nextPlayer.release()
+        surfaceHolders.clear()
     }
 }

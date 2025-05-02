@@ -1,7 +1,6 @@
 package com.kyobi.trend.ui
 
-import android.os.Handler
-import android.os.Looper
+import android.view.SurfaceView
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,18 +21,17 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.media3.common.C
 import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.MediaSource
-import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.kyobi.trend.model.Reel
 import com.kyobi.theme.kyobiTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.kyobi.trend.extension.pauseForPrev
+import com.kyobi.trend.extension.playForCurrent
+import com.kyobi.trend.extension.prepareForNext
+import com.kyobi.trend.extension.resetNextBeforeReuse
+import com.kyobi.trend.extension.resetPrevBeforeReuse
 import timber.log.Timber
 
 @OptIn(UnstableApi::class)
@@ -54,7 +52,6 @@ fun ReelList(
     val preloadedMediaSources = remember { mutableMapOf<Int, MediaSource>() }
     val pool = remember { mutableStateOf<PlayerPool?>(null) }
     val lastPos = remember { mutableIntStateOf(0) }
-    val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     LaunchedEffect(Unit) {
         playbackViewModel.setReels(currentReels)
@@ -64,11 +61,9 @@ fun ReelList(
             val mediaItem = MediaItem.fromUri(reel.videoUrl.toUri()).buildUpon()
                 .setMediaId(reel.videoUrl).build()
             preloadedMediaItems[index] = mediaItem
-//            Timber.tag(tag).d("Preloaded mediaItem for position $index mediaItem: $mediaItem")
             val mediaSource = playbackViewModel.startCreateMediaSource(mediaItem)
             if (mediaSource != null) {
                 preloadedMediaSources[index] = mediaSource
-//                Timber.tag(tag).d("Preloaded mediaSource for position $index mediaSource: $mediaSource")
             }
             // 2) init player pool
             if (preloadedMediaSources.size == reels.size) {
@@ -79,16 +74,10 @@ fun ReelList(
                     adapter.value!!.attachPlayerViewAt(0, p.currentPlayerView)
                     preloadedMediaSources[0]?.let { mediaSource ->
                         p.currentPlayer.apply {
-                            Timber.tag(tag).d("Set mediaSource and prepare then play current player at first time")
-                            setMediaSource(mediaSource, true)
-                            playWhenReady = true
-                            prepare()
-                            repeatMode = Player.REPEAT_MODE_ONE
-                            volume = 1f
+                            playForCurrent(isFirstTime = true, forward = false, source = mediaSource)
                         }
                         if (preloadedMediaSources.size > 1) {
                             adapter.value!!.attachPlayerViewAt(1, p.nextPlayerView)
-                            Timber.tag(tag).d("Set mediaSource but not prepare not play next player at time first")
                             p.nextPlayer.apply {
                                 prepareForNext(preloadedMediaSources[1])
                             }
@@ -117,10 +106,6 @@ fun ReelList(
                     playbackViewModel = playbackViewModel)
                 this.adapter = adapter.value
                 offscreenPageLimit = offscreenPageNumber // Giới hạn preload items trước/sau
-                setPageTransformer { page, position ->
-                    // Tránh animation nặng làm chậm Surface
-                    page.alpha = if (position <= -1f || position >= 1f) 0f else 1f
-                }
                 registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
@@ -132,47 +117,72 @@ fun ReelList(
                         Timber.tag(tag).d("===> onPageSelected($position), lastPos = ${lastPos.intValue}")
                         // Xác định hướng scroll
                         val forward = position > lastPos.intValue
-                        // Hoán đổi trong pool cho player và playerView
+                        // Hoán đổi trong pool cho player và playerView/playerView.player và surfaceHolders
                         if (forward) {
+                            // Clear prevPlayer và prevPlayerView trước khi tái sử dụng
+                            pp.prevPlayer.apply {
+                                resetPrevBeforeReuse(pp)
+                            }
+                            pp.prevPlayerView.let { view ->
+                                view.player = null
+                                Timber.tag(tag).d("Cleared prevPlayerView")
+                            }
+                            // Swap Player
                             val oldPrev = pp.prevPlayer
                             pp.prevPlayer = pp.currentPlayer
                             pp.currentPlayer = pp.nextPlayer
                             pp.nextPlayer = oldPrev
+                            // Swap PlayerView
                             val oldPrevView = pp.prevPlayerView
                             pp.prevPlayerView = pp.currentPlayerView
                             pp.currentPlayerView = pp.nextPlayerView
                             pp.nextPlayerView = oldPrevView
+                            // Cập nhật player cho PlayerView
+                            pp.prevPlayerView.player = pp.prevPlayer
+                            pp.currentPlayerView.player = pp.currentPlayer
+                            pp.nextPlayerView.player = pp.nextPlayer
                         } else {
+                            // Clear nextPlayer và nextPlayerView trước khi tái sử dụng
+                            pp.nextPlayer.apply {
+                                resetNextBeforeReuse(pp)
+                            }
+                            pp.nextPlayerView.let { view ->
+                                view.player = null
+                                Timber.tag(tag).d("Cleared nextPlayerView")
+                            }
+                            // Swap Player
                             val oldNext = pp.nextPlayer
                             pp.nextPlayer = pp.currentPlayer
                             pp.currentPlayer = pp.prevPlayer
                             pp.prevPlayer = oldNext
+                            // Swap PlayerView
                             val oldNextView = pp.nextPlayerView
                             pp.nextPlayerView = pp.currentPlayerView
                             pp.currentPlayerView = pp.prevPlayerView
                             pp.prevPlayerView = oldNextView
+                            // Cập nhật player cho PlayerView
+                            pp.nextPlayerView.player = pp.nextPlayer
+                            pp.currentPlayerView.player = pp.currentPlayer
+                            pp.prevPlayerView.player = pp.prevPlayer
                         }
-                        // Log trạng thái sau khi swap
                         Timber.tag(tag).d("After swap: currentPlayer instance=${pp.currentPlayer}, nextPlayer instance=${pp.nextPlayer}, prevPlayer instance=${pp.prevPlayer}")
                         // Hoán đổi trong adapter
                         adapter.value!!.attachPlayerViews(position, pp)
+                        // Phát currentPlayer
                         pp.currentPlayer.apply {
-                            setPriority(C.PRIORITY_MAX)
-                            // Đảm bảo media source đã được set từ trước (preload)
-                            // chỉ nên thực hiện hàm này ví lý do nào đó lần gần nhất nextPlayer/prevPlayer prepare thất bại
-                            if (forward) {
-                                Timber.tag(tag).d("case forward")
-                            } else {
-                                seekTo(0)
-                                Timber.tag(tag).d("case backward")
-                            }
-                            playWhenReady = true
-                            repeatMode = Player.REPEAT_MODE_ONE
-                            volume = 1f
+                            playForCurrent(isFirstTime = true, forward = forward, source = preloadedMediaSources[position])
                         }
-                        pp.prevPlayer.apply { pauseForPrev() }
-                        pp.nextPlayer.apply {
-                            prepareForNext(preloadedMediaSources[position + 1])
+                        // Chuẩn bị nextPlayer
+                        if (position + 1 < preloadedMediaSources.size) {
+                            pp.nextPlayer.apply {
+                                prepareForNext(preloadedMediaSources[position + 1])
+                            }
+                        }
+                        // Tạm dừng prevPlayer
+                        if (position - 1 >= 0) {
+                            pp.prevPlayer.apply {
+                                pauseForPrev(preloadedMediaSources[position - 1])
+                            }
                         }
                         lastPos.intValue = position
                     }
@@ -183,45 +193,54 @@ fun ReelList(
 }
 
 @UnstableApi
-fun ExoPlayer.prepareForNext(source: MediaSource?) {
-    try {
-        setPriority(C.PRIORITY_PLAYBACK_PRELOAD)
-        pause()
-        stop()
-        clearMediaItems()
-        source?.let {
-            setMediaSource(it, true)
-            repeatMode = Player.REPEAT_MODE_OFF
-            volume = 0f
-            val startTime = System.nanoTime()
-            addListener(object : Player.Listener {
-                override fun onRenderedFirstFrame() {
-                    val renderTimeMs = (System.nanoTime() - startTime) / 1_000_000
-                    Timber.tag("ExoPlayer").d("First frame rendered in $renderTimeMs ms")
-                }
-                override fun onSurfaceSizeChanged(width: Int, height: Int) {
-                    Timber.tag("ExoPlayer").d("Surface size changed: $width x $height")
-                }
-            })
-            prepare()
-            playWhenReady = false
-            seekTo(0)
+private fun updateSurfaceHolders(pp: PlayerPool) {
+    val tag = "ReelList"
+    // Cập nhật surfaceHolders cho prevPlayer
+    if (pp.prevPlayerView.videoSurfaceView is SurfaceView) {
+        // Clear SurfaceHolder cũ
+        pp.surfaceHolders[pp.prevPlayer]?.let { oldHolder ->
+            pp.prevPlayer.clearVideoSurfaceHolder(oldHolder)
+            Timber.tag(tag).d("Cleared old SurfaceHolder for prevPlayer: %s", pp.prevPlayer)
         }
-    } catch (e: Exception) {
-        Timber.tag("ExoPlayer").e(e, "Error preparing next player")
+        pp.surfaceHolders.remove(pp.prevPlayer)
+        // Set SurfaceHolder mới
+        val prevHolder = (pp.prevPlayerView.videoSurfaceView as SurfaceView).holder
+        pp.surfaceHolders[pp.prevPlayer] = prevHolder
+        pp.prevPlayer.setVideoSurfaceHolder(prevHolder)
+        Timber.tag(tag).d("Updated SurfaceHolder for prevPlayer: %s", pp.prevPlayer)
+    } else {
+        Timber.tag(tag).d("No SurfaceHolder for prevPlayer: player=%s, playerView=%s", pp.prevPlayer, pp.prevPlayerView)
     }
-}
-
-@UnstableApi
-fun ExoPlayer.pauseForPrev() {
-    try {
-        setPriority(C.PRIORITY_PLAYBACK_PRELOAD)
-        pause()
-        playWhenReady = false
-        repeatMode = Player.REPEAT_MODE_OFF
-        volume = 0f
-        Timber.tag("ExoPlayer").d("pauseForPrev done")
-    } catch (e: Exception) {
-        Timber.tag("ExoPlayer").e(e, "Error pausing prev player")
+    // Cập nhật surfaceHolders cho currentPlayer
+    if (pp.currentPlayerView.videoSurfaceView is SurfaceView) {
+        // Clear SurfaceHolder cũ
+        pp.surfaceHolders[pp.currentPlayer]?.let { oldHolder ->
+            pp.currentPlayer.clearVideoSurfaceHolder(oldHolder)
+            Timber.tag(tag).d("Cleared old SurfaceHolder for currentPlayer: %s", pp.currentPlayer)
+        }
+        pp.surfaceHolders.remove(pp.currentPlayer)
+        // Set SurfaceHolder mới
+        val currentHolder = (pp.currentPlayerView.videoSurfaceView as SurfaceView).holder
+        pp.surfaceHolders[pp.currentPlayer] = currentHolder
+        pp.currentPlayer.setVideoSurfaceHolder(currentHolder)
+        Timber.tag(tag).d("Updated SurfaceHolder for currentPlayer: %s", pp.currentPlayer)
+    } else {
+        Timber.tag(tag).d("No SurfaceHolder for currentPlayer: player=%s, playerView=%s", pp.currentPlayer, pp.currentPlayerView)
+    }
+    // Cập nhật surfaceHolders cho nextPlayer
+    if (pp.nextPlayerView.videoSurfaceView is SurfaceView) {
+        // Clear SurfaceHolder cũ
+        pp.surfaceHolders[pp.nextPlayer]?.let { oldHolder ->
+            pp.nextPlayer.clearVideoSurfaceHolder(oldHolder)
+            Timber.tag(tag).d("Cleared old SurfaceHolder for nextPlayer: %s", pp.nextPlayer)
+        }
+        pp.surfaceHolders.remove(pp.nextPlayer)
+        // Set SurfaceHolder mới
+        val nextHolder = (pp.nextPlayerView.videoSurfaceView as SurfaceView).holder
+        pp.surfaceHolders[pp.nextPlayer] = nextHolder
+        pp.nextPlayer.setVideoSurfaceHolder(nextHolder)
+        Timber.tag(tag).d("Updated SurfaceHolder for nextPlayer: %s", pp.nextPlayer)
+    } else {
+        Timber.tag(tag).d("No SurfaceHolder for nextPlayer: player=%s, playerView=%s", pp.nextPlayer, pp.nextPlayerView)
     }
 }
