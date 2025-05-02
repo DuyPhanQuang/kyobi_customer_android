@@ -228,4 +228,5 @@ fun TrendTab(
         topSystemBarHeight = topPadding,
         bottomNavBarHeight = bottomPadding
     )
+
 }
