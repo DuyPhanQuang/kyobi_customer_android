@@ -117,6 +117,10 @@ fun ReelList(
                     playbackViewModel = playbackViewModel)
                 this.adapter = adapter.value
                 offscreenPageLimit = offscreenPageNumber // Giới hạn preload items trước/sau
+                setPageTransformer { page, position ->
+                    // Tránh animation nặng làm chậm Surface
+                    page.alpha = if (position <= -1f || position >= 1f) 0f else 1f
+                }
                 registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
                     override fun onPageSelected(position: Int) {
                         super.onPageSelected(position)
