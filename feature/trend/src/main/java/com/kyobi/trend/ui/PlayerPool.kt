@@ -16,16 +16,19 @@ import timber.log.Timber
 class PlayerPool(ctx: Context) {
     var prevPlayer: ExoPlayer = ExoPlayer.Builder(ctx).setLoadControl(
         DefaultLoadControl.Builder()
-            .setBufferDurationsMs(1000, 5000, 500, 1000)
-            .build()).build()
+            .setBufferDurationsMs(500, 2000, 250, 500)
+            .setPrioritizeTimeOverSizeThresholds(true).build()
+    ).build()
     var currentPlayer: ExoPlayer = ExoPlayer.Builder(ctx).setLoadControl(
         DefaultLoadControl.Builder()
-            .setBufferDurationsMs(1000, 5000, 500, 1000)
-            .build()).build()
+            .setBufferDurationsMs(500, 2000, 250, 500)
+            .setPrioritizeTimeOverSizeThresholds(true).build()
+    ).build()
     var nextPlayer: ExoPlayer = ExoPlayer.Builder(ctx).setLoadControl(
         DefaultLoadControl.Builder()
-            .setBufferDurationsMs(1000, 5000, 500, 1000)
-            .build()).build()
+            .setBufferDurationsMs(500, 2000, 250, 500)
+            .setPrioritizeTimeOverSizeThresholds(true).build()
+    ).build()
 
     var prevPlayerView: PlayerView = createPlayerView(ctx, prevPlayer)
     var currentPlayerView: PlayerView = createPlayerView(ctx, currentPlayer)

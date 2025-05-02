@@ -87,11 +87,11 @@ class ReelAdapter(
             targetContainer.removeAllViews()
             targetContainer.addView(playerView)
             Timber.tag(tag).d("Reattached PlayerView at position %d", position)
+            playerView.requestLayout()
+            playerView.post { playerView.invalidate() }
         } else {
             Timber.tag(tag).d("PlayerView already attached at position %d", position)
         }
-        playerView.requestLayout()
-        playerView.post { playerView.invalidate() }
     }
 
     private fun findViewHolderForAdapterPosition(position: Int): ReelViewHolder? {
@@ -107,9 +107,12 @@ class ReelAdapter(
         fun setupCurrentPlayerListener(player: ExoPlayer) {
             currentPlayer = player
             currentPlayer?.addListener(object : Player.Listener {
+                override fun onRenderedFirstFrame() {
+                    Timber.tag("ExoPlayer").d("First frame rendered")
+                }
                 override fun onSurfaceSizeChanged(width: Int, height: Int) {
                     if (width > 0 && height > 0 && bindingAdapterPosition != RecyclerView.NO_POSITION) {
-                        Timber.tag(tag).d("Surface ready for position $bindingAdapterPosition: $width x $height")
+                        Timber.tag(tag).d("Surface size changed for position $bindingAdapterPosition: $width x $height")
                         playbackViewModel.updateSurfaceReadyState(position = bindingAdapterPosition, isReady = true)
                     }
                 }

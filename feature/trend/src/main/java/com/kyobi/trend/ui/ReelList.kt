@@ -1,5 +1,7 @@
 package com.kyobi.trend.ui
 
+import android.os.Handler
+import android.os.Looper
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,14 +22,18 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.MediaSource
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.kyobi.trend.model.Reel
 import com.kyobi.theme.kyobiTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import timber.log.Timber
 
 @OptIn(UnstableApi::class)
@@ -43,11 +49,12 @@ fun ReelList(
     val playbackViewModel: ReelPlaybackViewModel = hiltViewModel()
     val currentReels by rememberUpdatedState(reels)
     val adapter = remember { mutableStateOf<ReelAdapter?>(null) }
-    val offscreenPageNumber = 5
+    val offscreenPageNumber = 10
     val preloadedMediaItems = remember { mutableMapOf<Int, MediaItem>() }
     val preloadedMediaSources = remember { mutableMapOf<Int, MediaSource>() }
     val pool = remember { mutableStateOf<PlayerPool?>(null) }
     val lastPos = remember { mutableIntStateOf(0) }
+    val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     LaunchedEffect(Unit) {
         playbackViewModel.setReels(currentReels)
@@ -146,6 +153,7 @@ fun ReelList(
                         // Hoán đổi trong adapter
                         adapter.value!!.attachPlayerViews(position, pp)
                         pp.currentPlayer.apply {
+                            setPriority(C.PRIORITY_MAX)
                             // Đảm bảo media source đã được set từ trước (preload)
                             // chỉ nên thực hiện hàm này ví lý do nào đó lần gần nhất nextPlayer/prevPlayer prepare thất bại
                             if (forward) {
@@ -159,7 +167,9 @@ fun ReelList(
                             volume = 1f
                         }
                         pp.prevPlayer.apply { pauseForPrev() }
-                        pp.nextPlayer.apply { prepareForNext(preloadedMediaSources[position + 1]) }
+                        pp.nextPlayer.apply {
+                            prepareForNext(preloadedMediaSources[position + 1])
+                        }
                         lastPos.intValue = position
                     }
                 })
@@ -171,18 +181,28 @@ fun ReelList(
 @UnstableApi
 fun ExoPlayer.prepareForNext(source: MediaSource?) {
     try {
+        setPriority(C.PRIORITY_PLAYBACK_PRELOAD)
         pause()
         stop()
         clearMediaItems()
         source?.let {
             setMediaSource(it, true)
-            prepare()
             repeatMode = Player.REPEAT_MODE_OFF
             volume = 0f
-            Timber.tag("ExoPlayer").d("prepareForNext done")
+            val startTime = System.nanoTime()
+            addListener(object : Player.Listener {
+                override fun onRenderedFirstFrame() {
+                    val renderTimeMs = (System.nanoTime() - startTime) / 1_000_000
+                    Timber.tag("ExoPlayer").d("First frame rendered in $renderTimeMs ms")
+                }
+                override fun onSurfaceSizeChanged(width: Int, height: Int) {
+                    Timber.tag("ExoPlayer").d("Surface size changed: $width x $height")
+                }
+            })
+            prepare()
+            playWhenReady = false
+            seekTo(0)
         }
-        playWhenReady = false
-        seekTo(0)
     } catch (e: Exception) {
         Timber.tag("ExoPlayer").e(e, "Error preparing next player")
     }
@@ -191,6 +211,7 @@ fun ExoPlayer.prepareForNext(source: MediaSource?) {
 @UnstableApi
 fun ExoPlayer.pauseForPrev() {
     try {
+        setPriority(C.PRIORITY_PLAYBACK_PRELOAD)
         pause()
         playWhenReady = false
         repeatMode = Player.REPEAT_MODE_OFF

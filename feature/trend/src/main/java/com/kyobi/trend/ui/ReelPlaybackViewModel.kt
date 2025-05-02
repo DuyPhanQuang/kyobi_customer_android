@@ -84,6 +84,7 @@ class ReelPlaybackViewModel @Inject constructor(
             return if (uri.endsWith(".m3u8", ignoreCase = true)) {
                 Timber.tag(tag).d("Creating HlsMediaSource for URI: $uri")
                 HlsMediaSource.Factory(cacheDataSourceFactory)
+                    .setAllowChunklessPreparation(true) // Giảm tải cho HLS
                     .createMediaSource(mediaItem)
             } else {
                 Timber.tag(tag).d("Creating ProgressiveMediaSource for URI: $uri")
