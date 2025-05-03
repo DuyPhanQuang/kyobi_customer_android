@@ -104,12 +104,14 @@ class ReelAdapter(
             currentPlayer?.addListener(object : Player.Listener {
                 override fun onRenderedFirstFrame() {
                     Timber.tag("ExoPlayer").d("First frame rendered")
+                    currentPlayer?.removeListener(this)
                 }
                 override fun onSurfaceSizeChanged(width: Int, height: Int) {
                     if (width > 0 && height > 0 && bindingAdapterPosition != RecyclerView.NO_POSITION) {
                         Timber.tag(tag).d("Surface size changed for position $bindingAdapterPosition: $width x $height")
                         playbackViewModel.updateSurfaceReadyState(position = bindingAdapterPosition, isReady = true)
                     }
+                    currentPlayer?.removeListener(this)
                 }
                 override fun onPlaybackStateChanged(state: Int) {
                     Timber.tag(tag).d("Playback state changed for position $bindingAdapterPosition: $state")
@@ -118,12 +120,14 @@ class ReelAdapter(
                         Player.STATE_READY -> if (currentPlayer?.isPlaying == true) hideLoading()
                         Player.STATE_ENDED, Player.STATE_IDLE -> hideLoading()
                     }
+                    currentPlayer?.removeListener(this)
                 }
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     Timber.tag(tag).d("IsPlaying changed for position $bindingAdapterPosition: $isPlaying")
                     if (isPlaying && player.playbackState == Player.STATE_READY) {
                         hideLoading()
                     }
+                    currentPlayer?.removeListener(this)
                 }
             })
         }

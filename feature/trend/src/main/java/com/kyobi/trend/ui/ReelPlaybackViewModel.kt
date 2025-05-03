@@ -63,6 +63,8 @@ class ReelPlaybackViewModel @Inject constructor(
 
     fun getCurrentPlayingPosition(): Int = currentPlayingPosition
 
+    fun getMediaSources(): MutableMap<Int, MediaSource> = mediaSources
+
     fun updateSurfaceReadyState(position: Int, isReady: Boolean) {
         surfaceReadyStates[position] = isReady
         Timber.tag(tag).d("Surface ready state updated for position $position: $isReady")

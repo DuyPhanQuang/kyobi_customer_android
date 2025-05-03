@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -32,6 +33,9 @@ import com.kyobi.trend.extension.playForCurrent
 import com.kyobi.trend.extension.prepareForNext
 import com.kyobi.trend.extension.resetNextBeforeReuse
 import com.kyobi.trend.extension.resetPrevBeforeReuse
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @OptIn(UnstableApi::class)
@@ -49,7 +53,7 @@ fun ReelList(
     val adapter = remember { mutableStateOf<ReelAdapter?>(null) }
     val offscreenPageNumber = 10
     val preloadedMediaItems = remember { mutableMapOf<Int, MediaItem>() }
-    val preloadedMediaSources = remember { mutableMapOf<Int, MediaSource>() }
+    val preloadedMediaSources = remember { mutableStateMapOf<Int, MediaSource>() }
     val pool = remember { mutableStateOf<PlayerPool?>(null) }
     val lastPos = remember { mutableIntStateOf(0) }
 
@@ -65,24 +69,24 @@ fun ReelList(
             if (mediaSource != null) {
                 preloadedMediaSources[index] = mediaSource
             }
-            // 2) init player pool
-            if (preloadedMediaSources.size == reels.size) {
-                pool.value = playbackViewModel.initPlayerPool(preloadedMediaItems, preloadedMediaSources)
-                pool.value?.let { p ->
-                    Timber.tag(tag).d("===> Pool initialized: $p")
-                    Timber.tag(tag).d("attach initial 2 view")
-                    adapter.value!!.attachPlayerViewAt(0, p.currentPlayerView)
-                    preloadedMediaSources[0]?.let { mediaSource ->
-                        p.currentPlayer.apply {
-                            playForCurrent(isFirstTime = true, forward = false, source = mediaSource)
+        }
+        // 2) init player pool
+        if (preloadedMediaSources.size == reels.size) {
+            pool.value = playbackViewModel.initPlayerPool(preloadedMediaItems, preloadedMediaSources)
+            pool.value?.let { p ->
+                Timber.tag(tag).d("===> Pool initialized: $p")
+                Timber.tag(tag).d("attach initial 2 view")
+                adapter.value!!.attachPlayerViewAt(0, p.currentPlayerView)
+                preloadedMediaSources[0]?.let { mediaSource ->
+                    p.currentPlayer.apply {
+                        playForCurrent(isFirstTime = true, forward = false, source = mediaSource)
+                    }
+                    if (preloadedMediaSources.size > 1) {
+                        adapter.value!!.attachPlayerViewAt(1, p.nextPlayerView)
+                        p.nextPlayer.apply {
+                            prepareForNext(preloadedMediaSources[1])
                         }
-                        if (preloadedMediaSources.size > 1) {
-                            adapter.value!!.attachPlayerViewAt(1, p.nextPlayerView)
-                            p.nextPlayer.apply {
-                                prepareForNext(preloadedMediaSources[1])
-                            }
-                            Timber.tag(tag).d("Check nextPlayer instance: ${p.nextPlayer}")
-                        }
+                        Timber.tag(tag).d("Check nextPlayer instance: ${p.nextPlayer}")
                     }
                 }
             }
@@ -111,6 +115,11 @@ fun ReelList(
                         super.onPageSelected(position)
                         val pp = pool.value ?: run {
                             Timber.tag(tag).d("===> Pool is null, skipping")
+                            return
+                        }
+                        val mediaSources = playbackViewModel.getMediaSources()
+                        if (mediaSources.isEmpty()) {
+                            Timber.tag(tag).d("===> mediaSources is empty, skipping")
                             return
                         }
                         playbackViewModel.onPageSelected(position)
@@ -168,20 +177,28 @@ fun ReelList(
                         Timber.tag(tag).d("After swap: currentPlayer instance=${pp.currentPlayer}, nextPlayer instance=${pp.nextPlayer}, prevPlayer instance=${pp.prevPlayer}")
                         // Hoán đổi trong adapter
                         adapter.value!!.attachPlayerViews(position, pp)
-                        // Phát currentPlayer
-                        pp.currentPlayer.apply {
-                            playForCurrent(isFirstTime = true, forward = forward, source = preloadedMediaSources[position])
-                        }
-                        // Chuẩn bị nextPlayer
-                        if (position + 1 < preloadedMediaSources.size) {
-                            pp.nextPlayer.apply {
-                                prepareForNext(preloadedMediaSources[position + 1])
+                        CoroutineScope(Dispatchers.Main).launch {
+                            launch {
+                                // Phát currentPlayer
+                                pp.currentPlayer.apply {
+                                    playForCurrent(isFirstTime = true, forward = forward, source = mediaSources[position])
+                                }
                             }
-                        }
-                        // Tạm dừng prevPlayer
-                        if (position - 1 >= 0) {
-                            pp.prevPlayer.apply {
-                                pauseForPrev(preloadedMediaSources[position - 1])
+                            launch {
+                                // Chuẩn bị nextPlayer
+                                if (position + 1 < mediaSources.size) {
+                                    pp.nextPlayer.apply {
+                                        prepareForNext(mediaSources[position + 1])
+                                    }
+                                }
+                            }
+                            launch {
+                                // Tạm dừng prevPlayer
+                                if (position - 1 >= 0) {
+                                    pp.prevPlayer.apply {
+                                        pauseForPrev(mediaSources[position - 1])
+                                    }
+                                }
                             }
                         }
                         lastPos.intValue = position
