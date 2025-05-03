@@ -2,66 +2,83 @@ package com.kyobi.trend.ui
 
 import android.content.Context
 import android.graphics.Color
-import android.view.SurfaceHolder
 import android.view.ViewGroup
-import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.upstream.DefaultAllocator
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import androidx.media3.ui.PlayerView.SHOW_BUFFERING_NEVER
 import timber.log.Timber
-
-private val TAG = "PlayerPool"
+import androidx.compose.runtime.Composable
 
 @UnstableApi
-class PlayerPool(ctx: Context) {
-    var prevPlayer: ExoPlayer = ExoPlayer.Builder(ctx).setLoadControl(
-        DefaultLoadControl.Builder()
-            .setBufferDurationsMs(1000, 3000, 1000, 1000)
-            .setPrioritizeTimeOverSizeThresholds(true).build()
-    ).build()
-    var currentPlayer: ExoPlayer = ExoPlayer.Builder(ctx).setLoadControl(
-        DefaultLoadControl.Builder()
-            .setBufferDurationsMs(1000, 3000, 1000, 1000)
-            .setPrioritizeTimeOverSizeThresholds(true).build()
-    ).build()
-    var nextPlayer: ExoPlayer = ExoPlayer.Builder(ctx).setLoadControl(
-        DefaultLoadControl.Builder()
-            .setBufferDurationsMs(1000, 3000, 1000, 1000)
-            .setPrioritizeTimeOverSizeThresholds(true).build()
-    ).build()
+class PlayerPool(context: Context) {
+    private val tag = "PlayerPool"
 
-    val surfaceHolders = mutableMapOf<ExoPlayer, SurfaceHolder>()
+    var prevPlayer: ExoPlayer
+    var currentPlayer: ExoPlayer
+    var nextPlayer: ExoPlayer
 
-    var prevPlayerView: PlayerView = createPlayerView(ctx, prevPlayer)
-    var currentPlayerView: PlayerView = createPlayerView(ctx, currentPlayer)
-    var nextPlayerView: PlayerView = createPlayerView(ctx, nextPlayer)
+    var prevPlayerView: PlayerView
+    var currentPlayerView: PlayerView
+    var nextPlayerView: PlayerView
 
-    @OptIn(UnstableApi::class)
+    init {
+        val prevLoadControl = DefaultLoadControl.Builder()
+            .setAllocator(DefaultAllocator(true, 16))
+            .setBufferDurationsMs(2000, 4000, 500, 2000)
+            .setPrioritizeTimeOverSizeThresholds(true).build()
+        val currentLoadControl = DefaultLoadControl.Builder()
+            .setAllocator(DefaultAllocator(true, 16))
+            .setBufferDurationsMs(2000, 4000, 500, 2000)
+            .setPrioritizeTimeOverSizeThresholds(true).build()
+        val nextLoadControl = DefaultLoadControl.Builder()
+            .setAllocator(DefaultAllocator(true, 16))
+            .setBufferDurationsMs(2000, 4000, 500, 2000)
+            .setPrioritizeTimeOverSizeThresholds(true).build()
+
+        prevPlayer = ExoPlayer.Builder(context).setLoadControl(prevLoadControl).build()
+        currentPlayer = ExoPlayer.Builder(context).setLoadControl(currentLoadControl).build()
+        nextPlayer = ExoPlayer.Builder(context).setLoadControl(nextLoadControl).build()
+
+        prevPlayerView = createPlayerView(context, prevPlayer)
+        currentPlayerView = createPlayerView(context, currentPlayer)
+        nextPlayerView = createPlayerView(context, nextPlayer)
+
+        Timber.tag(tag).d("PlayerPool initialized with 3 players and views")
+    }
+
     private fun createPlayerView(context: Context, player: ExoPlayer): PlayerView {
-        val playerView = PlayerView(context).apply {
+        return PlayerView(context).apply {
             useController = false
             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
             setKeepContentOnPlayerReset(true)
             setBackgroundColor(Color.TRANSPARENT)
-            setEnableComposeSurfaceSyncWorkaround(true)
-            setShowBuffering(SHOW_BUFFERING_NEVER)
+            setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
             keepScreenOn = true
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
+            this.player = player
         }
-        playerView.player = player
-        return playerView
     }
 
     fun releaseAll() {
         prevPlayer.release()
         currentPlayer.release()
         nextPlayer.release()
-        surfaceHolders.clear()
+        Timber.tag(tag).d("PlayerPool released")
+    }
+
+    @Composable
+    fun getPlayerViewForPosition(position: Int, currentPosition: Int): PlayerView? {
+        return when (position) {
+            currentPosition -> currentPlayerView
+            currentPosition + 1 -> nextPlayerView
+            currentPosition - 1 -> prevPlayerView
+            else -> null
+        }
     }
 }

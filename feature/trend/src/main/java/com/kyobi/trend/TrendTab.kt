@@ -54,18 +54,6 @@ fun TrendTab(
             tags = listOf("style", "kyobi")
         ),
         Reel(
-            id = "reel_2_1",
-            videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1746194918762.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NjE5NDkxODc2Mi5tcDQiLCJpYXQiOjE3NDYxOTU0MTEsImV4cCI6MTc0ODc4NzQxMX0.vr-kODKaKsWtk-ReFjI51lkoM08PaxCMYPpSvWCBO_E",
-            status = "PUBLISHED",
-            likeCount = 800,
-            commentCount = 90,
-            shareCount = 30,
-            viewCount = 3200,
-            createdAt = "2025-04-19T15:30:00Z",
-            thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
-            tags = listOf("style", "kyobi")
-        ),
-        Reel(
             id = "reel_2_2",
             videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1746194998454.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NjE5NDk5ODQ1NC5tcDQiLCJpYXQiOjE3NDYxOTU0MjUsImV4cCI6MTc0ODc4NzQyNX0.JjdfjCGqwg0ZHO3sMmjyZAmFx4gzgs47S0_hEL2iJMA",
             status = "PUBLISHED",
@@ -224,7 +212,7 @@ fun TrendTab(
     )
 
     ReelList(
-        reels = mockData,
+        initReels = mockData,
         topSystemBarHeight = topPadding,
         bottomNavBarHeight = bottomPadding
     )

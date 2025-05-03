@@ -1,76 +1,73 @@
 package com.kyobi.trend.ui
 
 import android.content.Context
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
-import com.kyobi.trend.cache.MediaCache
-import com.kyobi.featurecommon.monitor.network.NetworkMonitor
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.lifecycle.HiltViewModel
-import timber.log.Timber
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import com.kyobi.trend.cache.MediaCache
 import com.kyobi.trend.model.Reel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @UnstableApi
 @HiltViewModel
 class ReelPlaybackViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val mediaCache: MediaCache,
-    private val networkMonitor: NetworkMonitor,
+    private val mediaCache: MediaCache
 ) : ViewModel() {
     private val tag = "ReelPlaybackViewModel"
-    private var currentPlayingPosition: Int = 0
-    private val surfaceReadyStates = mutableMapOf<Int, Boolean>()
-    private val reels = mutableListOf<Reel>()
-    private val mediaItems = mutableMapOf<Int, MediaItem>()
-    private val mediaSources = mutableMapOf<Int, MediaSource>()
-    private lateinit var pool: PlayerPool
+    val reels = mutableStateOf<List<Reel>>(emptyList())
+    val playerPool = mutableStateOf<PlayerPool?>(null)
+    val currentPosition = mutableIntStateOf(0)
 
     fun setReels(newReels: List<Reel>) {
         Timber.tag(tag).d("Setting reels, size: ${newReels.size}")
-        reels.clear()
-        reels.addAll(newReels)
-    }
-
-    /**
-     * Khởi tạo PlayerPool sau khi MediaSource đã preload xong.
-     */
-    fun initPlayerPool(
-        preloadedMediaItems: MutableMap<Int, MediaItem>,
-        preloadedMediaSources: MutableMap<Int, MediaSource>
-    ): PlayerPool? {
-        try {
-            for (i in reels.indices) {
-                mediaItems[i] = preloadedMediaItems[i]!!
-                mediaSources[i] = preloadedMediaSources[i]!!
+        reels.value = newReels
+        viewModelScope.launch(Dispatchers.IO) {
+            newReels.forEachIndexed { index, reel ->
+                Timber.tag(tag).d("Reel[$index]: videoUrl=${reel.videoUrl}, thumbnailUrl=${reel.thumbnailUrl}")
             }
-            // tạo pool
-            pool = PlayerPool(context)
-            Timber.tag(tag).d("PlayerPool initialized with ${reels.size} videos")
-
-            return pool
-        } catch (e: Exception) {
-            Timber.tag(tag).d("Failed to initPlayerPool e: ${e.message}")
-            return null
         }
     }
 
-    fun getCurrentPlayingPosition(): Int = currentPlayingPosition
-
-    fun getMediaSources(): MutableMap<Int, MediaSource> = mediaSources
-
-    fun updateSurfaceReadyState(position: Int, isReady: Boolean) {
-        surfaceReadyStates[position] = isReady
-        Timber.tag(tag).d("Surface ready state updated for position $position: $isReady")
+    fun initPlayerPool() {
+        if (playerPool.value == null) {
+            playerPool.value = PlayerPool(context)
+            Timber.tag(tag).d("PlayerPool initialized")
+        }
     }
 
-    fun startCreateMediaSource(mediaItem: MediaItem): MediaSource? {
+    fun onPageSelected(position: Int) {
+        currentPosition.intValue = position
+        Timber.tag(tag).d("Page selected: $position")
+    }
+
+    fun getMediaSource(position: Int): MediaSource? {
+        if (position < 0 || position >= reels.value.size) {
+            Timber.tag(tag).w("Invalid position: $position")
+            return null
+        }
+        val reel = reels.value[position]
+        val mediaItem = MediaItem.fromUri(reel.videoUrl).buildUpon()
+            .setMediaId(reel.videoUrl).build()
+        return startCreateMediaSource(mediaItem).also {
+            Timber.tag(tag).d("getMediaSource for position=$position, mediaId=${it?.mediaItem?.mediaId}")
+        }
+    }
+
+    private fun startCreateMediaSource(mediaItem: MediaItem): MediaSource? {
         try {
             val cache = mediaCache.getCache()
             val dataSourceFactory = DefaultDataSource.Factory(context)
@@ -86,7 +83,7 @@ class ReelPlaybackViewModel @Inject constructor(
             return if (uri.endsWith(".m3u8", ignoreCase = true)) {
                 Timber.tag(tag).d("Creating HlsMediaSource for URI: $uri")
                 HlsMediaSource.Factory(cacheDataSourceFactory)
-                    .setAllowChunklessPreparation(true) // Giảm tải cho HLS
+                    .setAllowChunklessPreparation(true)
                     .createMediaSource(mediaItem)
             } else {
                 Timber.tag(tag).d("Creating ProgressiveMediaSource for URI: $uri")
@@ -94,26 +91,13 @@ class ReelPlaybackViewModel @Inject constructor(
                     .createMediaSource(mediaItem)
             }
         } catch (e: Exception) {
-            Timber.tag(tag).d("Failed to startCreateMediaSource with mediaItem: $mediaItem error: ${e.message}")
+            Timber.tag(tag).e(e, "Failed to create MediaSource for $mediaItem")
             return null
         }
     }
 
-    fun onPageSelected(position: Int) {
-        currentPlayingPosition = position
-    }
-
-    fun onPlayerReleased(position: Int) {
-        surfaceReadyStates.remove(position)
-        mediaItems.remove(position)
-        mediaSources.remove(position)
-    }
-
     override fun onCleared() {
-        super.onCleared()
-        surfaceReadyStates.clear()
-        mediaItems.clear()
-        mediaSources.clear()
-        pool.releaseAll()
+        playerPool.value?.releaseAll()
+        Timber.tag(tag).d("ViewModel cleared")
     }
 }
