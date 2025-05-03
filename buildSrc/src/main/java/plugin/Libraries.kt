@@ -3,7 +3,7 @@
 object Version {
     const val CoreKtx = "1.16.0"
     const val AppCompat = "1.7.0"
-    const val AndroidXCompose = "1.7.0"
+    const val AndroidXCompose = "1.8.0"
     const val ComposeMaterial3Components = "1.3.0"
     const val ComposeMaterialComponents = "1.12.0"
     const val ComposeBom = "2024.12.01"

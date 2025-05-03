@@ -2,9 +2,13 @@ package com.kyobi.trend.ui
 
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.PagerDefaults
+import androidx.compose.foundation.pager.PagerSnapDistance
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -22,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -47,6 +52,16 @@ fun ReelList(
     val context = LocalContext.current
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { initReels.size })
     val coroutineScope = rememberCoroutineScope()
+    // Fling behavior giống TikTok
+    val fling = PagerDefaults.flingBehavior(
+        state = pagerState,
+        pagerSnapDistance = PagerSnapDistance.atMost(1),
+        snapAnimationSpec = tween(
+            durationMillis = 250,
+            easing = FastOutSlowInEasing
+        ),
+        snapPositionalThreshold = 0.35f
+    )
 
     LaunchedEffect(Unit) {
         viewModel.setReels(initReels)
@@ -69,11 +84,13 @@ fun ReelList(
                     pool.prevPlayer = pool.currentPlayer
                     pool.currentPlayer = pool.nextPlayer
                     pool.nextPlayer = oldPrev
+                    // Reset and prepare nextPlayer for the next page
+                    pool.nextPlayer.resetNextBeforeReuse()
+                    // Update PlayerView
                     val oldPrevView = pool.prevPlayerView
                     pool.prevPlayerView = pool.currentPlayerView
                     pool.currentPlayerView = pool.nextPlayerView
                     pool.nextPlayerView = oldPrevView
-                    // Update PlayerView.player
                     pool.prevPlayerView.player = pool.prevPlayer
                     pool.currentPlayerView.player = pool.currentPlayer
                     pool.nextPlayerView.player = pool.nextPlayer
@@ -85,30 +102,48 @@ fun ReelList(
                     pool.nextPlayer = pool.currentPlayer
                     pool.currentPlayer = pool.prevPlayer
                     pool.prevPlayer = oldNext
+                    // Reset and prepare prevPlayer for the previous page
+                    pool.prevPlayer.resetPrevBeforeReuse()
+                    // Update PlayerView
                     val oldNextView = pool.nextPlayerView
                     pool.nextPlayerView = pool.currentPlayerView
                     pool.currentPlayerView = pool.prevPlayerView
                     pool.prevPlayerView = oldNextView
-                    // Update PlayerView.player
                     pool.prevPlayerView.player = pool.prevPlayer
                     pool.currentPlayerView.player = pool.currentPlayer
                     pool.nextPlayerView.player = pool.nextPlayer
                     pool.currentPlayerView.requestLayout()
                     pool.currentPlayerView.invalidate()
                 }
+                // Check if currentPlayer has the correct MediaSource
+                val mediaSource = viewModel.getMediaSource(settledPage)
+                val expectedMediaId = mediaSource?.mediaItem?.mediaId
+                val currentMediaId = pool.currentPlayer.currentMediaItem?.mediaId
+                val shouldPrepareCurrent = expectedMediaId != null && currentMediaId != expectedMediaId
+
                 // Update Player states
                 if (settledPage - 1 >= 0) {
                     val prevSource = viewModel.getMediaSource(settledPage - 1)
                     pool.prevPlayer.pauseForPrev(prevSource)
                     Timber.tag(tag).d("pauseForPrev: page=${settledPage - 1}, mediaItem=${prevSource?.mediaItem?.mediaId}")
                 }
-                val mediaSource = viewModel.getMediaSource(settledPage)
-                pool.currentPlayer.playForCurrent(source = mediaSource)
+                // Play current page
+                pool.currentPlayer.playForCurrent(
+                    isFirstTime = settledPage == 0,
+                    source = if (shouldPrepareCurrent) mediaSource else null
+                )
                 Timber.tag(tag).d("playForCurrent: page=$settledPage, mediaItem=${pool.currentPlayer.currentMediaItem?.mediaId}, playerState=${pool.currentPlayer.playbackState}, isPlaying=${pool.currentPlayer.isPlaying}")
+                // Prepare next page
                 if (settledPage + 1 < initReels.size) {
                     val nextSource = viewModel.getMediaSource(settledPage + 1)
                     pool.nextPlayer.prepareForNext(nextSource)
-                    Timber.tag(tag).d("prepareForNext: page=${settledPage + 1}, mediaItem=${nextSource?.mediaItem?.mediaId}")
+                    Timber.tag(tag).d("prepareForNext: page=${settledPage + 1}, mediaItem=${nextSource?.mediaItem?.mediaId}, nextPlayerMediaItem=${pool.nextPlayer.currentMediaItem?.mediaId}, nextPlayerState=${pool.nextPlayer.playbackState}")
+                }
+                // Prepare prev page for backward scrolling
+                if (settledPage - 1 >= 0) {
+                    val prevSource = viewModel.getMediaSource(settledPage - 1)
+                    pool.prevPlayer.prepareForNext(prevSource) // Prepare prevPlayer for potential backward scroll
+                    Timber.tag(tag).d("prepareForPrev: page=${settledPage - 1}, mediaItem=${prevSource?.mediaItem?.mediaId}, prevPlayerMediaItem=${pool.prevPlayer.currentMediaItem?.mediaId}, prevPlayerState=${pool.prevPlayer.playbackState}")
                 }
                 viewModel.currentPosition.intValue = settledPage
                 Timber.tag(tag).d("Page $settledPage: prevPlayer=${pool.prevPlayer}, video=${settledPage - 1}, currentPlayer=${pool.currentPlayer}, video=$settledPage, nextPlayer=${pool.nextPlayer}, video=${settledPage + 1}, mediaItem=${pool.currentPlayer.currentMediaItem?.mediaId}, settledPage=$settledPage")
@@ -121,6 +156,7 @@ fun ReelList(
         modifier = Modifier
             .fillMaxSize()
             .padding(bottom = bottomNavBarHeight),
+        flingBehavior = fling,
         key = { it }
     ) { page ->
         Box(modifier = Modifier.fillMaxSize()) {
@@ -180,7 +216,7 @@ fun ReelList(
                 AsyncImage(
                     model = initReels[page].thumbnailUrl,
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().zIndex(1f),
                     contentScale = ContentScale.Crop
                 )
             }

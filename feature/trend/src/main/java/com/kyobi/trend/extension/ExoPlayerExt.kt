@@ -11,44 +11,49 @@ private const val TAG = "ExoPlayer"
 
 @OptIn(UnstableApi::class)
 fun ExoPlayer.pauseForPrev(source: MediaSource?) {
-    Timber.tag(TAG).d("pauseForPrev done")
-    stop()
     if (source != null) {
+        if (currentMediaItem?.mediaId != source.mediaItem.mediaId) {
+            setMediaSource(source)
+            prepare()
+        }
+        playWhenReady = false
+    } else {
+        stop()
         clearMediaItems()
-        setMediaSource(source)
-        prepare()
+        playWhenReady = false
     }
-    volume = 0f
-    repeatMode = Player.REPEAT_MODE_OFF
-    playWhenReady = false
+    Timber.tag(TAG).d("pauseForPrev done")
 }
 
 @OptIn(UnstableApi::class)
-fun ExoPlayer.playForCurrent(source: MediaSource?) {
+fun ExoPlayer.playForCurrent(isFirstTime: Boolean = false, source: MediaSource?) {
     Timber.tag(TAG).d("playForCurrent: player=$this, mediaItem=${source?.mediaItem?.mediaId}")
-    if (source == null) {
-        Timber.tag(TAG).w("source null")
-        return
-    }
-    clearMediaItems()
-    setMediaSource(source)
-    if (playbackState == Player.STATE_IDLE) {
-        Timber.tag(TAG).d("playForCurrent: prepare called, playbackState=$playbackState")
+    if (source != null && (isFirstTime || currentMediaItem?.mediaId != source.mediaItem.mediaId)) {
+        Timber.tag(TAG).d("playForCurrent: setting new MediaSource, isFirstTime=$isFirstTime, mediaId=${source.mediaItem.mediaId}, playbackState=$playbackState")
+        setMediaSource(source)
         prepare()
+        volume = 1f
+        repeatMode = Player.REPEAT_MODE_ONE
+        playWhenReady = true
+    } else if (currentMediaItem != null && playbackState in listOf(Player.STATE_BUFFERING, Player.STATE_READY)) {
+        Timber.tag(TAG).d("playForCurrent: reusing prepared MediaSource, mediaId=${currentMediaItem?.mediaId}, playbackState=$playbackState")
+        volume = 1f
+        repeatMode = Player.REPEAT_MODE_ONE
+        playWhenReady = true
+    } else {
+        Timber.tag(TAG).d("playForCurrent: no valid MediaSource, stopping playback")
+        stop()
+        clearMediaItems()
+        playWhenReady = false
     }
-    volume = 1f
-    repeatMode = Player.REPEAT_MODE_ONE
-    playWhenReady = true
 }
 
 @OptIn(UnstableApi::class)
 fun ExoPlayer.prepareForNext(source: MediaSource?) {
-    Timber.tag(TAG).d("prepareForNext: setMediaSource=${source?.mediaItem?.mediaId}")
-    stop()
-    clearMediaItems()
-    if (source != null) {
+    if (source != null && currentMediaItem?.mediaId != source.mediaItem.mediaId) {
         setMediaSource(source)
         prepare()
+        Timber.tag(TAG).d("prepareForNext: setMediaSource=${source.mediaItem.mediaId}")
     }
     volume = 0f
     repeatMode = Player.REPEAT_MODE_OFF
@@ -57,14 +62,16 @@ fun ExoPlayer.prepareForNext(source: MediaSource?) {
 
 @OptIn(UnstableApi::class)
 fun ExoPlayer.resetPrevBeforeReuse() {
-    Timber.tag(TAG).d("resetPrevBeforeReuse: player=$this")
     stop()
     clearMediaItems()
+    playWhenReady = false
+    Timber.tag(TAG).d("resetPrevBeforeReuse done")
 }
 
 @OptIn(UnstableApi::class)
 fun ExoPlayer.resetNextBeforeReuse() {
-    Timber.tag(TAG).d("resetNextBeforeReuse: player=$this")
     stop()
     clearMediaItems()
+    playWhenReady = false
+    Timber.tag(TAG).d("resetNextBeforeReuse done")
 }
