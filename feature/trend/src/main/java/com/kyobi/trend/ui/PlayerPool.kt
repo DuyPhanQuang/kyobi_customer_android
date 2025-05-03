@@ -54,6 +54,7 @@ class PlayerPool(context: Context) {
             useController = false
             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
             setKeepContentOnPlayerReset(true)
+            setEnableComposeSurfaceSyncWorkaround(true)
             setBackgroundColor(Color.TRANSPARENT)
             setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
             keepScreenOn = true

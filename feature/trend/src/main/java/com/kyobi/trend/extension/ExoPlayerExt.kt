@@ -18,10 +18,13 @@ fun ExoPlayer.pauseForPrev(source: MediaSource?) {
         setMediaSource(source)
         prepare()
     }
+    volume = 0f
+    repeatMode = Player.REPEAT_MODE_OFF
+    playWhenReady = false
 }
 
 @OptIn(UnstableApi::class)
-fun ExoPlayer.playForCurrent(isFirstTime: Boolean, source: MediaSource?) {
+fun ExoPlayer.playForCurrent(source: MediaSource?) {
     Timber.tag(TAG).d("playForCurrent: player=$this, mediaItem=${source?.mediaItem?.mediaId}")
     if (source == null) {
         Timber.tag(TAG).w("source null")
@@ -29,10 +32,12 @@ fun ExoPlayer.playForCurrent(isFirstTime: Boolean, source: MediaSource?) {
     }
     clearMediaItems()
     setMediaSource(source)
-    if (playbackState == Player.STATE_IDLE || isFirstTime) {
-        Timber.tag(TAG).d("playForCurrent: prepare called, isFirstTime=$isFirstTime, playbackState=$playbackState")
+    if (playbackState == Player.STATE_IDLE) {
+        Timber.tag(TAG).d("playForCurrent: prepare called, playbackState=$playbackState")
         prepare()
     }
+    volume = 1f
+    repeatMode = Player.REPEAT_MODE_ONE
     playWhenReady = true
 }
 
@@ -45,6 +50,9 @@ fun ExoPlayer.prepareForNext(source: MediaSource?) {
         setMediaSource(source)
         prepare()
     }
+    volume = 0f
+    repeatMode = Player.REPEAT_MODE_OFF
+    playWhenReady = false
 }
 
 @OptIn(UnstableApi::class)

@@ -58,10 +58,9 @@ fun ReelList(
             pagerState.settledPage to pagerState.isScrollInProgress
         }.collect { (settledPage, isScrolling) ->
             if (!isScrolling) {
-                Timber.tag(tag).d("snapshotFlow triggered: settledPage=$settledPage, isScrollInProgress=$isScrolling")
+                Timber.tag(tag).d("snapshotFlow triggered: settledPage=$settledPage, isScrollInProgress=false")
                 viewModel.onPageSelected(settledPage)
                 val pool = viewModel.playerPool.value ?: return@collect
-                val mediaSource = viewModel.getMediaSource(settledPage)
 
                 // Swap logic
                 if (settledPage > viewModel.currentPosition.intValue) { // Forward
@@ -97,20 +96,15 @@ fun ReelList(
                     pool.currentPlayerView.requestLayout()
                     pool.currentPlayerView.invalidate()
                 }
-
                 // Update Player states
                 if (settledPage - 1 >= 0) {
                     val prevSource = viewModel.getMediaSource(settledPage - 1)
                     pool.prevPlayer.pauseForPrev(prevSource)
                     Timber.tag(tag).d("pauseForPrev: page=${settledPage - 1}, mediaItem=${prevSource?.mediaItem?.mediaId}")
                 }
-                if (mediaSource != null) {
-                    pool.currentPlayer.playForCurrent(
-                        isFirstTime = settledPage == 0,
-                        source = mediaSource
-                    )
-                    Timber.tag(tag).d("playForCurrent: page=$settledPage, mediaItem=${mediaSource.mediaItem?.mediaId}, playerState=${pool.currentPlayer.playbackState}, isPlaying=${pool.currentPlayer.isPlaying}")
-                }
+                val mediaSource = viewModel.getMediaSource(settledPage)
+                pool.currentPlayer.playForCurrent(source = mediaSource)
+                Timber.tag(tag).d("playForCurrent: page=$settledPage, mediaItem=${pool.currentPlayer.currentMediaItem?.mediaId}, playerState=${pool.currentPlayer.playbackState}, isPlaying=${pool.currentPlayer.isPlaying}")
                 if (settledPage + 1 < initReels.size) {
                     val nextSource = viewModel.getMediaSource(settledPage + 1)
                     pool.nextPlayer.prepareForNext(nextSource)
