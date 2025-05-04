@@ -10,6 +10,7 @@ import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.PagerSnapDistance
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -43,24 +44,27 @@ fun ReelList(
         viewModel.setReels(initReels)
     }
 
-    VerticalPager(
-        state = pagerState,
+    Surface(
         modifier = Modifier
             .fillMaxSize()
             .padding(bottom = bottomNavBarHeight),
-        flingBehavior = fling,
-        key = { it }
-    ) { page ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            VideoPlayer(
-                reel = initReels[page],
-                pagerState = pagerState,
-                pageIndex = page,
-                viewModel = viewModel,
-                onSingleTap = { exoPlayer ->
-                    exoPlayer.playWhenReady = !exoPlayer.isPlaying
-                }
-            )
+    ) {
+        VerticalPager(
+            state = pagerState,
+            flingBehavior = fling,
+            key = { it }
+        ) { page ->
+            Box(modifier = Modifier.fillMaxSize()) {
+                VideoPlayer(
+                    reel = initReels[page],
+                    pagerState = pagerState,
+                    pageIndex = page,
+                    viewModel = viewModel,
+                    onSingleTap = { exoPlayer ->
+                        exoPlayer.playWhenReady = !exoPlayer.isPlaying
+                    }
+                )
+            }
         }
     }
 }
