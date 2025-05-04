@@ -19,7 +19,7 @@ class MediaCache @Inject constructor(
 ) {
     private var cache: SimpleCache? = null
     private val cacheDir = File(context.cacheDir, "media_cache")
-    private val cacheSizeMb = 100
+    private val cacheSizeMb = 200
     private var isCacheInUse = false // Thêm biến để theo dõi trạng thái sử dụng cache
 
     init {

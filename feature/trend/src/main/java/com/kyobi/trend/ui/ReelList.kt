@@ -29,7 +29,7 @@ fun ReelList(
     viewModel: ReelPlaybackViewModel = hiltViewModel()
 ) {
     val tag = "ReelList"
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { initReels.size })
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { viewModel.reels.value.size })
     val fling = PagerDefaults.flingBehavior(
         state = pagerState,
         pagerSnapDistance = PagerSnapDistance.atMost(1),
@@ -62,6 +62,9 @@ fun ReelList(
                     viewModel = viewModel,
                     onSingleTap = { exoPlayer ->
                         exoPlayer.playWhenReady = !exoPlayer.isPlaying
+                    },
+                    onFetchMore = {
+                        viewModel.fetchMoreReels()
                     }
                 )
             }
