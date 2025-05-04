@@ -67,13 +67,10 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
                 .setUpstreamDataSourceFactory(dataSourceFactory)
                 .setCacheReadDataSourceFactory(dataSourceFactory)
                 .setCacheWriteDataSinkFactory(CacheDataSink.Factory().setCache(mediaCache.getCache()))
-            if (uri.endsWith(".m3u8")) {
-                cacheDataSourceFactory.setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-            } else {
-                cacheDataSourceFactory.setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE)
-            }
+                .setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE or CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR) // Tăng hiệu suất cache
             return if (uri.endsWith(".m3u8")) {
                 HlsMediaSource.Factory(cacheDataSourceFactory)
+                    .setAllowChunklessPreparation(true)
                     .createMediaSource(mediaItem)
             } else {
                 ProgressiveMediaSource.Factory(cacheDataSourceFactory)
