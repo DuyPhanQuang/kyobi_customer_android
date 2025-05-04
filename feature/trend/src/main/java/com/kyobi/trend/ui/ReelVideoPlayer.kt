@@ -32,6 +32,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
@@ -58,6 +59,7 @@ fun VideoPlayer(
     var showThumbnail by remember(pageIndex) { mutableStateOf(true) }
     val players = remember { mutableStateMapOf<Int, ExoPlayer>() }
     val startTimes = remember { mutableStateMapOf<Int, Long>() }
+    val createdMediaSources = remember { mutableStateMapOf<String, Boolean>() } // Theo dõi MediaSource đã tạo
     val coroutineScope = rememberCoroutineScope()
     val isActivePage by rememberUpdatedState(pageIndex == pagerState.currentPage)
     val lifecycleOwner by rememberUpdatedState(LocalLifecycleOwner.current)
@@ -79,7 +81,11 @@ fun VideoPlayer(
     }
 
     fun createExoPlayer(mediaItem: MediaItem, playWhenReady: Boolean): ExoPlayer {
+        val renderersFactory = DefaultRenderersFactory(context)
+            .setEnableDecoderFallback(true) // Bật chế độ fallback để thử codec khác nếu lỗi
+            .forceDisableMediaCodecAsynchronousQueueing() // Tắt asynchronous queueing
         val player = ExoPlayer.Builder(context)
+            .setRenderersFactory(renderersFactory)
             .setLoadControl(
                 DefaultLoadControl.Builder()
                     .setBufferDurationsMs(5000, 10000, 1000, 5000)
@@ -135,29 +141,28 @@ fun VideoPlayer(
                 if (isActivePage) {
                     // Pre-init next page
                     if (currentPage + 1 < viewModel.reels.value.size && !players.containsKey(currentPage + 1)) {
-                        val mediaItem = MediaItem.fromUri(viewModel.reels.value[currentPage + 1].videoUrl).buildUpon()
-                            .setMediaId(viewModel.reels.value[currentPage + 1].videoUrl).build()
-                        players[currentPage + 1] = createExoPlayer(mediaItem, playWhenReady = false)
-                        startTimes[currentPage + 1] = System.currentTimeMillis()
-                        Timber.tag(tag).d("Pre-init ExoPlayer for next page ${currentPage + 1}")
+                        val nextUrl = viewModel.reels.value[currentPage + 1].videoUrl
+                        if (!createdMediaSources.containsKey(nextUrl) || !players.containsKey(currentPage + 1)) {
+                            val mediaItem = MediaItem.fromUri(nextUrl).buildUpon()
+                                .setMediaId(nextUrl).build()
+                            players[currentPage + 1] = createExoPlayer(mediaItem, playWhenReady = false)
+                            startTimes[currentPage + 1] = System.currentTimeMillis()
+                            createdMediaSources[nextUrl] = true
+                            Timber.tag(tag).d("Pre-init ExoPlayer for next page ${currentPage + 1}")
+                        }
                     }
-                    // Pre-init previous page
-                    if (currentPage - 1 >= 0 && !players.containsKey(currentPage - 1)) {
-                        val mediaItem = MediaItem.fromUri(viewModel.reels.value[currentPage - 1].videoUrl).buildUpon()
-                            .setMediaId(viewModel.reels.value[currentPage - 1].videoUrl).build()
-                        players[currentPage - 1] = createExoPlayer(mediaItem, playWhenReady = false)
-                        startTimes[currentPage - 1] = System.currentTimeMillis()
-                        Timber.tag(tag).d("Pre-init ExoPlayer for previous page ${currentPage - 1}")
-                    }
+                    // Ko cần Pre-init previous page
                 }
-                // Dừng video của trang previous ngay lập tức
+                // Dừng video của previous page asap
                 players.forEach { (index, player) ->
                     if (index == currentPage) {
                         if (!player.isPlaying) {
+                            player.setPriority(C.PRIORITY_PLAYBACK)
                             player.play()
                         }
                         Timber.tag(tag).d("Playing ExoPlayer for page $currentPage")
                     } else {
+                        player.setPriority(C.PRIORITY_PLAYBACK_PRELOAD)
                         player.pause()
                         player.seekTo(0)
                         Timber.tag(tag).d("Paused ExoPlayer for page $index")
@@ -167,24 +172,35 @@ fun VideoPlayer(
                 val playersToDispose = players.keys.filter { it !in (currentPage - 2..currentPage + 2) }
                 if (playersToDispose.isNotEmpty()) {
                     coroutineScope.launch(Dispatchers.Main) {
-                        delay(300L)
+                        delay(500L)
                         playersToDispose.forEach { index ->
-                            players.remove(index)?.let { player ->
-                                player.stop()
-                                player.release()
-                                Timber.tag(tag).d("Disposed ExoPlayer for page $index")
+                            viewModel.reels.value.getOrNull(index)?.videoUrl?.let { url ->
+                                players.remove(index)?.let { player ->
+                                    try {
+                                        if (player.isPlaying) {
+                                            player.pause()
+                                        }
+                                        player.stop()
+                                        Timber.tag(tag).d("Stopping ExoPlayer for page $index before release")
+                                        player.release()
+                                        createdMediaSources.remove(url)
+                                        Timber.tag(tag).d("Disposed ExoPlayer for page $index")
+                                    } catch (e: Exception) {
+                                        Timber.tag(tag).e(e, "Failed to release ExoPlayer for page $index")
+                                    }
+                                }
                             }
                         }
                     }
                 }
-                // Gán PlayerView khi trang visible
+                // Gán PlayerView khi page visible
                 if (isPageVisible && players.containsKey(pageIndex)) {
                     playerView.player = players[pageIndex]
                     Timber.tag(tag).d("PlayerView updated for page $pageIndex")
                 } else if (!isPageVisible) {
                     playerView.player = null
                 }
-                // Fetch thêm khi cần
+                // Load more
                 if (currentPage % 3 == 0 && currentPage > 0 && currentPage < viewModel.reels.value.size - 3) {
                     onFetchMore()
                 }
@@ -218,6 +234,7 @@ fun VideoPlayer(
 
     // Quản lý lifecycle
     DisposableEffect(lifecycleOwner, isActivePage) {
+        Timber.tag(tag).d("lifecycle called")
         val observer = LifecycleEventObserver { _, event ->
             if (isActivePage && players[pageIndex] != null) {
                 when (event) {
@@ -238,10 +255,14 @@ fun VideoPlayer(
         onDispose {
             players.remove(pageIndex)?.let { player ->
                 try {
-                    if (player.isPlaying) player.pause()
+                    if (player.isPlaying) {
+                        player.pause()
+                    }
                     player.stop()
+                    Timber.tag(tag).d("Stopping ExoPlayer for page $pageIndex before release")
                     player.release()
                     playerView.player = null
+                    createdMediaSources.remove(reel.videoUrl)
                     Timber.tag(tag).d("Disposed ExoPlayer for page $pageIndex")
                 } catch (e: Exception) {
                     Timber.tag(tag).e(e, "Failed to release ExoPlayer for page $pageIndex")

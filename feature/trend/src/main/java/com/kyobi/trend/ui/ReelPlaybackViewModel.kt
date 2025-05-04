@@ -37,7 +37,7 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     }
 
     fun fetchMoreReels() {
-        // Mock fetch thêm 5 Reel mới
+        // Mock fetch thêm
         val newReels = List(5) { index ->
             Reel(
                 id = "reel_${UUID.randomUUID()}",
@@ -58,25 +58,30 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
 
     @OptIn(UnstableApi::class)
     fun startCreateMediaSource(mediaItem: MediaItem): MediaSource {
-        val uri = mediaItem.localConfiguration?.uri.toString()
-        Timber.tag(tag).d("Creating MediaSource for URI: $uri")
-        val dataSourceFactory = DefaultDataSource.Factory(context)
-        val cacheDataSourceFactory = CacheDataSource.Factory()
-            .setCache(mediaCache.getCache())
-            .setUpstreamDataSourceFactory(dataSourceFactory)
-            .setCacheReadDataSourceFactory(dataSourceFactory)
-            .setCacheWriteDataSinkFactory(CacheDataSink.Factory().setCache(mediaCache.getCache()))
-        if (uri.endsWith(".mp4")) {
-            cacheDataSourceFactory.setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE)
-        } else {
-            cacheDataSourceFactory.setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-        }
-        return if (uri.endsWith(".m3u8")) {
-            HlsMediaSource.Factory(cacheDataSourceFactory)
-                .createMediaSource(mediaItem)
-        } else {
-            ProgressiveMediaSource.Factory(cacheDataSourceFactory)
-                .createMediaSource(mediaItem)
+        try {
+            val uri = mediaItem.localConfiguration?.uri.toString()
+            Timber.tag(tag).d("Creating MediaSource for URI: $uri")
+            val dataSourceFactory = DefaultDataSource.Factory(context)
+            val cacheDataSourceFactory = CacheDataSource.Factory()
+                .setCache(mediaCache.getCache())
+                .setUpstreamDataSourceFactory(dataSourceFactory)
+                .setCacheReadDataSourceFactory(dataSourceFactory)
+                .setCacheWriteDataSinkFactory(CacheDataSink.Factory().setCache(mediaCache.getCache()))
+            if (uri.endsWith(".m3u8")) {
+                cacheDataSourceFactory.setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+            } else {
+                cacheDataSourceFactory.setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE)
+            }
+            return if (uri.endsWith(".m3u8")) {
+                HlsMediaSource.Factory(cacheDataSourceFactory)
+                    .createMediaSource(mediaItem)
+            } else {
+                ProgressiveMediaSource.Factory(cacheDataSourceFactory)
+                    .createMediaSource(mediaItem)
+            }
+        } catch (e: Exception) {
+            Timber.tag(tag).e(e, "Failed to create mediaSource")
+            throw e
         }
     }
 
