@@ -159,6 +159,7 @@ fun VideoPlayer(
             Timber.tag(tag).d("PlayerView cleared for page $pageIndex")
         }
         onDispose {
+            Timber.tag(tag).d("Dispose - PlayerView cleared for page $pageIndex")
             playerView.player = null
         }
     }
