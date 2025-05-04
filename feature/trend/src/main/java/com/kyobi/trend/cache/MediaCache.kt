@@ -3,8 +3,12 @@ package com.kyobi.trend.cache
 import android.content.Context
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.cache.CacheDataSink
+import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.multidex.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
@@ -19,7 +23,7 @@ class MediaCache @Inject constructor(
 ) {
     private var cache: SimpleCache? = null
     private val cacheDir = File(context.cacheDir, "media_cache")
-    private val cacheSizeMb = 200
+    private val cacheSizeMb = 500
     private var isCacheInUse = false // Thêm biến để theo dõi trạng thái sử dụng cache
 
     init {
@@ -68,6 +72,27 @@ class MediaCache @Inject constructor(
                 Timber.tag("MediaCache").d("Cleared old cache (age: $ageInDays days)")
             }
         }
+    }
+
+    fun createSharedCacheDataSourceFactory(context: Context, mediaCache: SimpleCache): CacheDataSource.Factory {
+        val upstreamFactory = DefaultDataSource.Factory(context)
+        return CacheDataSource.Factory()
+            .setCache(mediaCache)
+            .setUpstreamDataSourceFactory(upstreamFactory)
+            .setCacheReadDataSourceFactory(upstreamFactory)
+            .setCacheWriteDataSinkFactory(CacheDataSink.Factory().setCache(mediaCache))
+            .setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE or CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+            .setCacheKeyFactory { mediaItem ->
+                val uri = mediaItem.uri.toString()
+                val fileName = uri.substringAfterLast("/").substringBefore("?")
+                val token = uri.substringAfter("?token=").takeIf { it.isNotEmpty() } ?: "notoken"
+                "$fileName-${uri.hashCode()}-${token.hashCode()}" // Key duy nhất dựa trên file name, uri hash và token hash
+            }
+    }
+
+    fun getMediaSourceFactory(): DefaultMediaSourceFactory {
+        val cacheDataSourceFactory = createSharedCacheDataSourceFactory(context, getCache())
+        return DefaultMediaSourceFactory(cacheDataSourceFactory)
     }
 
     fun release() {

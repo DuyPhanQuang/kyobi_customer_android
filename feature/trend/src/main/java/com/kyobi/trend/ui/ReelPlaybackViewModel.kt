@@ -7,9 +7,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.cache.CacheDataSink
-import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
@@ -19,17 +16,21 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import timber.log.Timber
 import java.util.UUID
+import java.util.concurrent.Executors
 import javax.inject.Inject
 
 @HiltViewModel
 class ReelPlaybackViewModel @OptIn(UnstableApi::class)
 @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val mediaCache: MediaCache
+    val mediaCache: MediaCache
 ) : ViewModel() {
     private val tag = "ReelPlaybackViewModel"
     private val _reels = mutableStateOf<List<Reel>>(emptyList())
     val reels: State<List<Reel>> = _reels
+    val shortenMediaSources = mutableMapOf<String, MediaSource?>()
+    val fullMediaSources = mutableMapOf<String, MediaSource?>()
+    private val executorService = Executors.newFixedThreadPool(2)
 
     fun setReels(newReels: List<Reel>) {
         Timber.tag(tag).d("Setting reels, size: ${newReels.size}")
@@ -57,18 +58,46 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
         Timber.tag(tag).d("Fetched more reels, new size: ${_reels.value.size}")
     }
 
+    fun preloadShortenAndFullMediaSources(page: Int) {
+        if (page >= reels.value.size) return
+        val reel = reels.value[page]
+        // Preload shortenUrl
+        if (!shortenMediaSources.containsKey(reel.shortenUrl) && reel.shortenUrl.isNotEmpty()) {
+            executorService.execute {
+                try {
+                    val mediaItem = MediaItem.fromUri(reel.shortenUrl).buildUpon()
+                        .setMediaId(reel.shortenUrl).build()
+                    val mediaSource = startCreateMediaSource(mediaItem)
+                    shortenMediaSources[reel.shortenUrl] = mediaSource
+                    Timber.tag(tag).d("Preloaded shortenUrl MediaSource for page $page")
+                } catch (e: Exception) {
+                    Timber.tag(tag).e(e, "Failed to preload shortenUrl MediaSource for page $page")
+                }
+            }
+        }
+        // Preload videoUrl
+        if (!fullMediaSources.containsKey(reel.videoUrl)) {
+            executorService.execute {
+                try {
+                    val mediaItem = MediaItem.fromUri(reel.videoUrl).buildUpon()
+                        .setMediaId(reel.videoUrl).build()
+                    val mediaSource = startCreateMediaSource(mediaItem)
+                    fullMediaSources[reel.videoUrl] = mediaSource
+                    Timber.tag(tag).d("Preloaded videoUrl MediaSource for page $page")
+                } catch (e: Exception) {
+                    Timber.tag(tag).e(e, "Failed to preload videoUrl MediaSource for page $page")
+                }
+            }
+        }
+    }
+
     @OptIn(UnstableApi::class)
     fun startCreateMediaSource(mediaItem: MediaItem): MediaSource {
         try {
             val uri = mediaItem.localConfiguration?.uri.toString()
             Timber.tag(tag).d("Creating MediaSource for URI: $uri")
-            val dataSourceFactory = DefaultDataSource.Factory(context)
-            val cacheDataSourceFactory = CacheDataSource.Factory()
-                .setCache(mediaCache.getCache())
-                .setUpstreamDataSourceFactory(dataSourceFactory)
-                .setCacheReadDataSourceFactory(dataSourceFactory)
-                .setCacheWriteDataSinkFactory(CacheDataSink.Factory().setCache(mediaCache.getCache()))
-                .setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE or CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR) // Tăng hiệu suất cache
+            val cacheDataSourceFactory = mediaCache.createSharedCacheDataSourceFactory(
+                context, mediaCache.getCache())
             return if (uri.endsWith(".m3u8")) {
                 HlsMediaSource.Factory(cacheDataSourceFactory)
                     .setAllowChunklessPreparation(true)
