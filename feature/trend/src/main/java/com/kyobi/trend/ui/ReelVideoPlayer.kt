@@ -193,10 +193,11 @@ fun VideoPlayer(
                         .setMediaId(reelData.shortenUrl).build()
                     val fullMediaItem = MediaItem.fromUri(reelData.videoUrl).buildUpon()
                         .setMediaId(reelData.videoUrl).build()
+                    // Tải thumbnail trước
                     player = createExoPlayer(
                         shortenMediaItem = mediaItem,
                         fullMediaItem = fullMediaItem,
-                        targetIndex = settledPage
+                        targetIndex = settledPage,
                     )
                     playerView.player = player
                     Timber.tag(tag).d("Initialized ExoPlayer for current page $settledPage")

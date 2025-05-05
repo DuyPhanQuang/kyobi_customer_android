@@ -39,7 +39,7 @@ fun TrendTab(
             shareCount = 50,
             viewCount = 5000,
             createdAt = "2025-04-20T10:00:00Z",
-            thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
+            thumbnailUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/thumbnails/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746444377793-thumbnail.webp?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0aHVtYm5haWxzLzQ2OGI0ZDM2LTRkNDMtNDhmMy04ZjMyLTBkNzk2ZTJiMmVjZC9yZWVsLTE3NDY0NDQzNzc3OTMtdGh1bWJuYWlsLndlYnAiLCJpYXQiOjE3NDY0NDQzNzksImV4cCI6MTc3Nzk4MDM3OX0.OBtARv4roCRe02jgq2Vc2krZ5NBpnNMwd5pqyEgIsdU",
             tags = listOf("fashion", "trend")
         ),
         Reel(

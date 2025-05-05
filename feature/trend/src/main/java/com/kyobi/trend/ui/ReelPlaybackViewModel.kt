@@ -2,6 +2,9 @@ package com.kyobi.trend.ui
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.view.Surface
+import android.view.TextureView
+import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
