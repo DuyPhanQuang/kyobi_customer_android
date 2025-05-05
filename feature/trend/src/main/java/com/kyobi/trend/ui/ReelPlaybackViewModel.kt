@@ -21,6 +21,8 @@ import java.util.concurrent.Executors
 import javax.inject.Inject
 import androidx.core.net.toUri
 import androidx.media3.common.C
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.DefaultHlsExtractorFactory
 
 @HiltViewModel
@@ -39,13 +41,8 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     fun setReels(newReels: List<Reel>) {
         Timber.tag(tag).d("Setting reels, size: ${newReels.size}")
         _reels.value = newReels
-        if (newReels.size >= 10) {
-            preloadMediaSourceForRange(0, 10)
-            Timber.tag(tag).d("Preloaded initial 10 media sources")
-        } else {
-            preloadMediaSourceForRange(0, newReels.size)
-            Timber.tag(tag).d("Preloaded initial ${newReels.size} media sources")
-        }
+        preloadMediaSourceForRange(0, newReels.size)
+        Timber.tag(tag).d("Preloaded initial ${newReels.size} media sources")
     }
 
     fun fetchMoreReels() {
@@ -154,8 +151,48 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
         }
     }
 
+    @OptIn(UnstableApi::class)
+    fun startPlay(targetPlayer: ExoPlayer?, page: Int) {
+        targetPlayer?.setPriority(C.PRIORITY_PLAYBACK)
+        targetPlayer?.repeatMode = Player.REPEAT_MODE_ALL
+        targetPlayer?.playWhenReady = true
+        targetPlayer?.play()
+    }
+
+    @OptIn(UnstableApi::class)
+    fun startPause(targetPlayer: ExoPlayer?, page: Int) {
+        targetPlayer?.setPriority(C.PRIORITY_PLAYBACK_PRELOAD)
+        targetPlayer?.repeatMode = Player.REPEAT_MODE_OFF
+        targetPlayer?.playWhenReady = false
+        targetPlayer?.pause()
+        targetPlayer?.seekTo(0)
+    }
+
+    fun startRelease(targetPlayer: ExoPlayer?, page: Int) {
+        targetPlayer?.playWhenReady = false
+        targetPlayer?.repeatMode = Player.REPEAT_MODE_OFF
+        targetPlayer?.pause()
+        Timber.tag(tag).d("Pausing ExoPlayer for page $page before stop")
+        targetPlayer?.stop()
+        targetPlayer?.clearMediaItems()
+        Timber.tag(tag).d("Stopping ExoPlayer for page $page before release")
+        targetPlayer?.release()
+        Timber.tag(tag).d("Releasing ExoPlayer for page $page")
+    }
+
     override fun onCleared() {
-        Timber.tag(tag).d("ViewModel cleared")
+        Timber.tag(tag).d("ViewModel cleared, releasing resources")
+        // Shutdown ExecutorService
+        try {
+            executorService.shutdown()
+            if (!executorService.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+                executorService.shutdownNow()
+                Timber.tag(tag).w("ExecutorService did not terminate gracefully, forced shutdown")
+            }
+            Timber.tag(tag).d("ExecutorService shut down successfully")
+        } catch (e: Exception) {
+            Timber.tag(tag).e(e, "Failed to shutdown ExecutorService")
+        }
         super.onCleared()
     }
 }
