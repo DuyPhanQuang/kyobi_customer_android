@@ -3,7 +3,6 @@ package com.kyobi.trend.ui
 import android.content.Context
 import androidx.annotation.OptIn
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.media3.common.MediaItem
@@ -93,7 +92,7 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
                 try {
                     val mediaItem = MediaItem.fromUri(reel.shortenUrl).buildUpon()
                         .setMediaId(reel.shortenUrl).build()
-                    startCreateMediaSource(mediaItem)
+                    startCreateMediaSource(mediaItem, shouldCache = true)
                     Timber.tag(tag).d("Preloaded shortenUrl MediaSource for page $page")
                 } catch (e: Exception) {
                     Timber.tag(tag).e(e, "Failed to preload shortenUrl MediaSource for page $page")
@@ -106,7 +105,7 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
                 try {
                     val mediaItem = MediaItem.fromUri(reel.videoUrl).buildUpon()
                         .setMediaId(reel.videoUrl).build()
-                    startCreateMediaSource(mediaItem)
+                    startCreateMediaSource(mediaItem, shouldCache = false)
                     Timber.tag(tag).d("Preloaded videoUrl MediaSource for page $page")
                 } catch (e: Exception) {
                     Timber.tag(tag).e(e, "Failed to preload videoUrl MediaSource for page $page")
@@ -116,19 +115,23 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     }
 
     @OptIn(UnstableApi::class)
-    fun startCreateMediaSource(mediaItem: MediaItem): MediaSource {
+    fun startCreateMediaSource(mediaItem: MediaItem, shouldCache: Boolean = true): MediaSource {
         try {
             val uri = mediaItem.localConfiguration?.uri.toString()
             Timber.tag(tag).d("Creating MediaSource for URI: $uri")
-            val cacheDataSourceFactory = mediaCache.createSharedCacheDataSourceFactory(
-                context, mediaCache.getCache())
+            // Chọn DataSource.Factory dựa trên shouldCache
+            val dataSourceFactory = if (shouldCache) {
+                mediaCache.createSharedCacheDataSourceFactory(context, mediaCache.getCache())
+            } else {
+                mediaCache.createNonCachedDataSourceFactory(context)
+            }
             return if (uri.endsWith(".m3u8")) {
-                HlsMediaSource.Factory(cacheDataSourceFactory)
+                HlsMediaSource.Factory(dataSourceFactory)
                     .setAllowChunklessPreparation(true)
                     .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy())
                     .createMediaSource(mediaItem)
             } else {
-                ProgressiveMediaSource.Factory(cacheDataSourceFactory)
+                ProgressiveMediaSource.Factory(dataSourceFactory)
                     .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy())
                     .createMediaSource(mediaItem)
             }

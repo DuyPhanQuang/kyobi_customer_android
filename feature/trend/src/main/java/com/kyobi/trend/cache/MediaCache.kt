@@ -24,7 +24,7 @@ class MediaCache @Inject constructor(
     private var cache: SimpleCache? = null
     private val cacheDir = File(context.cacheDir, "media_cache")
     private val cacheSizeMb = 500
-    private var isCacheInUse = false // Thêm biến để theo dõi trạng thái sử dụng cache
+    private var isCacheInUse = false // theo dõi trạng thái sử dụng cache
 
     init {
         clearCacheIfOld()
@@ -45,7 +45,7 @@ class MediaCache @Inject constructor(
             )
             Timber.tag("MediaCache").d("Reinitialized cache with size ${cacheSizeMb}MB")
         }
-        isCacheInUse = true // Đánh dấu cache đang được sử dụng
+        isCacheInUse = true
         return cache!!
     }
 
@@ -90,9 +90,18 @@ class MediaCache @Inject constructor(
             }
     }
 
-    fun getMediaSourceFactory(): DefaultMediaSourceFactory {
-        val cacheDataSourceFactory = createSharedCacheDataSourceFactory(context, getCache())
-        return DefaultMediaSourceFactory(cacheDataSourceFactory)
+    // DataSource.Factory không cache
+    fun createNonCachedDataSourceFactory(context: Context): DefaultDataSource.Factory {
+        return DefaultDataSource.Factory(context)
+    }
+
+    fun getMediaSourceFactory(shouldCache: Boolean = true): DefaultMediaSourceFactory {
+        val dataSourceFactory = if (shouldCache) {
+            createSharedCacheDataSourceFactory(context, getCache())
+        } else {
+            createNonCachedDataSourceFactory(context)
+        }
+        return DefaultMediaSourceFactory(dataSourceFactory)
     }
 
     fun release() {

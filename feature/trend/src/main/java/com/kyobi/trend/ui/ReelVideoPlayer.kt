@@ -94,7 +94,7 @@ fun VideoPlayer(
         val renderersFactory = DefaultRenderersFactory(context)
             .setEnableDecoderFallback(true) // Bật chế độ fallback để thử codec khác nếu lỗi
             .forceDisableMediaCodecAsynchronousQueueing() // Tắt asynchronous queueing
-        val cacheDataSourceFactory = viewModel.mediaCache.getMediaSourceFactory()
+        val cacheDataSourceFactory = viewModel.mediaCache.getMediaSourceFactory(shouldCache = true)
         val player = ExoPlayer.Builder(context)
             .setRenderersFactory(renderersFactory)
             .setLoadControl(
@@ -104,7 +104,7 @@ fun VideoPlayer(
                         45000,
                         2000,
                         5000)
-                    .setTargetBufferBytes(-1)
+                    .setTargetBufferBytes(-1) // Tự động điều chỉnh buffer
                     .build()
             )
             .setReleaseTimeoutMs(5000L)
@@ -112,8 +112,8 @@ fun VideoPlayer(
             .build()
         startTimes[pageIndex] = System.currentTimeMillis()
         // Tạo ConcatenatingMediaSource2
-        val shortenMediaSource = viewModel.startCreateMediaSource(shortenMediaItem)
-        val fullMediaSource = viewModel.startCreateMediaSource(fullMediaItem)
+        val shortenMediaSource = viewModel.startCreateMediaSource(shortenMediaItem, shouldCache = true)
+        val fullMediaSource = viewModel.startCreateMediaSource(fullMediaItem, shouldCache = false)
         val newMediaSource: MediaSource = try {
             ConcatenatingMediaSource2.Builder()
                 .add(shortenMediaSource, 10_000L)
