@@ -12,7 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -70,7 +69,7 @@ fun VideoPlayer(
             setKeepContentOnPlayerReset(true)
             setEnableComposeSurfaceSyncWorkaround(true)
             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-            setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+            setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
             keepScreenOn = true
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -97,7 +96,7 @@ fun VideoPlayer(
                     .setBufferDurationsMs(
                         4000,
                         12000,
-                        2000,
+                        1000,
                         2000)
                     .setTargetBufferBytes(-1)
                     .build()

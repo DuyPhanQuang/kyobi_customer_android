@@ -43,6 +43,19 @@ fun TrendTab(
             tags = listOf("fashion", "trend")
         ),
         Reel(
+            id = "reel_1_0_hls",
+            videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746462876876/full/full.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDYyODc2ODc2L2Z1bGwvZnVsbC5tM3U4IiwiaWF0IjoxNzQ2NDYyOTAxLCJleHAiOjE3Nzc5OTg5MDF9.5Cx_la0TwUfIH-XagoeIZX9T3JQM3wrmyDHSsyi8cgc",
+            shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746462876876/shorten/shorten.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDYyODc2ODc2L3Nob3J0ZW4vc2hvcnRlbi5tM3U4IiwiaWF0IjoxNzQ2NDYyOTAxLCJleHAiOjE3Nzc5OTg5MDF9.TEZIE47UO6ETinbUUXP8g69_RiLUJaDUJI4uC8mFE7w",
+            status = "PUBLISHED",
+            likeCount = 1200,
+            commentCount = 150,
+            shareCount = 50,
+            viewCount = 5000,
+            createdAt = "2025-04-20T10:00:00Z",
+            thumbnailUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/thumbnails/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746462876876-thumbnail.webp?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0aHVtYm5haWxzLzQ2OGI0ZDM2LTRkNDMtNDhmMy04ZjMyLTBkNzk2ZTJiMmVjZC9yZWVsLTE3NDY0NjI4NzY4NzYtdGh1bWJuYWlsLndlYnAiLCJpYXQiOjE3NDY0NjI4NzgsImV4cCI6MTc3Nzk5ODg3OH0.JcjryYU9Rk7RNTsibMndfMxDu48YSF26Pg5ey-lojEU",
+            tags = listOf("fashion", "trend")
+        ),
+        Reel(
             id = "reel_1_1_hls",
             videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746444377793/full/full.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDQ0Mzc3NzkzL2Z1bGwvZnVsbC5tM3U4IiwiaWF0IjoxNzQ2NDQ0Mzk3LCJleHAiOjE3Nzc5ODAzOTd9.QGT0ceFcYim7vnY2iUOM0X-xKoiYxBtHkzSFFdGBxKM",
             shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746444377793/shorten/shorten.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDQ0Mzc3NzkzL3Nob3J0ZW4vc2hvcnRlbi5tM3U4IiwiaWF0IjoxNzQ2NDQ0Mzk3LCJleHAiOjE3Nzc5ODAzOTd9.czfpkVJT-8BkLdauW0B7h8kAy6vEx5hNSM9gZrIDbtg",
