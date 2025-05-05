@@ -36,6 +36,7 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ConcatenatingMediaSource2
 import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
@@ -99,10 +100,11 @@ fun VideoPlayer(
             .setLoadControl(
                 DefaultLoadControl.Builder()
                     .setBufferDurationsMs(
-                        10000,
-                        10000,
-                        1000,
+                        15000,
+                        45000,
+                        2000,
                         5000)
+                    .setTargetBufferBytes(-1)
                     .build()
             )
             .setReleaseTimeoutMs(5000L)
@@ -152,6 +154,15 @@ fun VideoPlayer(
                 }
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                     Timber.tag(tag).d("Media item transition to mediaId ${mediaItem?.mediaId} for page $pageIndex")
+                }
+                override fun onPositionDiscontinuity(
+                    oldPosition: Player.PositionInfo,
+                    newPosition: Player.PositionInfo,
+                    reason: Int
+                ) {
+                    if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+                        Timber.tag(tag).d("Auto transition (likely from shorten to full) at page $pageIndex")
+                    }
                 }
             })
         }

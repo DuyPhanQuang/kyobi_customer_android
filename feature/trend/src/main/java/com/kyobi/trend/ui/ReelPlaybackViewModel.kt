@@ -11,6 +11,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import com.kyobi.trend.cache.MediaCache
 import com.kyobi.trend.model.Reel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -124,9 +125,11 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
             return if (uri.endsWith(".m3u8")) {
                 HlsMediaSource.Factory(cacheDataSourceFactory)
                     .setAllowChunklessPreparation(true)
+                    .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy())
                     .createMediaSource(mediaItem)
             } else {
                 ProgressiveMediaSource.Factory(cacheDataSourceFactory)
+                    .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy())
                     .createMediaSource(mediaItem)
             }
         } catch (e: Exception) {
