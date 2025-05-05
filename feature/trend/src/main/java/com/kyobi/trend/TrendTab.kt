@@ -44,15 +44,15 @@ fun TrendTab(
         ),
         Reel(
             id = "reel_1_hls",
-            "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746437866416/full/full.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDM3ODY2NDE2L2Z1bGwvZnVsbC5tM3U4IiwiaWF0IjoxNzQ2NDM3ODg3LCJleHAiOjE3Nzc5NzM4ODd9.pLbLnCTSdh0D88luvKhESJrFzcB2FvXHe0JjD_JKCDw",
-            shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746437866416/shorten/shorten.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDM3ODY2NDE2L3Nob3J0ZW4vc2hvcnRlbi5tM3U4IiwiaWF0IjoxNzQ2NDM3ODg3LCJleHAiOjE3Nzc5NzM4ODd9.5tHu0uFSoh78FUyHv8Usv8M1dsoYQnCrXJk2Mj-wGN0",
+            videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746444377793/full/full.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDQ0Mzc3NzkzL2Z1bGwvZnVsbC5tM3U4IiwiaWF0IjoxNzQ2NDQ0Mzk3LCJleHAiOjE3Nzc5ODAzOTd9.QGT0ceFcYim7vnY2iUOM0X-xKoiYxBtHkzSFFdGBxKM",
+            shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746444377793/shorten/shorten.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDQ0Mzc3NzkzL3Nob3J0ZW4vc2hvcnRlbi5tM3U4IiwiaWF0IjoxNzQ2NDQ0Mzk3LCJleHAiOjE3Nzc5ODAzOTd9.czfpkVJT-8BkLdauW0B7h8kAy6vEx5hNSM9gZrIDbtg",
             status = "PUBLISHED",
             likeCount = 1200,
             commentCount = 150,
             shareCount = 50,
             viewCount = 5000,
             createdAt = "2025-04-20T10:00:00Z",
-            thumbnailUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/thumbnails/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746437866416-thumbnail.webp?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0aHVtYm5haWxzLzQ2OGI0ZDM2LTRkNDMtNDhmMy04ZjMyLTBkNzk2ZTJiMmVjZC9yZWVsLTE3NDY0Mzc4NjY0MTYtdGh1bWJuYWlsLndlYnAiLCJpYXQiOjE3NDY0Mzc4NjgsImV4cCI6MTc3Nzk3Mzg2OH0.MwpF0b8YiA0Ingge0SCMYOZf5rvefyyLytzVqLropS0",
+            thumbnailUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/thumbnails/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746444377793-thumbnail.webp?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0aHVtYm5haWxzLzQ2OGI0ZDM2LTRkNDMtNDhmMy04ZjMyLTBkNzk2ZTJiMmVjZC9yZWVsLTE3NDY0NDQzNzc3OTMtdGh1bWJuYWlsLndlYnAiLCJpYXQiOjE3NDY0NDQzNzksImV4cCI6MTc3Nzk4MDM3OX0.OBtARv4roCRe02jgq2Vc2krZ5NBpnNMwd5pqyEgIsdU",
             tags = listOf("fashion", "trend")
         ),
         Reel(
