@@ -21,7 +21,6 @@ import java.util.concurrent.Executors
 import javax.inject.Inject
 import androidx.core.net.toUri
 import androidx.media3.common.C
-import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.DefaultHlsExtractorFactory
 
@@ -154,15 +153,12 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     @OptIn(UnstableApi::class)
     fun startPlay(targetPlayer: ExoPlayer?, page: Int) {
         targetPlayer?.setPriority(C.PRIORITY_PLAYBACK)
-        targetPlayer?.repeatMode = Player.REPEAT_MODE_ALL
         targetPlayer?.playWhenReady = true
         targetPlayer?.play()
     }
 
     @OptIn(UnstableApi::class)
     fun startPause(targetPlayer: ExoPlayer?, page: Int) {
-        targetPlayer?.setPriority(C.PRIORITY_PLAYBACK_PRELOAD)
-        targetPlayer?.repeatMode = Player.REPEAT_MODE_OFF
         targetPlayer?.playWhenReady = false
         targetPlayer?.pause()
         targetPlayer?.seekTo(0)
@@ -170,7 +166,6 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
 
     fun startRelease(targetPlayer: ExoPlayer?, page: Int) {
         targetPlayer?.playWhenReady = false
-        targetPlayer?.repeatMode = Player.REPEAT_MODE_OFF
         targetPlayer?.pause()
         Timber.tag(tag).d("Pausing ExoPlayer for page $page before stop")
         targetPlayer?.stop()

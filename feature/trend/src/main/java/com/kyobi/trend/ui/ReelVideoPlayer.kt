@@ -59,7 +59,6 @@ fun VideoPlayer(
     var showThumbnail by remember(pageIndex) { mutableStateOf(true) }
     val startTimes = remember { mutableStateMapOf<Int, Long>() }
     val createdMediaSources = remember { mutableStateMapOf<String, MediaSource?>() } // Theo dõi MediaSource đã tạo
-    val coroutineScope = rememberCoroutineScope()
     val lifecycleOwner by rememberUpdatedState(LocalLifecycleOwner.current)
     // Sử dụng mutableStateMapOf để quản lý hasFetchedForPage theo pageIndex
     val fetchStates = remember { mutableStateMapOf<Int, Boolean>().apply { put(pageIndex, false) } }
@@ -88,7 +87,7 @@ fun VideoPlayer(
         targetIndex: Int,
     ): ExoPlayer {
         val renderersFactory = DefaultRenderersFactory(context)
-            .setEnableDecoderFallback(true)
+            .setEnableDecoderFallback(false)
             .forceDisableMediaCodecAsynchronousQueueing()
         val cacheDataSourceFactory = viewModel.mediaCache.getMediaSourceFactory(shouldCache = true)
         val createPlayer = ExoPlayer.Builder(context)
@@ -104,6 +103,7 @@ fun VideoPlayer(
                     .build()
             )
             .setMediaSourceFactory(cacheDataSourceFactory)
+            .setReleaseTimeoutMs(1000L)
             .build()
         startTimes[targetIndex] = System.currentTimeMillis()
         val shortenMediaSource = viewModel.startCreateMediaSource(shortenMediaItem, shouldCache = true)
@@ -122,7 +122,7 @@ fun VideoPlayer(
         return createPlayer.apply {
             setMediaSource(newMediaSource, false)
             videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
-            repeatMode = Player.REPEAT_MODE_OFF
+            repeatMode = Player.REPEAT_MODE_ALL
             volume = 1f
             this.playWhenReady = true
             prepare()
@@ -220,23 +220,6 @@ fun VideoPlayer(
             }
     }
 
-    AndroidView(
-        factory = { playerView },
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        player?.let {
-                            it.playWhenReady = !it.isPlaying
-                            Timber.tag(tag)
-                                .d("Tapped page $pageIndex, playWhenReady=${it.playWhenReady}")
-                        }
-                    }
-                )
-            }
-    )
-
     if (showThumbnail && reel.thumbnailUrl?.isNotEmpty() == true) {
         AsyncImage(
             model = reel.thumbnailUrl,
@@ -270,17 +253,31 @@ fun VideoPlayer(
         }
     }
 
-    // Release ExoPlayer khi composable bị dispose
-    DisposableEffect(pageIndex) {
+    AndroidView(
+        factory = { playerView },
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = {
+                        player?.let {
+                            it.playWhenReady = !it.isPlaying
+                            Timber.tag(tag)
+                                .d("Tapped page $pageIndex, playWhenReady=${it.playWhenReady}")
+                        }
+                    }
+                )
+            }
+    )
+
+    DisposableEffect(Unit) {
         onDispose {
             player?.let { playerToRelease ->
                 try {
                     viewModel.startRelease(playerToRelease, pageIndex)
-                    playerView.player = null
                     createdMediaSources.remove(reel.shortenUrl)
                     createdMediaSources.remove(reel.videoUrl)
                     Timber.tag(tag).d("Disposed ExoPlayer for page $pageIndex")
-                    player = null
                 } catch (e: Exception) {
                     Timber.tag(tag).e(e, "Failed to release ExoPlayer for page $pageIndex")
                 }
