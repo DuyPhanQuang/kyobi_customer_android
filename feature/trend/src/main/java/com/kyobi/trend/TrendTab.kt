@@ -43,6 +43,19 @@ fun TrendTab(
             tags = listOf("fashion", "trend")
         ),
         Reel(
+            id = "reel_1_hls",
+            "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746437866416/full/full.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDM3ODY2NDE2L2Z1bGwvZnVsbC5tM3U4IiwiaWF0IjoxNzQ2NDM3ODg3LCJleHAiOjE3Nzc5NzM4ODd9.pLbLnCTSdh0D88luvKhESJrFzcB2FvXHe0JjD_JKCDw",
+            shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746437866416/shorten/shorten.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDM3ODY2NDE2L3Nob3J0ZW4vc2hvcnRlbi5tM3U4IiwiaWF0IjoxNzQ2NDM3ODg3LCJleHAiOjE3Nzc5NzM4ODd9.5tHu0uFSoh78FUyHv8Usv8M1dsoYQnCrXJk2Mj-wGN0",
+            status = "PUBLISHED",
+            likeCount = 1200,
+            commentCount = 150,
+            shareCount = 50,
+            viewCount = 5000,
+            createdAt = "2025-04-20T10:00:00Z",
+            thumbnailUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/thumbnails/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746437866416-thumbnail.webp?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0aHVtYm5haWxzLzQ2OGI0ZDM2LTRkNDMtNDhmMy04ZjMyLTBkNzk2ZTJiMmVjZC9yZWVsLTE3NDY0Mzc4NjY0MTYtdGh1bWJuYWlsLndlYnAiLCJpYXQiOjE3NDY0Mzc4NjgsImV4cCI6MTc3Nzk3Mzg2OH0.MwpF0b8YiA0Ingge0SCMYOZf5rvefyyLytzVqLropS0",
+            tags = listOf("fashion", "trend")
+        ),
+        Reel(
             id = "reel_2",
             videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1746194918762.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NjE5NDkxODc2Mi5tcDQiLCJpYXQiOjE3NDYxOTUzODAsImV4cCI6MTc0ODc4NzM4MH0.YiKTG3sFBpv9zWqKJ4wyFVpGmCUs7xJdEpoRlfR36wg",
             shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1746372752350.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NjM3Mjc1MjM1MC5tcDQiLCJpYXQiOjE3NDYzNzI3ODgsImV4cCI6MTc0ODk2NDc4OH0.C5LfkfqFYAk1PLQXdm8HKlTRc1dK91NsUd2VdPb93-g",

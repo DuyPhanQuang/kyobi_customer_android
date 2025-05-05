@@ -19,6 +19,9 @@ import timber.log.Timber
 import java.util.UUID
 import java.util.concurrent.Executors
 import javax.inject.Inject
+import androidx.core.net.toUri
+import androidx.media3.common.C
+import androidx.media3.exoplayer.hls.DefaultHlsExtractorFactory
 
 @HiltViewModel
 class ReelPlaybackViewModel @OptIn(UnstableApi::class)
@@ -125,14 +128,24 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
             } else {
                 mediaCache.createNonCachedDataSourceFactory(context)
             }
-            return if (uri.endsWith(".m3u8")) {
+            val path = uri.toUri().path ?: ""
+            return if (path.endsWith(".m3u8")) {
+                // Tạo DefaultHlsExtractorFactory và cấu hình
+                val customExtractorFactory = DefaultHlsExtractorFactory().apply {
+                    // Tắt kiểm tra codec không cần thiết Không parse codec nào (thay cho FLAG_DISABLE_CODECS)
+                    // Không parse codec nào, tương đương FLAG_DISABLE_CODECS
+                    experimentalSetCodecsToParseWithinGopSampleDependencies(0)
+                    // Tùy chỉnh codec để parse sample dependencies Chỉ parse H.264 (tăng tốc seeking)
+                    experimentalSetCodecsToParseWithinGopSampleDependencies(C.VIDEO_CODEC_FLAG_H264)
+                }
                 HlsMediaSource.Factory(dataSourceFactory)
                     .setAllowChunklessPreparation(true)
-                    .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy())
+                    .setExtractorFactory(customExtractorFactory)
+                    .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(3))
                     .createMediaSource(mediaItem)
             } else {
                 ProgressiveMediaSource.Factory(dataSourceFactory)
-                    .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy())
+                    .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(3))
                     .createMediaSource(mediaItem)
             }
         } catch (e: Exception) {

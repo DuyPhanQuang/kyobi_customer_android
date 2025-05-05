@@ -89,7 +89,6 @@ fun VideoPlayer(
     fun createExoPlayer(
         shortenMediaItem: MediaItem,
         fullMediaItem: MediaItem,
-        playWhenReady: Boolean,
     ): ExoPlayer {
         val renderersFactory = DefaultRenderersFactory(context)
             .setEnableDecoderFallback(true) // Bật chế độ fallback để thử codec khác nếu lỗi
@@ -186,11 +185,7 @@ fun VideoPlayer(
                         .setMediaId(reelData.shortenUrl).build()
                     val fullMediaItem = MediaItem.fromUri(reelData.videoUrl).buildUpon()
                         .setMediaId(reelData.videoUrl).build()
-                    players[currentPage] = createExoPlayer(
-                        shortenMediaItem = mediaItem,
-                        fullMediaItem = fullMediaItem,
-                        playWhenReady = true,
-                    )
+                    players[currentPage] = createExoPlayer(shortenMediaItem = mediaItem, fullMediaItem = fullMediaItem)
                     Timber.tag(tag).d("Initialized ExoPlayer for current page $currentPage")
                 }
                 // Pre-init cho page tiếp theo
@@ -200,17 +195,9 @@ fun VideoPlayer(
                         .setMediaId(reelData.shortenUrl).build()
                     val fullMediaItem = MediaItem.fromUri(reelData.videoUrl).buildUpon()
                         .setMediaId(reelData.videoUrl).build()
-                    players[currentPage + 1] = createExoPlayer(
-                        shortenMediaItem = mediaItem,
-                        fullMediaItem = fullMediaItem,
-                        playWhenReady = false,
-                    )
+                    players[currentPage + 1] = createExoPlayer(shortenMediaItem = mediaItem, fullMediaItem = fullMediaItem)
                     startTimes[currentPage + 1] = System.currentTimeMillis()
                     Timber.tag(tag).d("Pre-init ExoPlayer for next page ${currentPage + 1}")
-                }
-                // Reset PlayerView trước khi cập nhật
-                if (!isPageVisible) {
-                    playerView.player = null
                 }
                 // Quản lý play/pause dựa trên isPageVisible
                 players.forEach { (index, player) ->
