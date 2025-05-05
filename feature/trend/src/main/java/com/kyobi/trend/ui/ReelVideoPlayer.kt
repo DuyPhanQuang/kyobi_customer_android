@@ -44,6 +44,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 @OptIn(UnstableApi::class)
@@ -65,6 +66,8 @@ fun VideoPlayer(
     val coroutineScope = rememberCoroutineScope()
     val isActivePage by rememberUpdatedState(pageIndex == pagerState.currentPage)
     val lifecycleOwner by rememberUpdatedState(LocalLifecycleOwner.current)
+    // Sử dụng mutableStateMapOf để quản lý hasFetchedForPage theo pageIndex
+    val fetchStates = remember { mutableStateMapOf<Int, Boolean>().apply { put(pageIndex, false) } }
 
     // Tạo và giữ PlayerView bằng remember
     val playerView = remember(pageIndex) {
@@ -86,8 +89,6 @@ fun VideoPlayer(
         shortenMediaItem: MediaItem,
         fullMediaItem: MediaItem,
         playWhenReady: Boolean,
-        preloadedShortenMediaSource: MediaSource? = null,
-        preloadedFullMediaSource: MediaSource? = null,
     ): ExoPlayer {
         val renderersFactory = DefaultRenderersFactory(context)
             .setEnableDecoderFallback(true) // Bật chế độ fallback để thử codec khác nếu lỗi
@@ -108,9 +109,9 @@ fun VideoPlayer(
             .setMediaSourceFactory(cacheDataSourceFactory)
             .build()
         startTimes[pageIndex] = System.currentTimeMillis()
-        // Tạo ConcatenatingMediaSource2 nếu không có preloadedMediaSource
-        val shortenMediaSource = preloadedShortenMediaSource ?: viewModel.startCreateMediaSource(shortenMediaItem)
-        val fullMediaSource = preloadedFullMediaSource ?: viewModel.startCreateMediaSource(fullMediaItem)
+        // Tạo ConcatenatingMediaSource2
+        val shortenMediaSource = viewModel.startCreateMediaSource(shortenMediaItem)
+        val fullMediaSource = viewModel.startCreateMediaSource(fullMediaItem)
         val newMediaSource: MediaSource = try {
             ConcatenatingMediaSource2.Builder()
                 .add(shortenMediaSource, 10_000L)
@@ -124,13 +125,11 @@ fun VideoPlayer(
         }
         return player.apply {
             videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
-            repeatMode = Player.REPEAT_MODE_ALL
+            repeatMode = Player.REPEAT_MODE_OFF
             setMediaSource(newMediaSource, false)
-            this.playWhenReady = playWhenReady
+            volume = 0f
+            this.playWhenReady = false
             prepare()
-            if (!playWhenReady) {
-                pause()
-            }
             addListener(object : Player.Listener {
                 override fun onRenderedFirstFrame() {
                     val startTime = startTimes[pageIndex]
@@ -158,18 +157,11 @@ fun VideoPlayer(
         }
     }
 
-    // Preload MediaSource trong background
-    fun preloadMediaSource(page: Int) {
-        viewModel.preloadShortenAndFullMediaSources(page)
-    }
-
     // Quản lý ExoPlayer: pre-init, play, stop, dispose
     LaunchedEffect(
         pageIndex,
         pagerState,
         viewModel.reels.value,
-        viewModel.shortenMediaSources,
-        viewModel.fullMediaSources
     ) {
         snapshotFlow { pagerState.currentPage to pagerState.currentPageOffsetFraction }
             .distinctUntilChanged()
@@ -183,14 +175,11 @@ fun VideoPlayer(
                         .setMediaId(reelData.shortenUrl).build()
                     val fullMediaItem = MediaItem.fromUri(reelData.videoUrl).buildUpon()
                         .setMediaId(reelData.videoUrl).build()
-                    val preloadedShortenMediaSource = viewModel.shortenMediaSources[reelData.shortenUrl]
-                    val preloadedFullMediaSource = viewModel.fullMediaSources[reelData.videoUrl]
                     players[currentPage] = createExoPlayer(
                         shortenMediaItem = mediaItem,
                         fullMediaItem = fullMediaItem,
                         playWhenReady = true,
-                        preloadedShortenMediaSource,
-                        preloadedFullMediaSource)
+                    )
                     Timber.tag(tag).d("Initialized ExoPlayer for current page $currentPage")
                 }
                 // Pre-init cho page tiếp theo
@@ -200,33 +189,43 @@ fun VideoPlayer(
                         .setMediaId(reelData.shortenUrl).build()
                     val fullMediaItem = MediaItem.fromUri(reelData.videoUrl).buildUpon()
                         .setMediaId(reelData.videoUrl).build()
-                    val preloadedShortenMediaSource = viewModel.shortenMediaSources[reelData.shortenUrl]
-                    val preloadedFullMediaSource = viewModel.fullMediaSources[reelData.videoUrl]
                     players[currentPage + 1] = createExoPlayer(
                         shortenMediaItem = mediaItem,
                         fullMediaItem = fullMediaItem,
                         playWhenReady = false,
-                        preloadedShortenMediaSource,
-                        preloadedFullMediaSource)
+                    )
                     startTimes[currentPage + 1] = System.currentTimeMillis()
                     Timber.tag(tag).d("Pre-init ExoPlayer for next page ${currentPage + 1}")
                 }
-                // Dừng video của previous page asap
+                // Reset PlayerView trước khi cập nhật
+                if (!isPageVisible) {
+                    playerView.player = null
+                }
+                // Quản lý play/pause dựa trên isPageVisible
                 players.forEach { (index, player) ->
-                    if (index == currentPage) {
-                        if (!player.isPlaying) {
-                            player.setPriority(C.PRIORITY_PLAYBACK)
-                            player.volume = 1f
-                            player.play()
-                        }
+                    if (isPageVisible && index == currentPage) {
+                        player.setPriority(C.PRIORITY_PLAYBACK)
+                        player.volume = 1f
+                        player.repeatMode = Player.REPEAT_MODE_ALL
+                        player.playWhenReady = true
+                        player.play()
                         Timber.tag(tag).d("Playing ExoPlayer for page $currentPage")
                     } else {
                         player.setPriority(C.PRIORITY_PLAYBACK_PRELOAD)
                         player.volume = 0f
+                        player.repeatMode = Player.REPEAT_MODE_OFF
+                        player.playWhenReady = false
                         player.pause()
                         player.seekTo(0)
                         Timber.tag(tag).d("Paused ExoPlayer for page $index")
                     }
+                }
+                // Gán hoặc reset PlayerView
+                if (isPageVisible && players.containsKey(pageIndex)) {
+                    playerView.player = players[pageIndex]
+                    Timber.tag(tag).d("PlayerView updated for page $pageIndex")
+                } else {
+                    playerView.player = null
                 }
                 // Dispose các ExoPlayer không cần thiết (cách currentPage 1 bước) với debounce
                 val playersToDispose = players.keys.filter { it !in (currentPage - 1..currentPage + 1) && it != pageIndex }
@@ -238,15 +237,15 @@ fun VideoPlayer(
                                 players.remove(index)?.let { player ->
                                     try {
                                         player.volume = 0f
-                                        player.pause() // ko cần check isPlaying ở đây pause asap
+                                        player.playWhenReady = false
+                                        player.repeatMode = Player.REPEAT_MODE_OFF
+                                        player.pause()
                                         player.stop()
                                         player.clearMediaItems()
                                         Timber.tag(tag).d("Stopping ExoPlayer for page $index before release")
                                         player.release()
                                         createdMediaSources.remove(reelData.shortenUrl)
                                         createdMediaSources.remove(reelData.videoUrl)
-                                        viewModel.shortenMediaSources.remove(reelData.shortenUrl)
-                                        viewModel.fullMediaSources.remove(reelData.videoUrl)
                                         Timber.tag(tag).d("Disposed ExoPlayer for page $index")
                                     } catch (e: Exception) {
                                         Timber.tag(tag).e(e, "Failed to release ExoPlayer for page $index")
@@ -256,19 +255,12 @@ fun VideoPlayer(
                         }
                     }
                 }
-                // Gán PlayerView khi page visible
-                if (isPageVisible && players.containsKey(pageIndex)) {
-                    playerView.player = players[pageIndex]
-                    Timber.tag(tag).d("PlayerView updated for page $pageIndex")
-                } else if (!isPageVisible) {
-                    playerView.player = null
-                }
-                // Load more
-                // Dùng biến trạng thái để tránh fetchMoreReels lặp
-                var hasFetchedForPage by mutableStateOf(false)
-                if (currentPage >= viewModel.reels.value.size - 5 && !hasFetchedForPage) {
+                // Trigger load more
+                val hasFetchedForPage = fetchStates[pageIndex] ?: false
+                if (currentPage >= viewModel.reels.value.size - 5 && !hasFetchedForPage && !viewModel.isFetching.value) {
                     onFetchMore()
-                    hasFetchedForPage = true
+                    fetchStates[pageIndex] = true
+                    Timber.tag(tag).d("Triggered load more at page $currentPage")
                 }
             }
     }
@@ -324,6 +316,9 @@ fun VideoPlayer(
         onDispose {
             players.remove(pageIndex)?.let { player ->
                 try {
+                    player.volume = 0f
+                    player.repeatMode = Player.REPEAT_MODE_OFF
+                    player.playWhenReady = false
                     player.pause()
                     player.stop()
                     player.clearMediaItems()
@@ -332,8 +327,6 @@ fun VideoPlayer(
                     playerView.player = null
                     createdMediaSources.remove(reel.shortenUrl)
                     createdMediaSources.remove(reel.videoUrl)
-                    viewModel.shortenMediaSources.remove(reel.shortenUrl)
-                    viewModel.fullMediaSources.remove(reel.videoUrl)
                     Timber.tag(tag).d("Disposed ExoPlayer for page $pageIndex")
                 } catch (e: Exception) {
                     Timber.tag(tag).e(e, "Failed to release ExoPlayer for page $pageIndex")
