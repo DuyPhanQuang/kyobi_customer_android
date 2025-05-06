@@ -18,8 +18,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import timber.log.Timber
 import javax.inject.Inject
 import androidx.core.net.toUri
+import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -39,6 +42,7 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     val isFetching: State<Boolean> = _isFetching
     private val _mediaSources = mutableMapOf<String, MediaSource>()
     private var exoPlayer: ExoPlayer? = null
+    private var currentSettledPage = 0
 
     @OptIn(UnstableApi::class)
     fun initializePlayer(mediaSources: List<MediaSource>) {
@@ -70,6 +74,48 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
                     }
                     seekTo(0, 0L)
                     prepare()
+                    addListener(object : Player.Listener {
+                        override fun onRenderedFirstFrame() {
+                            Timber.tag(tag).d("First frame rendered for page $currentSettledPage")
+                        }
+                        override fun onPositionDiscontinuity(
+                            oldPosition: Player.PositionInfo,
+                            newPosition: Player.PositionInfo,
+                            reason: Int
+                        ) {
+                            if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+                                Timber.tag(tag).d("Auto transition detected at page $currentSettledPage, periodIndex: ${newPosition.periodIndex}")
+                                if (newPosition.periodIndex > 1 || newPosition.mediaItemIndex != currentSettledPage) {
+                                    Timber.tag(tag).d("Looping back to page $currentSettledPage")
+                                    startPlay(currentSettledPage)
+                                }
+                            }
+                        }
+                        override fun onPlayerError(error: PlaybackException) {
+                            Timber.tag(tag).e(error, "Player error for page $currentSettledPage")
+                        }
+                        override fun onVideoSizeChanged(videoSize: VideoSize) {
+                            Timber.tag(tag).d("Video size changed for page $currentSettledPage: ${videoSize.width}x${videoSize.height}")
+                        }
+                        override fun onPlaybackStateChanged(state: Int) {
+                            Timber.tag(tag).d("Playback state changed for page $currentSettledPage: $state")
+                        }
+                        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                            Timber.tag(tag).d("Media item transition to mediaId ${mediaItem?.mediaId} for page $currentSettledPage")
+                        }
+                        override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) {
+                            Timber.tag(tag).d("Audio attributes changed for page $currentSettledPage: contentType=${audioAttributes.contentType}, usage=${audioAttributes.usage}, flags=${audioAttributes.flags}")
+                        }
+                        override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                            Timber.tag(tag).d("Audio session ID changed for page $currentSettledPage: audioSessionId=$audioSessionId")
+                        }
+                        override fun onVolumeChanged(volume: Float) {
+                            Timber.tag(tag).d("Volume changed for page $currentSettledPage: volume=$volume")
+                        }
+                        override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
+                            Timber.tag(tag).d("Device volume changed for page $currentSettledPage: volume=$volume, muted=$muted")
+                        }
+                    })
                 }
             Timber.tag(tag).d("Initialized single ExoPlayer instance")
         }
@@ -110,6 +156,11 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
         _isFetching.value = true
         // Làm sau
         _isFetching.value = false
+    }
+
+    @OptIn(UnstableApi::class)
+    fun updateSettledPage(page: Int) {
+        currentSettledPage = page
     }
 
     private fun preloadMediaSourceForRange(startPage: Int, endPage: Int) {

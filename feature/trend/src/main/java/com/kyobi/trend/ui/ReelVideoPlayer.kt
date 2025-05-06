@@ -27,6 +27,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
@@ -62,6 +63,7 @@ fun VideoPlayer(
             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
             setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
             setShutterBackgroundColor(Color.TRANSPARENT)
+            setBackgroundColor(Color.TRANSPARENT)
             keepScreenOn = true
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -72,50 +74,6 @@ fun VideoPlayer(
 
     // Lấy ExoPlayer từ ViewModel
     val player = viewModel.getPlayer()
-
-    fun onTargetPlayerListener(settledPage: Int, player: Player?) {
-        player?.addListener(object : Player.Listener {
-            override fun onRenderedFirstFrame() {
-                val startTime = startTimes[settledPage]
-                if (startTime != null) {
-                    val duration = System.currentTimeMillis() - startTime
-                    Timber.tag(tag).d("Time to render first frame for page $settledPage: $duration ms")
-                    startTimes.remove(settledPage)
-                }
-                Timber.tag(tag).d("First frame rendered for page $settledPage")
-                showThumbnail = false
-            }
-            override fun onPlayerError(error: PlaybackException) {
-                Timber.tag(tag).e(error, "Player error for page $settledPage")
-            }
-            override fun onVideoSizeChanged(videoSize: VideoSize) {
-                Timber.tag(tag).d("Video size changed for page $settledPage: ${videoSize.width}x${videoSize.height}")
-            }
-            override fun onPlaybackStateChanged(state: Int) {
-                Timber.tag(tag).d("Playback state changed for page $settledPage: $state")
-            }
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                Timber.tag(tag).d("Media item transition to mediaId ${mediaItem?.mediaId} for page $settledPage")
-            }
-            override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
-                if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
-                    Timber.tag(tag).d("Auto transition (likely from shorten to full) at page $settledPage")
-                }
-            }
-            override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) {
-                Timber.tag(tag).d("Audio attributes changed for page $settledPage: contentType=${audioAttributes.contentType}, usage=${audioAttributes.usage}, flags=${audioAttributes.flags}")
-            }
-            override fun onAudioSessionIdChanged(audioSessionId: Int) {
-                Timber.tag(tag).d("Audio session ID changed for page $settledPage: audioSessionId=$audioSessionId")
-            }
-            override fun onVolumeChanged(volume: Float) {
-                Timber.tag(tag).d("Volume changed for page $settledPage: volume=$volume")
-            }
-            override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
-                Timber.tag(tag).d("Device volume changed for page $settledPage: volume=$volume, muted=$muted")
-            }
-        })
-    }
 
     // Thiết lập ExoPlayer khi page hiện tại
     LaunchedEffect(
@@ -131,7 +89,8 @@ fun VideoPlayer(
                     val reelData = viewModel.reels.value[settledPage]
                     Timber.tag(tag).d("Preparing ExoPlayer for page $settledPage, reelData: $reelData")
                     playerView.player = player
-                    onTargetPlayerListener(settledPage, player)
+                    viewModel.updateSettledPage(settledPage)
+                    showThumbnail = true
                     startTimes[settledPage] = System.currentTimeMillis()
                     Timber.tag(tag).d("Initialized ExoPlayer for current page $settledPage")
                 }
@@ -149,7 +108,10 @@ fun VideoPlayer(
             modifier = Modifier
                 .fillMaxSize()
                 .zIndex(1f),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
+            onSuccess = {
+                showThumbnail = false
+            }
         )
     }
 
