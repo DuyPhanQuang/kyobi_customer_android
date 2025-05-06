@@ -24,6 +24,7 @@ import com.kyobi.trend.model.Reel
 @Composable
 fun ReelList(
     initReels: List<Reel>,
+    moreReels: List<Reel>,
     topSystemBarHeight: Dp = 0.dp,
     bottomNavBarHeight: Dp = 0.dp,
     viewModel: ReelPlaybackViewModel = hiltViewModel()

@@ -159,6 +159,9 @@ fun TrendTab(
             thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
             tags = listOf("style", "kyobi")
         ),
+    )
+
+    val mockMoreData = listOf(
         Reel(
             id = "reel_2_2_2",
             videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1744563878330.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NDU2Mzg3ODMzMC5tcDQiLCJpYXQiOjE3NDYzNDA0NTIsImV4cCI6MTc0ODkzMjQ1Mn0.FxoglE6_2KVZPk4D-BxsBnw30_ve3dipdXpF5v044os",
@@ -319,6 +322,7 @@ fun TrendTab(
 
     ReelList(
         initReels = mockData,
+        moreReels = mockMoreData,
         topSystemBarHeight = topPadding,
         bottomNavBarHeight = bottomPadding
     )

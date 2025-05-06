@@ -1,10 +1,6 @@
 package com.kyobi.trend.ui
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.view.Surface
-import android.view.TextureView
-import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -20,8 +16,6 @@ import com.kyobi.trend.model.Reel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import timber.log.Timber
-import java.util.UUID
-import java.util.concurrent.Executors
 import javax.inject.Inject
 import androidx.core.net.toUri
 import androidx.media3.common.C
@@ -36,18 +30,18 @@ import androidx.media3.exoplayer.source.ConcatenatingMediaSource2
 class ReelPlaybackViewModel @OptIn(UnstableApi::class)
 @Inject constructor(
     @ApplicationContext private val context: Context,
-    val mediaCache: MediaCache
+    private val mediaCache: MediaCache
 ) : ViewModel() {
     private val tag = "ReelPlaybackViewModel"
     private val _reels = mutableStateOf<List<Reel>>(emptyList())
     val reels: State<List<Reel>> = _reels
-    private val executorService = Executors.newFixedThreadPool(3)
     private val _isFetching = mutableStateOf(false)
     val isFetching: State<Boolean> = _isFetching
+    private val _mediaSources = mutableMapOf<String, MediaSource>()
     private var exoPlayer: ExoPlayer? = null
 
     @OptIn(UnstableApi::class)
-    fun initializePlayer() {
+    fun initializePlayer(mediaSources: List<MediaSource>) {
         if (exoPlayer == null) {
             val renderersFactory = DefaultRenderersFactory(context)
                 .setEnableDecoderFallback(false)
@@ -68,7 +62,15 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
                 )
                 .setMediaSourceFactory(cacheDataSourceFactory)
                 .setReleaseTimeoutMs(1000L)
-                .build()
+                .build().apply {
+                    videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
+                    volume = 1f
+                    if (mediaSources.isNotEmpty()) {
+                        setMediaSources(mediaSources, 0, 0L)
+                    }
+                    seekTo(0, 0L)
+                    prepare()
+                }
             Timber.tag(tag).d("Initialized single ExoPlayer instance")
         }
     }
@@ -77,74 +79,37 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     fun getPlayer(): ExoPlayer? = exoPlayer
 
     @OptIn(UnstableApi::class)
-    fun setupMediaSourceForPage(
-        shortenMediaItem: MediaItem,
-        fullMediaItem: MediaItem,
-        targetIndex: Int,
-        listener: Player.Listener
-    ) {
-        Timber.tag(tag).d("vaodaynhe page: $targetIndex")
-        exoPlayer?.let { player ->
-            val shortenMediaSource = startCreateMediaSource(shortenMediaItem, shouldCache = true)
-            val fullMediaSource = startCreateMediaSource(fullMediaItem, shouldCache = false)
-            val newMediaSource: MediaSource = try {
+    fun setReels(newReels: List<Reel>) {
+        Timber.tag(tag).d("Setting reels, size: ${newReels.size}")
+        _reels.value = newReels
+        preloadMediaSourceForRange(0, newReels.size) // Preload trước
+        // Tạo danh sách mergedSources
+        val mergedSources = newReels.mapIndexed { index, reel ->
+            val shortenMediaSource = _mediaSources[reel.shortenUrl]
+                ?: throw IllegalStateException("Shorten MediaSource for ${reel.shortenUrl} not preloaded")
+            val fullMediaSource = _mediaSources[reel.videoUrl]
+                ?: throw IllegalStateException("Full MediaSource for ${reel.videoUrl} not preloaded")
+            try {
                 ConcatenatingMediaSource2.Builder()
                     .add(shortenMediaSource, 10_000L)
                     .add(fullMediaSource, 180_000L)
                     .build().also {
-                        Timber.tag(tag).d("ConcatenatingMediaSource2 created for page $targetIndex")
+                        Timber.tag(tag).d("ConcatenatingMediaSource2 created for page $index")
                     }
             } catch (e: Exception) {
-                Timber.tag(tag).e(e, "Failed to create ConcatenatingMediaSource2 for page $targetIndex")
+                Timber.tag(tag).e(e, "Failed to create ConcatenatingMediaSource2 for page $index")
                 throw e
             }
-            player.setMediaSource(newMediaSource, false)
-            player.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
-            player.repeatMode = Player.REPEAT_MODE_ALL
-            player.volume = 1f
-            player.seekTo(0) // very important. giup giam first frame render
-            player.playWhenReady = true
-            player.prepare()
-            player.addListener(listener)
-            Timber.tag(tag).d("Setup MediaSource for page $targetIndex")
         }
-    }
-
-    fun setReels(newReels: List<Reel>) {
-        Timber.tag(tag).d("Setting reels, size: ${newReels.size}")
-        _reels.value = newReels
-        preloadMediaSourceForRange(0, newReels.size)
-        Timber.tag(tag).d("Preloaded initial ${newReels.size} media sources")
+        initializePlayer(mergedSources) // init ExoPlayer with init mergedSources
+        Timber.tag(tag).d("Preloaded and set ${newReels.size} media sources")
     }
 
     fun fetchMoreReels() {
         if (_isFetching.value) return
         _isFetching.value = true
-        try {
-            val newReels = List(5) { index ->
-                Reel(
-                    id = "reel_${UUID.randomUUID()}",
-                    videoUrl = "https://example.com/video.mp4",
-                    shortenUrl = "",
-                    status = "PUBLISHED",
-                    likeCount = 800,
-                    commentCount = 90,
-                    shareCount = 30,
-                    viewCount = 3200,
-                    createdAt = "2025-04-19T15:30:00Z",
-                    thumbnailUrl = "https://example.com/thumbnail.gif",
-                    tags = listOf("style", "kyobi")
-                )
-            }
-            val currentSize = _reels.value.size
-            _reels.value += newReels
-            val latestSize = _reels.value.size
-            Timber.tag(tag).d("Fetched more reels, latest size: $latestSize")
-            preloadMediaSourceForRange(currentSize, latestSize)
-            Timber.tag(tag).d("Preloaded additional media sources from page $currentSize to $latestSize")
-        } finally {
-            _isFetching.value = false
-        }
+        // Làm sau
+        _isFetching.value = false
     }
 
     private fun preloadMediaSourceForRange(startPage: Int, endPage: Int) {
@@ -156,32 +121,30 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     }
 
     private fun preloadShortenAndFullMediaSources(page: Int) {
-        if (page >= reels.value.size) return
-        val reel = reels.value[page]
+        if (page >= _reels.value.size) return
+        val reel = _reels.value[page]
         // Preload shortenUrl
         if (reel.shortenUrl.isNotEmpty()) {
-            executorService.execute {
-                try {
-                    val mediaItem = MediaItem.fromUri(reel.shortenUrl).buildUpon()
-                        .setMediaId(reel.shortenUrl).build()
-                    startCreateMediaSource(mediaItem, shouldCache = true)
-                    Timber.tag(tag).d("Preloaded shortenUrl MediaSource for page $page")
-                } catch (e: Exception) {
-                    Timber.tag(tag).e(e, "Failed to preload shortenUrl MediaSource for page $page")
-                }
+            try {
+                val mediaItem = MediaItem.fromUri(reel.shortenUrl).buildUpon()
+                    .setMediaId(reel.shortenUrl).build()
+                val source = startCreateMediaSource(mediaItem, shouldCache = true)
+                _mediaSources[reel.shortenUrl] = source
+                Timber.tag(tag).d("Preloaded shortenUrl MediaSource for page $page")
+            } catch (e: Exception) {
+                Timber.tag(tag).e(e, "Failed to preload shortenUrl MediaSource for page $page")
             }
         }
         // Preload videoUrl
         if (reel.videoUrl.isNotEmpty()) {
-            executorService.execute {
-                try {
-                    val mediaItem = MediaItem.fromUri(reel.videoUrl).buildUpon()
-                        .setMediaId(reel.videoUrl).build()
-                    startCreateMediaSource(mediaItem, shouldCache = false)
-                    Timber.tag(tag).d("Preloaded videoUrl MediaSource for page $page")
-                } catch (e: Exception) {
-                    Timber.tag(tag).e(e, "Failed to preload videoUrl MediaSource for page $page")
-                }
+            try {
+                val mediaItem = MediaItem.fromUri(reel.videoUrl).buildUpon()
+                    .setMediaId(reel.videoUrl).build()
+                val source = startCreateMediaSource(mediaItem, shouldCache = false)
+                _mediaSources[reel.videoUrl] = source
+                Timber.tag(tag).d("Preloaded videoUrl MediaSource for page $page")
+            } catch (e: Exception) {
+                Timber.tag(tag).e(e, "Failed to preload videoUrl MediaSource for page $page")
             }
         }
     }
@@ -224,13 +187,10 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     }
 
     @OptIn(UnstableApi::class)
-    fun startPlay(page: Int, shouldUseSeekTo: Boolean) {
+    fun startPlay(page: Int) {
         exoPlayer?.let { player ->
-            if (shouldUseSeekTo) {
-                player.seekTo(0) // very important. giup giam first frame render
-            }
+            player.seekTo(page, 0L) // very important. giup giam first frame render
             player.playWhenReady = true
-            player.play()
             Timber.tag(tag).d("Playing ExoPlayer for page $page")
         }
     }
@@ -239,23 +199,13 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     fun startPause(page: Int) {
         exoPlayer?.let { player ->
             player.playWhenReady = false
-            player.pause()
             Timber.tag(tag).d("Paused ExoPlayer for page $page")
-        }
-    }
-
-    fun pausePlay(page: Int, isPlay: Boolean) {
-        if (isPlay) {
-            startPlay(page, false)
-        } else {
-            startPause(page)
         }
     }
 
     private fun startRelease() {
         exoPlayer?.let { player ->
             player.playWhenReady = false
-            player.pause()
             Timber.tag(tag).d("Pausing ExoPlayer for before stop")
             player.stop()
             player.clearMediaItems()
@@ -269,16 +219,6 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     override fun onCleared() {
         Timber.tag(tag).d("ViewModel cleared, releasing resources")
         startRelease()
-        try {
-            executorService.shutdown()
-            if (!executorService.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
-                executorService.shutdownNow()
-                Timber.tag(tag).w("ExecutorService did not terminate gracefully, forced shutdown")
-            }
-            Timber.tag(tag).d("ExecutorService shut down successfully")
-        } catch (e: Exception) {
-            Timber.tag(tag).e(e, "Failed to shutdown ExecutorService")
-        }
         super.onCleared()
     }
 }
