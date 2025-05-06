@@ -28,6 +28,8 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.DefaultHlsExtractorFactory
 import androidx.media3.exoplayer.source.ConcatenatingMediaSource2
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @HiltViewModel
 class ReelPlaybackViewModel @OptIn(UnstableApi::class)
@@ -43,6 +45,8 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     private val _mediaSources = mutableMapOf<String, MediaSource>()
     private var exoPlayer: ExoPlayer? = null
     private var currentSettledPage = 0
+    private val _firstFrameRendered = MutableStateFlow(-1) // -1: chưa render
+    val firstFrameRendered = _firstFrameRendered.asStateFlow()
 
     @OptIn(UnstableApi::class)
     fun initializePlayer(mediaSources: List<MediaSource>) {
@@ -58,25 +62,26 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
                         .setBufferDurationsMs(
                             4000,
                             12000,
-                            1000,
+                            2000,
                             2000
                         )
                         .setTargetBufferBytes(-1)
                         .build()
                 )
                 .setMediaSourceFactory(cacheDataSourceFactory)
-                .setReleaseTimeoutMs(1000L)
                 .build().apply {
                     videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                     volume = 1f
                     if (mediaSources.isNotEmpty()) {
-                        setMediaSources(mediaSources, 0, 0L)
+                        setMediaSources(mediaSources, true)
                     }
-                    seekTo(0, 0L)
+                    seekTo(0)
+                    playWhenReady = true
                     prepare()
                     addListener(object : Player.Listener {
                         override fun onRenderedFirstFrame() {
                             Timber.tag(tag).d("First frame rendered for page $currentSettledPage")
+                            _firstFrameRendered.value = currentSettledPage
                         }
                         override fun onPositionDiscontinuity(
                             oldPosition: Player.PositionInfo,
@@ -85,7 +90,9 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
                         ) {
                             if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
                                 Timber.tag(tag).d("Auto transition detected at page $currentSettledPage, periodIndex: ${newPosition.periodIndex}")
-                                if (newPosition.periodIndex > 1 || newPosition.mediaItemIndex != currentSettledPage) {
+                                // Page hiện tại: shorten = 2 * page, full = 2 * page + 1
+                                val maxPeriodIndex = 2 * currentSettledPage + 1
+                                if (newPosition.periodIndex > maxPeriodIndex || newPosition.mediaItemIndex != currentSettledPage) {
                                     Timber.tag(tag).d("Looping back to page $currentSettledPage")
                                     startPlay(currentSettledPage)
                                 }

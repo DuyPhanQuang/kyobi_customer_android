@@ -25,12 +25,6 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.media3.common.AudioAttributes
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
-import androidx.media3.common.PlaybackException
-import androidx.media3.common.Player
-import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -60,11 +54,12 @@ fun VideoPlayer(
         PlayerView(context).apply {
             useController = false
             setKeepContentOnPlayerReset(true)
+            setEnableComposeSurfaceSyncWorkaround(true)
+            keepScreenOn = true
             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
             setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
             setShutterBackgroundColor(Color.TRANSPARENT)
             setBackgroundColor(Color.TRANSPARENT)
-            keepScreenOn = true
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -75,11 +70,28 @@ fun VideoPlayer(
     // Lấy ExoPlayer từ ViewModel
     val player = viewModel.getPlayer()
 
+    // Collect firstFrameRendered để cập nhật showThumbnail và đo thời gian
+    LaunchedEffect(pageIndex, viewModel.firstFrameRendered) {
+        viewModel.firstFrameRendered.collect { renderedPage ->
+            if (renderedPage == pageIndex) {
+                showThumbnail = false
+                val startTime = startTimes[pageIndex]
+                if (startTime != null) {
+                    val duration = System.currentTimeMillis() - startTime
+                    Timber.tag(tag).d("Time to render first frame for page $pageIndex: $duration ms")
+                    startTimes.remove(pageIndex)
+                }
+                Timber.tag(tag).d("Hiding thumbnail for page $pageIndex")
+            }
+        }
+    }
+
     // Thiết lập ExoPlayer khi page hiện tại
     LaunchedEffect(
         pageIndex,
         pagerState,
         viewModel.reels.value,
+        player,
     ) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
@@ -88,7 +100,9 @@ fun VideoPlayer(
                 if (isCurrentPage && viewModel.reels.value.getOrNull(settledPage) != null) {
                     val reelData = viewModel.reels.value[settledPage]
                     Timber.tag(tag).d("Preparing ExoPlayer for page $settledPage, reelData: $reelData")
-                    playerView.player = player
+                    if (player != null) {
+                        playerView.player = player
+                    }
                     viewModel.updateSettledPage(settledPage)
                     showThumbnail = true
                     startTimes[settledPage] = System.currentTimeMillis()
@@ -99,20 +113,6 @@ fun VideoPlayer(
                     Timber.tag(tag).d("Playing ExoPlayer for page $settledPage")
                 }
             }
-    }
-
-    if (showThumbnail && reel.thumbnailUrl?.isNotEmpty() == true) {
-        AsyncImage(
-            model = reel.thumbnailUrl,
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxSize()
-                .zIndex(1f),
-            contentScale = ContentScale.Crop,
-            onSuccess = {
-                showThumbnail = false
-            }
-        )
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -129,6 +129,17 @@ fun VideoPlayer(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
+    }
+
+    if (showThumbnail && reel.thumbnailUrl?.isNotEmpty() == true) {
+        AsyncImage(
+            model = reel.thumbnailUrl,
+            contentDescription = null,
+            modifier = Modifier
+                .fillMaxSize()
+                .zIndex(1f),
+            contentScale = ContentScale.Crop,
+        )
     }
 
     AndroidView(
