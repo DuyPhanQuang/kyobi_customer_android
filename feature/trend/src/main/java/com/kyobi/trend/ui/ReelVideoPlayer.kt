@@ -175,11 +175,11 @@ fun VideoPlayer(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_STOP -> {
-                    viewModel.startPause(pageIndex)
+                    viewModel.pausePlay(pageIndex, false)
                 }
                 Lifecycle.Event.ON_START -> {
                     if (pageIndex == pagerState.settledPage) {
-                        viewModel.startPlay(pageIndex)
+                        viewModel.pausePlay(pageIndex, true)
                     }
                 }
                 else -> {}

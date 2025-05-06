@@ -241,6 +241,14 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
         }
     }
 
+    fun pausePlay(page: Int, isPlay: Boolean) {
+        if (isPlay) {
+            startPlay(page)
+        } else {
+            startPause(page)
+        }
+    }
+
     private fun startRelease() {
         exoPlayer?.let { player ->
             player.playWhenReady = false
