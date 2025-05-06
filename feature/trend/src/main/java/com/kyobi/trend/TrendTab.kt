@@ -2,6 +2,7 @@ package com.kyobi.trend
 
 import androidx.annotation.OptIn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -14,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.trend.model.Reel
 import com.kyobi.trend.ui.ReelList
+import com.kyobi.trend.ui.ReelPlaybackViewModel
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -21,6 +23,7 @@ fun TrendTab(
     navController: NavController,
     viewModel: TrendTabViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
+    reelPlaybackViewModel: ReelPlaybackViewModel = hiltViewModel(),
     topPadding: Dp,
     bottomPadding: Dp,
 ) {
@@ -333,11 +336,16 @@ fun TrendTab(
         )
     )
 
+    LaunchedEffect(Unit) {
+        reelPlaybackViewModel.setReels(mockData)
+    }
+
     ReelList(
         initReels = mockData,
         moreReels = mockMoreData,
         topSystemBarHeight = topPadding,
-        bottomNavBarHeight = bottomPadding
+        bottomNavBarHeight = bottomPadding,
+        viewModel = reelPlaybackViewModel,
     )
 
 }

@@ -60,24 +60,25 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
                 .setLoadControl(
                     DefaultLoadControl.Builder()
                         .setBufferDurationsMs(
-                            4000,
-                            12000,
-                            2000,
-                            2000
+                            10000, // minBufferMs: 10s, đủ preload shorten + full
+                            30000, // maxBufferMs: 30s, preload vài page kế tiếp
+                            2000,  // bufferForPlaybackMs: 2s, bắt đầu play nhanh
+                            2000   // bufferForPlaybackAfterRebufferMs: 2s, ổn định sau rebuffer
                         )
                         .setTargetBufferBytes(-1)
                         .build()
                 )
                 .setMediaSourceFactory(cacheDataSourceFactory)
                 .build().apply {
-                    videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
-                    volume = 1f
                     if (mediaSources.isNotEmpty()) {
-                        setMediaSources(mediaSources, true)
+                        setMediaSources(mediaSources, 0, 0)
+                        prepare()
+                        seekTo(0, 0)
+                        repeatMode = Player.REPEAT_MODE_ONE
+                        videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
+                        volume = 1f
+                        playWhenReady = false
                     }
-                    seekTo(0)
-                    playWhenReady = true
-                    prepare()
                     addListener(object : Player.Listener {
                         override fun onRenderedFirstFrame() {
                             Timber.tag(tag).d("First frame rendered for page $currentSettledPage")
@@ -91,10 +92,9 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
                             if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
                                 Timber.tag(tag).d("Auto transition detected at page $currentSettledPage, periodIndex: ${newPosition.periodIndex}")
                                 // Page hiện tại: shorten = 2 * page, full = 2 * page + 1
-                                val maxPeriodIndex = 2 * currentSettledPage + 1
-                                if (newPosition.periodIndex > maxPeriodIndex || newPosition.mediaItemIndex != currentSettledPage) {
+                                val fullPeriodIndex = 2 * currentSettledPage + 1 // Period của fullMediaSource
+                                if (newPosition.periodIndex > fullPeriodIndex) {
                                     Timber.tag(tag).d("Looping back to page $currentSettledPage")
-                                    startPlay(currentSettledPage)
                                 }
                             }
                         }
@@ -247,9 +247,9 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     @OptIn(UnstableApi::class)
     fun startPlay(page: Int) {
         exoPlayer?.let { player ->
-            player.seekTo(page, 0L) // very important. giup giam first frame render
+            player.seekTo(page, 0) // very important. giup giam first frame render
             player.playWhenReady = true
-            Timber.tag(tag).d("Playing ExoPlayer for page $page")
+            Timber.tag(tag).d("Playing ExoPlayer for init page greater than 0")
         }
     }
 
@@ -263,14 +263,12 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
 
     private fun startRelease() {
         exoPlayer?.let { player ->
+            player.seekTo(0)
             player.playWhenReady = false
-            Timber.tag(tag).d("Pausing ExoPlayer for before stop")
             player.stop()
             player.clearMediaItems()
-            Timber.tag(tag).d("Stopping ExoPlayer for before release")
             player.release()
-            exoPlayer = null
-            Timber.tag(tag).d("Releasing ExoPlayer for")
+            Timber.tag(tag).d("Releasing ExoPlayer")
         }
     }
 

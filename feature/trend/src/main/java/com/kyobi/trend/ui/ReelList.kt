@@ -27,7 +27,7 @@ fun ReelList(
     moreReels: List<Reel>,
     topSystemBarHeight: Dp = 0.dp,
     bottomNavBarHeight: Dp = 0.dp,
-    viewModel: ReelPlaybackViewModel = hiltViewModel()
+    viewModel: ReelPlaybackViewModel
 ) {
     val tag = "ReelList"
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { viewModel.reels.value.size })
@@ -40,10 +40,6 @@ fun ReelList(
         ),
         snapPositionalThreshold = 0.35f
     )
-
-    LaunchedEffect(Unit) {
-        viewModel.setReels(initReels)
-    }
 
     Surface(
         modifier = Modifier
