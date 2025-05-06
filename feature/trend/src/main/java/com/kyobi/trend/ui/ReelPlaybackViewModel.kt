@@ -102,9 +102,9 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
             player.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
             player.repeatMode = Player.REPEAT_MODE_ALL
             player.volume = 1f
+            player.seekTo(0) // very important. giup giam first frame render
             player.playWhenReady = true
             player.prepare()
-            player.seekTo(0)
             player.addListener(listener)
             Timber.tag(tag).d("Setup MediaSource for page $targetIndex")
         }
@@ -224,8 +224,11 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     }
 
     @OptIn(UnstableApi::class)
-    fun startPlay(page: Int) {
+    fun startPlay(page: Int, shouldUseSeekTo: Boolean) {
         exoPlayer?.let { player ->
+            if (shouldUseSeekTo) {
+                player.seekTo(0) // very important. giup giam first frame render
+            }
             player.playWhenReady = true
             player.play()
             Timber.tag(tag).d("Playing ExoPlayer for page $page")
@@ -243,7 +246,7 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
 
     fun pausePlay(page: Int, isPlay: Boolean) {
         if (isPlay) {
-            startPlay(page)
+            startPlay(page, false)
         } else {
             startPause(page)
         }

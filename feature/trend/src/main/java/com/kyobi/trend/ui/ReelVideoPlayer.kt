@@ -147,7 +147,7 @@ fun VideoPlayer(
                     Timber.tag(tag).d("Initialized ExoPlayer for current page $settledPage")
                 }
                 if (isCurrentPage && player != null) {
-                    viewModel.startPlay(settledPage)
+                    viewModel.startPlay(settledPage, true)
                     Timber.tag(tag).d("Playing ExoPlayer for page $settledPage")
                 }
                 val hasFetchedForPage = fetchStates[pageIndex] ?: false
