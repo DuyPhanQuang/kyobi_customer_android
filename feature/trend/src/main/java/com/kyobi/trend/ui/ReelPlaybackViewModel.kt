@@ -25,8 +25,12 @@ import java.util.concurrent.Executors
 import javax.inject.Inject
 import androidx.core.net.toUri
 import androidx.media3.common.C
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.DefaultHlsExtractorFactory
+import androidx.media3.exoplayer.source.ConcatenatingMediaSource2
 
 @HiltViewModel
 class ReelPlaybackViewModel @OptIn(UnstableApi::class)
@@ -40,6 +44,71 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     private val executorService = Executors.newFixedThreadPool(3)
     private val _isFetching = mutableStateOf(false)
     val isFetching: State<Boolean> = _isFetching
+    private var exoPlayer: ExoPlayer? = null
+
+    @OptIn(UnstableApi::class)
+    fun initializePlayer() {
+        if (exoPlayer == null) {
+            val renderersFactory = DefaultRenderersFactory(context)
+                .setEnableDecoderFallback(false)
+                .forceDisableMediaCodecAsynchronousQueueing()
+            val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
+            exoPlayer = ExoPlayer.Builder(context)
+                .setRenderersFactory(renderersFactory)
+                .setLoadControl(
+                    DefaultLoadControl.Builder()
+                        .setBufferDurationsMs(
+                            4000,
+                            12000,
+                            1000,
+                            2000
+                        )
+                        .setTargetBufferBytes(-1)
+                        .build()
+                )
+                .setMediaSourceFactory(cacheDataSourceFactory)
+                .setReleaseTimeoutMs(1000L)
+                .build()
+            Timber.tag(tag).d("Initialized single ExoPlayer instance")
+        }
+    }
+
+    // Lấy ExoPlayer
+    fun getPlayer(): ExoPlayer? = exoPlayer
+
+    @OptIn(UnstableApi::class)
+    fun setupMediaSourceForPage(
+        shortenMediaItem: MediaItem,
+        fullMediaItem: MediaItem,
+        targetIndex: Int,
+        listener: Player.Listener
+    ) {
+        Timber.tag(tag).d("vaodaynhe page: $targetIndex")
+        exoPlayer?.let { player ->
+            val shortenMediaSource = startCreateMediaSource(shortenMediaItem, shouldCache = true)
+            val fullMediaSource = startCreateMediaSource(fullMediaItem, shouldCache = false)
+            val newMediaSource: MediaSource = try {
+                ConcatenatingMediaSource2.Builder()
+                    .add(shortenMediaSource, 10_000L)
+                    .add(fullMediaSource, 180_000L)
+                    .build().also {
+                        Timber.tag(tag).d("ConcatenatingMediaSource2 created for page $targetIndex")
+                    }
+            } catch (e: Exception) {
+                Timber.tag(tag).e(e, "Failed to create ConcatenatingMediaSource2 for page $targetIndex")
+                throw e
+            }
+            player.setMediaSource(newMediaSource, false)
+            player.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
+            player.repeatMode = Player.REPEAT_MODE_ALL
+            player.volume = 1f
+            player.playWhenReady = true
+            player.prepare()
+            player.seekTo(0)
+            player.addListener(listener)
+            Timber.tag(tag).d("Setup MediaSource for page $targetIndex")
+        }
+    }
 
     fun setReels(newReels: List<Reel>) {
         Timber.tag(tag).d("Setting reels, size: ${newReels.size}")
@@ -155,33 +224,40 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     }
 
     @OptIn(UnstableApi::class)
-    fun startPlay(targetPlayer: ExoPlayer?, page: Int) {
-        targetPlayer?.setPriority(C.PRIORITY_PLAYBACK)
-        targetPlayer?.playWhenReady = true
-        targetPlayer?.play()
+    fun startPlay(page: Int) {
+        exoPlayer?.let { player ->
+            player.playWhenReady = true
+            player.play()
+            Timber.tag(tag).d("Playing ExoPlayer for page $page")
+        }
     }
 
     @OptIn(UnstableApi::class)
-    fun startPause(targetPlayer: ExoPlayer?, page: Int) {
-        targetPlayer?.playWhenReady = false
-        targetPlayer?.pause()
-        targetPlayer?.seekTo(0)
+    fun startPause(page: Int) {
+        exoPlayer?.let { player ->
+            player.playWhenReady = false
+            player.pause()
+            Timber.tag(tag).d("Paused ExoPlayer for page $page")
+        }
     }
 
-    fun startRelease(targetPlayer: ExoPlayer?, page: Int) {
-        targetPlayer?.playWhenReady = false
-        targetPlayer?.pause()
-        Timber.tag(tag).d("Pausing ExoPlayer for page $page before stop")
-        targetPlayer?.stop()
-        targetPlayer?.clearMediaItems()
-        Timber.tag(tag).d("Stopping ExoPlayer for page $page before release")
-        targetPlayer?.release()
-        Timber.tag(tag).d("Releasing ExoPlayer for page $page")
+    private fun startRelease() {
+        exoPlayer?.let { player ->
+            player.playWhenReady = false
+            player.pause()
+            Timber.tag(tag).d("Pausing ExoPlayer for before stop")
+            player.stop()
+            player.clearMediaItems()
+            Timber.tag(tag).d("Stopping ExoPlayer for before release")
+            player.release()
+            exoPlayer = null
+            Timber.tag(tag).d("Releasing ExoPlayer for")
+        }
     }
 
     override fun onCleared() {
         Timber.tag(tag).d("ViewModel cleared, releasing resources")
-        // Shutdown ExecutorService
+        startRelease()
         try {
             executorService.shutdown()
             if (!executorService.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {

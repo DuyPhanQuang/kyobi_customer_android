@@ -31,11 +31,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.DefaultLoadControl
-import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.ConcatenatingMediaSource2
-import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
@@ -57,12 +53,9 @@ fun VideoPlayer(
     val context = LocalContext.current
     var showThumbnail by remember(pageIndex) { mutableStateOf(true) }
     val startTimes = remember { mutableStateMapOf<Int, Long>() }
-    val createdMediaSources = remember { mutableStateMapOf<String, MediaSource?>() } // Theo dõi MediaSource đã tạo
     val lifecycleOwner by rememberUpdatedState(LocalLifecycleOwner.current)
-    // Sử dụng mutableStateMapOf để quản lý hasFetchedForPage theo pageIndex
     val fetchStates = remember { mutableStateMapOf<Int, Boolean>().apply { put(pageIndex, false) } }
 
-    // Tạo và giữ PlayerView bằng remember
     val playerView = remember(pageIndex) {
         PlayerView(context).apply {
             useController = false
@@ -78,104 +71,10 @@ fun VideoPlayer(
         }
     }
 
-    var player by remember(pageIndex) { mutableStateOf<ExoPlayer?>(null) }
+    // Lấy ExoPlayer từ ViewModel
+    val player = viewModel.getPlayer()
 
-    fun createExoPlayer(
-        shortenMediaItem: MediaItem,
-        fullMediaItem: MediaItem,
-        targetIndex: Int,
-    ): ExoPlayer {
-        val renderersFactory = DefaultRenderersFactory(context)
-            .setEnableDecoderFallback(false)
-            .forceDisableMediaCodecAsynchronousQueueing()
-        val cacheDataSourceFactory = viewModel.mediaCache.getMediaSourceFactory(shouldCache = true)
-        val createPlayer = ExoPlayer.Builder(context)
-            .setRenderersFactory(renderersFactory)
-            .setLoadControl(
-                DefaultLoadControl.Builder()
-                    .setBufferDurationsMs(
-                        4000,
-                        12000,
-                        1000,
-                        2000)
-                    .setTargetBufferBytes(-1)
-                    .build()
-            )
-            .setMediaSourceFactory(cacheDataSourceFactory)
-            .setReleaseTimeoutMs(1000L)
-            .build()
-        startTimes[targetIndex] = System.currentTimeMillis()
-        val shortenMediaSource = viewModel.startCreateMediaSource(shortenMediaItem, shouldCache = true)
-        val fullMediaSource = viewModel.startCreateMediaSource(fullMediaItem, shouldCache = false)
-        val newMediaSource: MediaSource = try {
-            ConcatenatingMediaSource2.Builder()
-                .add(shortenMediaSource, 10_000L)
-                .add(fullMediaSource, 180_000L)
-                .build().also {
-                    Timber.tag(tag).d("ConcatenatingMediaSource2 created for page $targetIndex")
-                }
-        } catch (e: Exception) {
-            Timber.tag(tag).e(e, "Failed to create ConcatenatingMediaSource2 for page $targetIndex")
-            throw e
-        }
-        return createPlayer.apply {
-            setMediaSource(newMediaSource, false)
-            videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
-            repeatMode = Player.REPEAT_MODE_ALL
-            volume = 1f
-            this.playWhenReady = true
-            prepare()
-            addListener(object : Player.Listener {
-                override fun onRenderedFirstFrame() {
-                    val startTime = startTimes[targetIndex]
-                    if (startTime != null) {
-                        val duration = System.currentTimeMillis() - startTime
-                        Timber.tag(tag).d("Time to render first frame for page $targetIndex: $duration ms")
-                        startTimes.remove(targetIndex)
-                    }
-                    Timber.tag(tag).d("First frame rendered for page $targetIndex")
-                    showThumbnail = false
-                }
-                override fun onPlayerError(error: PlaybackException) {
-                    Timber.tag(tag).e(error, "Player error for page $targetIndex")
-                }
-                override fun onVideoSizeChanged(videoSize: VideoSize) {
-                    Timber.tag(tag).d("Video size changed for page $targetIndex: ${videoSize.width}x${videoSize.height}")
-                }
-                override fun onPlaybackStateChanged(state: Int) {
-                    Timber.tag(tag).d("Playback state changed for page $targetIndex: $state")
-                }
-                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                    Timber.tag(tag).d("Media item transition to mediaId ${mediaItem?.mediaId} for page $targetIndex")
-                }
-                override fun onPositionDiscontinuity(
-                    oldPosition: Player.PositionInfo,
-                    newPosition: Player.PositionInfo,
-                    reason: Int
-                ) {
-                    if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
-                        Timber.tag(tag).d("Auto transition (likely from shorten to full) at page $targetIndex")
-                    }
-                }
-                override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) {
-                    super.onAudioAttributesChanged(audioAttributes)
-                    Timber.tag(tag).d("Audio attributes changed for page $targetIndex: contentType=${audioAttributes.contentType}, usage=${audioAttributes.usage}, flags=${audioAttributes.flags}")
-                }
-                override fun onAudioSessionIdChanged(audioSessionId: Int) {
-                    super.onAudioSessionIdChanged(audioSessionId)
-                    Timber.tag(tag).d("Audio session ID changed for page $targetIndex: audioSessionId=$audioSessionId")
-                }
-                override fun onVolumeChanged(volume: Float) {
-                    Timber.tag(tag).d("Volume changed for page $targetIndex: volume=$volume")
-                }
-                override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
-                    Timber.tag(tag).d("Device volume changed for page $targetIndex: volume=$volume, muted=$muted")
-                }
-            })
-        }
-    }
-
-    // Quản lý ExoPlayer: pre-init, play, pause
+    // Khởi tạo ExoPlayer và thiết lập MediaSource
     LaunchedEffect(
         pageIndex,
         pagerState,
@@ -185,31 +84,72 @@ fun VideoPlayer(
             .distinctUntilChanged()
             .collect { settledPage ->
                 val isCurrentPage = pageIndex == settledPage
-                // Khởi tạo ExoPlayer cho page hiện tại nếu chưa có
-                if (isCurrentPage && player == null && viewModel.reels.value.getOrNull(settledPage) != null) {
+                if (isCurrentPage && viewModel.reels.value.getOrNull(settledPage) != null) {
+                    viewModel.initializePlayer()
                     val reelData = viewModel.reels.value[settledPage]
-                    Timber.tag(tag).d("Preparing to initialize ExoPlayer for page $settledPage, reelData: $reelData")
+                    Timber.tag(tag).d("Preparing to setup ExoPlayer for page $settledPage, reelData: $reelData")
                     val mediaItem = MediaItem.fromUri(reelData.shortenUrl).buildUpon()
                         .setMediaId(reelData.shortenUrl).build()
                     val fullMediaItem = MediaItem.fromUri(reelData.videoUrl).buildUpon()
                         .setMediaId(reelData.videoUrl).build()
-                    player = createExoPlayer(
+                    viewModel.setupMediaSourceForPage(
                         shortenMediaItem = mediaItem,
                         fullMediaItem = fullMediaItem,
                         targetIndex = settledPage,
+                        listener = object : Player.Listener {
+                            override fun onRenderedFirstFrame() {
+                                val startTime = startTimes[settledPage]
+                                if (startTime != null) {
+                                    val duration = System.currentTimeMillis() - startTime
+                                    Timber.tag(tag).d("Time to render first frame for page $settledPage: $duration ms")
+                                    startTimes.remove(settledPage)
+                                }
+                                Timber.tag(tag).d("First frame rendered for page $settledPage")
+                                showThumbnail = false
+                            }
+                            override fun onPlayerError(error: PlaybackException) {
+                                Timber.tag(tag).e(error, "Player error for page $settledPage")
+                            }
+                            override fun onVideoSizeChanged(videoSize: VideoSize) {
+                                Timber.tag(tag).d("Video size changed for page $settledPage: ${videoSize.width}x${videoSize.height}")
+                            }
+                            override fun onPlaybackStateChanged(state: Int) {
+                                Timber.tag(tag).d("Playback state changed for page $settledPage: $state")
+                            }
+                            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                                Timber.tag(tag).d("Media item transition to mediaId ${mediaItem?.mediaId} for page $settledPage")
+                            }
+                            override fun onPositionDiscontinuity(
+                                oldPosition: Player.PositionInfo,
+                                newPosition: Player.PositionInfo,
+                                reason: Int
+                            ) {
+                                if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+                                    Timber.tag(tag).d("Auto transition (likely from shorten to full) at page $settledPage")
+                                }
+                            }
+                            override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) {
+                                Timber.tag(tag).d("Audio attributes changed for page $settledPage: contentType=${audioAttributes.contentType}, usage=${audioAttributes.usage}, flags=${audioAttributes.flags}")
+                            }
+                            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                                Timber.tag(tag).d("Audio session ID changed for page $settledPage: audioSessionId=$audioSessionId")
+                            }
+                            override fun onVolumeChanged(volume: Float) {
+                                Timber.tag(tag).d("Volume changed for page $settledPage: volume=$volume")
+                            }
+                            override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
+                                Timber.tag(tag).d("Device volume changed for page $settledPage: volume=$volume, muted=$muted")
+                            }
+                        }
                     )
-                    playerView.player = player
+                    playerView.player = viewModel.getPlayer()
+                    startTimes[settledPage] = System.currentTimeMillis()
                     Timber.tag(tag).d("Initialized ExoPlayer for current page $settledPage")
                 }
-                // Quản lý play/pause
                 if (isCurrentPage && player != null) {
-                    viewModel.startPlay(player, settledPage)
+                    viewModel.startPlay(settledPage)
                     Timber.tag(tag).d("Playing ExoPlayer for page $settledPage")
-                } else if (player != null) {
-                    viewModel.startPause(player, pageIndex)
-                    Timber.tag(tag).d("Paused ExoPlayer for page $pageIndex")
                 }
-                // Trigger load more
                 val hasFetchedForPage = fetchStates[pageIndex] ?: false
                 if (settledPage >= viewModel.reels.value.size - 5 && !hasFetchedForPage && !viewModel.isFetching.value) {
                     onFetchMore()
@@ -230,17 +170,16 @@ fun VideoPlayer(
         )
     }
 
-    // Quản lý lifecycle
     DisposableEffect(lifecycleOwner) {
         Timber.tag(tag).d("lifecycle called")
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_STOP -> {
-                    player?.let { viewModel.startPause(it, pageIndex) }
+                    viewModel.startPause(pageIndex)
                 }
                 Lifecycle.Event.ON_START -> {
                     if (pageIndex == pagerState.settledPage) {
-                        player?.let { viewModel.startPlay(it, pageIndex) }
+                        viewModel.startPlay(pageIndex)
                     }
                 }
                 else -> {}
@@ -271,15 +210,9 @@ fun VideoPlayer(
 
     DisposableEffect(Unit) {
         onDispose {
-            player?.let { playerToRelease ->
-                try {
-                    viewModel.startRelease(playerToRelease, pageIndex)
-                    createdMediaSources.remove(reel.shortenUrl)
-                    createdMediaSources.remove(reel.videoUrl)
-                    Timber.tag(tag).d("Disposed ExoPlayer for page $pageIndex")
-                } catch (e: Exception) {
-                    Timber.tag(tag).e(e, "Failed to release ExoPlayer for page $pageIndex")
-                }
+            if (pageIndex != pagerState.settledPage) {
+                playerView.player = null
+                Timber.tag(tag).d("Detached PlayerView for page $pageIndex on dispose")
             }
         }
     }
