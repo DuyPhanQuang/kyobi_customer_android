@@ -87,7 +87,7 @@ fun OutlineButton(
         },
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(MaterialTheme.kyobiTheme.height.dp48)
             .then(if (enableScaleEffect) Modifier.scale(scale) else Modifier)
             .border(
                 1.dp,
@@ -125,7 +125,7 @@ fun OutlineButton(
         if (isLoading && isShowLoadingOnly) {
             CircularProgressIndicator(
                 color = MaterialTheme.kyobiTheme.colors.onSecondary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg)
             )
         } else {
             Row(
@@ -139,7 +139,8 @@ fun OutlineButton(
                         contentDescription = "Leading Icon",
                         modifier = Modifier
                             .size(MaterialTheme.kyobiTheme.icon.sm)
-                            .padding(end = if (text != null) MaterialTheme.kyobiTheme.spacing.space8 else 0.dp),
+                            .padding(end = if (text != null) MaterialTheme.kyobiTheme.spacing.dp8
+                            else MaterialTheme.kyobiTheme.spacing.dp0),
                         tint = leadingIconColor ?: MaterialTheme.kyobiTheme.colors.onSecondary
                     )
                 }
@@ -157,7 +158,9 @@ fun OutlineButton(
                         contentDescription = "Trailing Icon",
                         modifier = Modifier
                             .size(MaterialTheme.kyobiTheme.icon.sm)
-                            .padding(start = if (text != null) MaterialTheme.kyobiTheme.spacing.space8 else 0.dp),
+                            .padding(
+                                start = if (text != null) MaterialTheme.kyobiTheme.spacing.dp8
+                                else MaterialTheme.kyobiTheme.spacing.dp0),
                         tint = trailingIconColor ?: MaterialTheme.kyobiTheme.colors.onSecondary
                     )
                 }
@@ -165,7 +168,7 @@ fun OutlineButton(
             if (isLoading) {
                 CircularProgressIndicator(
                     color = MaterialTheme.kyobiTheme.colors.onSecondary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg)
                 )
             }
         }

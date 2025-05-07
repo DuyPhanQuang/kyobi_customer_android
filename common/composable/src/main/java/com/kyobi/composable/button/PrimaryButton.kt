@@ -90,7 +90,7 @@ fun PrimaryButton(
         },
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(MaterialTheme.kyobiTheme.height.dp48)
             .then(if (enableScaleEffect) Modifier.scale(scale) else Modifier)
             .background(
                 color = MaterialTheme.kyobiTheme.colors.primary,
@@ -122,12 +122,13 @@ fun PrimaryButton(
             disabledContainerColor = MaterialTheme.kyobiTheme.colors.bg.stone300,
             disabledContentColor = MaterialTheme.kyobiTheme.colors.onPrimary,
         ),
-        contentPadding = if (text == null) PaddingValues(0.dp) else ButtonDefaults.ContentPadding
+        contentPadding = if (text == null) PaddingValues(MaterialTheme.kyobiTheme.spacing.dp0)
+        else ButtonDefaults.ContentPadding
     ) {
         if (isLoading && isShowLoadingOnly) {
             CircularProgressIndicator(
                 color = MaterialTheme.kyobiTheme.colors.onPrimary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg)
             )
         } else {
             Row(
@@ -141,7 +142,9 @@ fun PrimaryButton(
                         contentDescription = "Leading Icon",
                         modifier = Modifier
                             .size(MaterialTheme.kyobiTheme.icon.sm)
-                            .padding(end = if (text == null) MaterialTheme.kyobiTheme.spacing.space8 else 0.dp),
+                            .padding(
+                                end = if (text == null) MaterialTheme.kyobiTheme.spacing.dp8
+                            else MaterialTheme.kyobiTheme.spacing.dp0),
                         tint = leadingIconColor ?: MaterialTheme.kyobiTheme.colors.onPrimary
                     )
                 }
@@ -159,14 +162,16 @@ fun PrimaryButton(
                         contentDescription = "Trailing Icon",
                         modifier = Modifier
                             .size(MaterialTheme.kyobiTheme.icon.sm)
-                            .padding(start = if (text == null) MaterialTheme.kyobiTheme.spacing.space8 else 0.dp),
+                            .padding(
+                                start = if (text == null) MaterialTheme.kyobiTheme.spacing.dp8
+                                else MaterialTheme.kyobiTheme.spacing.dp0),
                         tint = trailingIconColor ?: MaterialTheme.kyobiTheme.colors.onPrimary
                     )
                 }
                 if (isLoading) {
                     CircularProgressIndicator(
                         color = MaterialTheme.kyobiTheme.colors.onPrimary,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg)
                     )
                 }
             }

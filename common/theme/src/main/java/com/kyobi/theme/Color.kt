@@ -51,6 +51,7 @@ data class AppColors(
     val text: Colors,
     val bg: Colors,
     val border: Colors,
+    val icon: Colors,
 )
 
 val LightAppColors = AppColors(
@@ -70,6 +71,7 @@ val LightAppColors = AppColors(
     text = Colors(),
     bg = Colors(),
     border = Colors(),
+    icon = Colors()
 )
 
 val DarkAppColors = AppColors(
@@ -89,6 +91,7 @@ val DarkAppColors = AppColors(
     text = Colors(),
     bg = Colors(),
     border = Colors(),
+    icon = Colors()
 )
 
 fun AppColors.toColorScheme() = lightColorScheme(

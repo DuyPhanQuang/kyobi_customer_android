@@ -12,9 +12,11 @@ data class AppThemeConfig(
     val colors: AppColors,
     val typography: Typography,
     val shapes: Shapes,
-    val spacing: Spacing,
+    val spacing: Dimension,
     val icon: Icon,
-    val appBar: AppBar
+    val appBar: AppBar,
+    val width: Dimension,
+    val height: Dimension,
 )
 
 val LocalTheme = staticCompositionLocalOf<AppThemeConfig> {
@@ -26,9 +28,11 @@ val LightThemeConfig = AppThemeConfig(
     colors = LightAppColors,
     typography = AppTypography,
     shapes = AppShapes,
-    spacing = Spacing,
+    spacing = Dimension,
     icon = Icon,
-    appBar = AppBar
+    appBar = AppBar,
+    width = Dimension,
+    height = Dimension
 )
 
 // Dark Theme Config
@@ -36,9 +40,11 @@ val DarkThemeConfig = AppThemeConfig(
     colors = DarkAppColors,
     typography = AppTypography,
     shapes = AppShapes,
-    spacing = Spacing,
+    spacing = Dimension,
     icon = Icon,
-    appBar = AppBar
+    appBar = AppBar,
+    width = Dimension,
+    height = Dimension
 )
 
 @Composable

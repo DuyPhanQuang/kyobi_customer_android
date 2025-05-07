@@ -122,7 +122,11 @@ fun RootApp(
                 startDestination = "home",
             ) {
                 composable(screen = Screen.Home) {
-                    HomeTab()
+                    HomeTab(
+                        navController = navController,
+                        topPadding = innerPadding.calculateTopPadding(),
+                        bottomPadding = innerPadding.calculateBottomPadding()
+                    )
                 }
                 // EditorVideoScreen
                 composable(screen = Screen.EditorVideo) {
