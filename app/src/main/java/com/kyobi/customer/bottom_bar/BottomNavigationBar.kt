@@ -47,6 +47,7 @@ import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.featurecommon.routes.Screen
 import com.kyobi.theme.Colors
 import com.kyobi.theme.kyobiTheme
+import com.kyobi.theme.paragraphXs
 import ly.img.camera.core.CameraConfiguration
 import ly.img.camera.core.CameraMode
 import ly.img.camera.core.CameraResult
@@ -173,15 +174,15 @@ fun BottomNavigationBar(
                         label = {
                             Text(
                                 text = "Lookbook",
-                                style = MaterialTheme.kyobiTheme.typography.labelSmall,
+                                style = MaterialTheme.kyobiTheme.typography.paragraphXs,
                             )
                         },
                         alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.kyobiTheme.colors.text.neutral950,
-                            unselectedIconColor = MaterialTheme.kyobiTheme.colors.text.neutral500,
-                            selectedTextColor = MaterialTheme.kyobiTheme.colors.text.neutral950,
-                            unselectedTextColor = MaterialTheme.kyobiTheme.colors.text.neutral500,
+                            selectedIconColor = MaterialTheme.kyobiTheme.colors.bg.stone950,
+                            unselectedIconColor = MaterialTheme.kyobiTheme.colors.bg.stone400,
+                            selectedTextColor = MaterialTheme.kyobiTheme.colors.bg.stone950,
+                            unselectedTextColor = MaterialTheme.kyobiTheme.colors.bg.stone400,
                         )
                     )
                 }
@@ -240,15 +241,15 @@ fun BottomNavigationBar(
                         label = {
                             Text(
                                 text = item.label,
-                                style = MaterialTheme.kyobiTheme.typography.labelSmall,
+                                style = MaterialTheme.kyobiTheme.typography.paragraphXs,
                             )
                         },
                         alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.kyobiTheme.colors.text.neutral950,
-                            unselectedIconColor = MaterialTheme.kyobiTheme.colors.text.neutral500,
-                            selectedTextColor = MaterialTheme.kyobiTheme.colors.text.neutral950,
-                            unselectedTextColor = MaterialTheme.kyobiTheme.colors.text.neutral500,
+                            selectedIconColor = MaterialTheme.kyobiTheme.colors.bg.stone950,
+                            unselectedIconColor = MaterialTheme.kyobiTheme.colors.bg.stone400,
+                            selectedTextColor = MaterialTheme.kyobiTheme.colors.bg.stone950,
+                            unselectedTextColor = MaterialTheme.kyobiTheme.colors.bg.stone400,
                         )
                     )
                 }

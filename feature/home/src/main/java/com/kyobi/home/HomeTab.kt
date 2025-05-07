@@ -36,7 +36,7 @@ fun HomeTab(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
-    val maxScrollOffset = 320f // total height of section header + section banner
+    val maxScrollOffset = 200f // total height of section header + section banner / 2
     val scrollOffset = remember { derivedStateOf { lazyListState.firstVisibleItemScrollOffset } }
     val scrollAlphaAnimation by animateFloatAsState(
         targetValue = (scrollOffset.value.toFloat() / maxScrollOffset).coerceIn(0f, 1f),
@@ -51,7 +51,7 @@ fun HomeTab(
                 top = MaterialTheme.kyobiTheme.spacing.dp0,
                 bottom = bottomPadding
             ),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.onPrimary
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(

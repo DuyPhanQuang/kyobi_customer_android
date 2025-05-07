@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -22,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.kyobi.composable.space.XsSpaceX
+import com.kyobi.theme.kyobiTheme
 import kotlinx.coroutines.launch
 
 @Composable
@@ -38,13 +39,11 @@ fun HomeSectionBanner() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
+            .height(MaterialTheme.kyobiTheme.height.dp320)
     ) {
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
+            modifier = Modifier.fillMaxWidth()
         ) { page ->
             AsyncImage(
                 model = carouselItems[page],
