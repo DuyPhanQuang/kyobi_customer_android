@@ -5,10 +5,10 @@ import com.kyobi.domain.model.request.MetafieldIdentifierRequest
 
 interface ShopifyApiService {
     suspend fun getProducts(
-        query: String? = null,
-        reverse: Boolean? = null,
-        sortKey: String? = null,
-        identifiers: List<MetafieldIdentifierRequest>? = null,
-        first: Int? = 250
+        query: String?,
+        reverse: Boolean?,
+        sortKey: String?,
+        identifiers: List<MetafieldIdentifierRequest>?,
+        first: Int?
     ): List<Product>
 }

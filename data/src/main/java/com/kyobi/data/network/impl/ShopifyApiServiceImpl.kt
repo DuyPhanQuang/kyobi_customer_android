@@ -37,23 +37,23 @@ class ShopifyApiServiceImpl @Inject constructor(
             val productSortKey = sortKey?.let {
                 ProductSortKeys.valueOf(it.uppercase())
             }
+            val effectiveFirst = first ?: 250
+            val indentifiers = if (includeMetafields) {
+                identifiers!!.map {
+                    HasMetafieldsIdentifier(
+                        namespace = Optional.present(it.namespace),
+                        key = it.key
+                    )
+                }
+            } else { emptyList() }
             val response: ApolloResponse<GetProductsQuery.Data> = apolloClient
                 .query(
                     GetProductsQuery(
-                        first = Optional.presentIfNotNull(first),
+                        first = Optional.present(effectiveFirst),
                         query = Optional.presentIfNotNull(query),
                         reverse = Optional.presentIfNotNull(reverse),
                         sortKey = Optional.presentIfNotNull(productSortKey),
-                        identifiers = if (includeMetafields) {
-                            identifiers?.map {
-                                HasMetafieldsIdentifier(
-                                    namespace = Optional.presentIfNotNull(it.namespace),
-                                    key = it.key
-                                )
-                            } ?: emptyList()
-                        } else {
-                            emptyList()
-                        }
+                        identifiers = indentifiers
                     )
                 )
                 .execute()
