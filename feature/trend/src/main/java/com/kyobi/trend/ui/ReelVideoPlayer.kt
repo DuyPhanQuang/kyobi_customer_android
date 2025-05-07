@@ -100,16 +100,13 @@ fun VideoPlayer(
                 if (isCurrentPage && viewModel.reels.value.getOrNull(settledPage) != null) {
                     val reelData = viewModel.reels.value[settledPage]
                     Timber.tag(tag).d("Preparing ExoPlayer for page $settledPage, reelData: $reelData")
-                    if (player != null) {
-                        playerView.player = player
-                    }
-                    viewModel.updateSettledPage(settledPage)
+                    viewModel.updateSettledPage(settledPage, playerView)
                     showThumbnail = true
                     startTimes[settledPage] = System.currentTimeMillis()
                     Timber.tag(tag).d("Initialized ExoPlayer for current page $settledPage")
                 }
                 if (isCurrentPage && player != null) {
-                    viewModel.startPlay(settledPage)
+                    viewModel.startPlay(settledPage, playerView)
                     Timber.tag(tag).d("Playing ExoPlayer for page $settledPage")
                 }
             }
@@ -120,7 +117,7 @@ fun VideoPlayer(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_STOP -> {
-                    viewModel.startPause(pageIndex)
+                    viewModel.startPause(pageIndex, playerView)
                 }
                 else -> {}
             }

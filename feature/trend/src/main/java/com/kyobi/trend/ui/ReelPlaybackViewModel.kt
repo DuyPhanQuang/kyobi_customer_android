@@ -1,6 +1,9 @@
 package com.kyobi.trend.ui
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
+import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +31,7 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.DefaultHlsExtractorFactory
 import androidx.media3.exoplayer.source.ConcatenatingMediaSource2
+import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -35,7 +39,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class ReelPlaybackViewModel @OptIn(UnstableApi::class)
 @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val mediaCache: MediaCache
+    private val mediaCache: MediaCache,
 ) : ViewModel() {
     private val tag = "ReelPlaybackViewModel"
     private val _reels = mutableStateOf<List<Reel>>(emptyList())
@@ -72,7 +76,6 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
                 .build().apply {
                     if (mediaSources.isNotEmpty()) {
                         setMediaSources(mediaSources, 0, 0)
-                        prepare()
                         seekTo(0, 0)
                         repeatMode = Player.REPEAT_MODE_ONE
                         videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
@@ -166,8 +169,9 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     }
 
     @OptIn(UnstableApi::class)
-    fun updateSettledPage(page: Int) {
+    fun updateSettledPage(page: Int, playerView: PlayerView) {
         currentSettledPage = page
+        playerView.player = exoPlayer
     }
 
     private fun preloadMediaSourceForRange(startPage: Int, endPage: Int) {
@@ -245,20 +249,23 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
     }
 
     @OptIn(UnstableApi::class)
-    fun startPlay(page: Int) {
+    fun startPlay(page: Int, playerView: PlayerView) {
         exoPlayer?.let { player ->
             player.seekTo(page, 0) // very important. giup giam first frame render
+            player.prepare()
             player.playWhenReady = true
             Timber.tag(tag).d("Playing ExoPlayer for init page greater than 0")
         }
+        playerView.player = exoPlayer
     }
 
     @OptIn(UnstableApi::class)
-    fun startPause(page: Int) {
+    fun startPause(page: Int, playerView: PlayerView) {
         exoPlayer?.let { player ->
             player.playWhenReady = false
             Timber.tag(tag).d("Paused ExoPlayer for page $page")
         }
+        playerView.player = exoPlayer
     }
 
     private fun startRelease() {
