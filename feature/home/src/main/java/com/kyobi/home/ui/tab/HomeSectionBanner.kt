@@ -111,8 +111,8 @@ fun HomeSectionBanner() {
                             )
                             .clip(targetShape)
                             .background(if (isSelected)
-                                MaterialTheme.kyobiTheme.colors.bg.logo else
-                                    MaterialTheme.kyobiTheme.colors.bg.white)
+                                MaterialTheme.kyobiTheme.colors.bg.stone800 else
+                                    MaterialTheme.kyobiTheme.colors.bg.stone100)
                             .clickable {
                                 isUserInteracting = true
                                 coroutineScope.launch {
