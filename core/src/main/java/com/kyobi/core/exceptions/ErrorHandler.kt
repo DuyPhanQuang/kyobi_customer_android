@@ -3,8 +3,11 @@ package com.kyobi.core.exceptions
 import com.squareup.moshi.Moshi
 import retrofit2.HttpException
 import timber.log.Timber
+import javax.inject.Inject
 
-class ErrorHandler(private val moshi: Moshi) {
+class KyobiErrorHandler @Inject constructor(
+    private val moshi: Moshi
+) {
     fun handleError(exception: Exception): KyobiApiException {
         return when (exception) {
             is HttpException -> handleHttpException(exception)

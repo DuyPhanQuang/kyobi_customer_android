@@ -1,6 +1,6 @@
 package com.kyobi.data.network.impl
 
-import com.kyobi.core.exceptions.ErrorHandler
+import com.kyobi.core.exceptions.KyobiErrorHandler
 import com.kyobi.core.exceptions.KyobiApiException
 import com.kyobi.data.model.AnonymousLoginResponse
 import com.kyobi.data.model.AppVersionResponse
@@ -16,17 +16,15 @@ import com.kyobi.domain.model.request.RegisterTokenRequest
 import com.kyobi.domain.model.request.SignupRequest
 import com.kyobi.domain.model.request.UnregisterTokenRequest
 import retrofit2.HttpException
-import retrofit2.Retrofit
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class KyobiApiServiceImpl @Inject constructor(
-    retrofit: Retrofit,
-    private val errorHandler: ErrorHandler
+    private val api: KyobiApiService,
+    private val errorHandler: KyobiErrorHandler
 ) : KyobiApiService {
-    private val api = retrofit.create(KyobiApiService::class.java)
     private val tag = "KyobiApiService"
 
     override suspend fun login(request: LoginRequest): LoginResponse {

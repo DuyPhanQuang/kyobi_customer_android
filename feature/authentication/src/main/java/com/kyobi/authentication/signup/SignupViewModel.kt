@@ -66,6 +66,7 @@ class SignupViewModel @Inject constructor(
                                 is DomainNetworkResult.Error.Generic -> {
                                     result.throwable.message
                                 }
+                                is DomainNetworkResult.Error.ShopifyApi -> null
                             } ?: "Something went wrong"
                             signUpUiState = signUpUiState.copy(
                                 isLoading = false,

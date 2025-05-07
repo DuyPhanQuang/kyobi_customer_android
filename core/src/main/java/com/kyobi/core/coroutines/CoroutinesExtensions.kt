@@ -20,3 +20,7 @@ fun CoroutineScope.launchOnIO(block: suspend CoroutineScope.() -> Unit) {
 fun CoroutineScope.launchOnMain(block: suspend CoroutineScope.() -> Unit) {
     launch(Dispatchers.Main) { block() }
 }
+
+fun CoroutineScope.launchOnBackground(block: suspend CoroutineScope.() -> Unit) {
+    launch(Dispatchers.Default) { block() }
+}

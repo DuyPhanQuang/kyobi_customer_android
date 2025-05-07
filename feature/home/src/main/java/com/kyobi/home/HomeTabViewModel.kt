@@ -22,7 +22,13 @@ class HomeTabViewModel @Inject constructor(
 
     private fun fetchProducts() {
         viewModelScope.launch {
-            getProductsUseCase().collect { result ->
+            getProductsUseCase.invoke(
+                query = null,
+                reverse = null,
+                sortKey = null,
+                identifiers = null,
+                first = null,
+            ).collect { result ->
                 _uiState.value = _uiState.value.copy(
                     productsResult = result)
             }

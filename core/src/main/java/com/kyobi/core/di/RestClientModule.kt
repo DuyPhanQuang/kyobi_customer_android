@@ -1,6 +1,6 @@
-package com.kyobi.core.network
+package com.kyobi.core.di
 
-import com.kyobi.core.exceptions.ErrorHandler
+import com.kyobi.core.exceptions.KyobiErrorHandler
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
@@ -26,7 +26,8 @@ object RestClientModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(
+    @Named("KyobiRetrofitClient")
+    fun provideRetrofitClient(
         @Named("BASE_URL") baseUrl: String,
         @Named("KyobiOkHttpClient") okHttpClient: OkHttpClient,
         moshi: Moshi
@@ -40,7 +41,7 @@ object RestClientModule {
 
     @Provides
     @Singleton
-    fun provideErrorHandler(moshi: Moshi): ErrorHandler {
-        return ErrorHandler(moshi)
+    fun provideErrorHandler(moshi: Moshi): KyobiErrorHandler {
+        return KyobiErrorHandler(moshi)
     }
 }

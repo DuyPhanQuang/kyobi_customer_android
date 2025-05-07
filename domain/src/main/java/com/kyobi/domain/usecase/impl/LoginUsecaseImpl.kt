@@ -46,21 +46,4 @@ class LoginUsecaseImpl @Inject constructor(
             emit(DomainNetworkResult.Error.Generic(throwable))
         }
     }
-
-    override suspend fun getCurrentUser(): Flow<DomainNetworkResult<LoggedInUser>> {
-        return flow {
-            emit(DomainNetworkResult.Loading)
-            try {
-                val result = authRepository.getAuthUser()
-                emit(DomainNetworkResult.Success(result))
-            } catch (e: KyobiApiException) {
-                emit(DomainNetworkResult.Error.KyobiApi(e))
-            } catch (e: Exception) {
-                emit(DomainNetworkResult.Error.Generic(e))
-            }
-        }.catch { throwable ->
-            emit(DomainNetworkResult.Error.Generic(throwable))
-        }
-    }
-
 }

@@ -7,5 +7,4 @@ import kotlinx.coroutines.flow.Flow
 interface LoginUseCase {
     suspend operator fun invoke(email: String, password: String): Flow<DomainNetworkResult<LoggedInUser>>
     suspend fun loginAnonymously(): Flow<DomainNetworkResult<LoggedInUser>>
-    suspend fun getCurrentUser(): Flow<DomainNetworkResult<LoggedInUser>>
 }

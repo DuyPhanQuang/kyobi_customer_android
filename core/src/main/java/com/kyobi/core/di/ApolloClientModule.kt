@@ -1,7 +1,8 @@
-package com.kyobi.core.network
+package com.kyobi.core.di
 
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.network.okHttpClient
+import com.kyobi.core.exceptions.ShopifyErrorHandler
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,6 +16,7 @@ import javax.inject.Singleton
 object ApolloClientModule {
     @Provides
     @Singleton
+    @Named("KyobiApolloClient")
     fun provideApolloClient(
         @Named("SHOPIFY_BASE_URL") shopifyBaseUrl: String,
         @Named("SHOPIFY_API_VERSION") shopifyApiVersion: String,
@@ -27,5 +29,11 @@ object ApolloClientModule {
             .addHttpHeader("X-Shopify-Storefront-Access-Token", xShopifyStorefrontAccessToken)
             .okHttpClient(okHttpClient)
             .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideShopifyErrorHandler(): ShopifyErrorHandler {
+        return ShopifyErrorHandler()
     }
 }

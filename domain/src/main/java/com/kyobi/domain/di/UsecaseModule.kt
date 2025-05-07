@@ -4,6 +4,7 @@ import com.kyobi.domain.usecase.AppVersionUsecase
 import com.kyobi.domain.usecase.AssetSourceUsecase
 import com.kyobi.domain.usecase.AssetUsecase
 import com.kyobi.domain.usecase.GetProductsUseCase
+import com.kyobi.domain.usecase.GetUserUsecase
 import com.kyobi.domain.usecase.LoginUseCase
 import com.kyobi.domain.usecase.LogoutUseCase
 import com.kyobi.domain.usecase.NotificationUseCase
@@ -12,6 +13,7 @@ import com.kyobi.domain.usecase.impl.AppVersionUsecaseImpl
 import com.kyobi.domain.usecase.impl.AssetSourceUsecaseImpl
 import com.kyobi.domain.usecase.impl.AssetUsecaseImpl
 import com.kyobi.domain.usecase.impl.GetProductsUseCaseImpl
+import com.kyobi.domain.usecase.impl.GetUserUsecaseImpl
 import com.kyobi.domain.usecase.impl.LoginUsecaseImpl
 import com.kyobi.domain.usecase.impl.LogoutUsecaseImpl
 import com.kyobi.domain.usecase.impl.NotificationUseCaseImpl
@@ -28,6 +30,10 @@ abstract class UseCaseModule {
     @Binds
     @Singleton
     abstract fun bindGetProductsUseCase(impl: GetProductsUseCaseImpl): GetProductsUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindGetUserUseCase(impl: GetUserUsecaseImpl): GetUserUsecase
 
     @Binds
     @Singleton

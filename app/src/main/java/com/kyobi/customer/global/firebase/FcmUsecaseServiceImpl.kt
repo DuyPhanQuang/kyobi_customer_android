@@ -57,6 +57,7 @@ class FcmUsecaseServiceImpl @Inject constructor(
                     val errorMessage = when (result) {
                         is DomainNetworkResult.Error.KyobiApi -> result.exception.message
                         is DomainNetworkResult.Error.Generic -> result.throwable.message
+                        is DomainNetworkResult.Error.ShopifyApi -> null
                     } ?: "Something went wrong"
                     Timber.tag(tag).e("Failed to register token: $errorMessage")
                     throw Exception(errorMessage)
@@ -85,6 +86,7 @@ class FcmUsecaseServiceImpl @Inject constructor(
                     val errorMessage = when (result) {
                         is DomainNetworkResult.Error.KyobiApi -> result.exception.message
                         is DomainNetworkResult.Error.Generic -> result.throwable.message
+                        is DomainNetworkResult.Error.ShopifyApi -> null
                     } ?: "Something went wrong"
                     Timber.tag(tag).e("Failed to unregister token: $errorMessage")
                     throw Exception(errorMessage)

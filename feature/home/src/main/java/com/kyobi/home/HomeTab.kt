@@ -88,7 +88,7 @@ fun ProductItem(product: Product) {
                 .padding(16.dp)
         ) {
             AsyncImage(
-                model = product.imageUrl,
+                model = product.featuredImage?.url ?: "",
                 contentDescription = product.title,
                 modifier = Modifier
                     .size(80.dp)
@@ -100,7 +100,7 @@ fun ProductItem(product: Product) {
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = "$${product.price}",
+                    text = "$${product.priceRange.minVariantPrice}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )

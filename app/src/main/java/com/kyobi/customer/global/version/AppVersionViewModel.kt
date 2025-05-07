@@ -125,6 +125,7 @@ class AppVersionViewModel @Inject constructor(
                                 val errorMessage = when (result) {
                                     is DomainNetworkResult.Error.KyobiApi -> result.exception.message
                                     is DomainNetworkResult.Error.Generic -> result.throwable.message
+                                    is DomainNetworkResult.Error.ShopifyApi -> null
                                 } ?: "Something went wrong"
                                 Timber.tag(tag).e("Failed to get app version")
                                 _uiState.value = _uiState.value.copy(isLoading = true, error = errorMessage)

@@ -1,20 +1,36 @@
 package com.kyobi.data.di
 
+import com.apollographql.apollo3.ApolloClient
+import com.kyobi.core.exceptions.ShopifyErrorHandler
 import com.kyobi.data.network.KyobiApiService
 import com.kyobi.data.network.ShopifyApiService
 import com.kyobi.data.network.impl.ShopifyApiServiceImpl
-import com.kyobi.data.network.impl.KyobiApiServiceImpl
-import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import retrofit2.Retrofit
+import javax.inject.Named
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class DataModule {
-    @Binds
-    abstract fun bindShopifyApiService(impl: ShopifyApiServiceImpl): ShopifyApiService
+object DataModule {
 
-    @Binds
-    abstract fun bindKyobiApiService(impl: KyobiApiServiceImpl): KyobiApiService
+    @Provides
+    @Singleton
+    fun provideKyobiApiService(
+        @Named("KyobiRetrofitClient") retrofit: Retrofit
+    ): KyobiApiService {
+        return retrofit.create(KyobiApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideShopifyApiService(
+        @Named("KyobiApolloClient") apolloClient: ApolloClient,
+        errorHandler: ShopifyErrorHandler
+    ): ShopifyApiService {
+        return ShopifyApiServiceImpl(apolloClient, errorHandler)
+    }
 }
