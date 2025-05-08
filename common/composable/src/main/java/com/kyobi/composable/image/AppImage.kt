@@ -20,16 +20,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import coil.ImageLoader
+import coil.annotation.ExperimentalCoilApi
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import coil.request.CachePolicy
 import coil.request.ImageRequest
-import coil.size.Scale
 import com.kyobi.composable.R
 import com.kyobi.theme.kyobiTheme
+import timber.log.Timber
 
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun AppImage(
     imageUrl: String?,
@@ -39,12 +41,11 @@ fun AppImage(
     errorImageRes: Int = R.drawable.error_image,
     isSkeletonEnabled: Boolean = true,
     contentDescription: String? = null,
-    filterQuality: FilterQuality = FilterQuality.High
+    filterQuality: FilterQuality = FilterQuality.High,
+    imageLoader: ImageLoader
 ) {
+    val tag = "AppImage"
     val context = LocalContext.current
-    val configuration = LocalConfiguration.current
-
-    // Animation cho skeleton loading
     val infiniteTransition = rememberInfiniteTransition(label = "SkeletonAnimation")
     val alpha by infiniteTransition.animateFloat(
         initialValue = 0.3f,
@@ -53,7 +54,8 @@ fun AppImage(
             animation = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "SkeletonAlpha")
+        label = "SkeletonAlpha"
+    )
 
     val gradientBrush = Brush.linearGradient(
         colors = listOf(
@@ -67,21 +69,28 @@ fun AppImage(
 
     val finalImageUrl = if (imageUrl.isNullOrEmpty()) defaultImageRes else imageUrl
 
+    // Kiểm tra disk cache
+    val isInDiskCache = imageUrl?.let { url ->
+        imageLoader.diskCache?.openSnapshot(url)?.use { true } ?: false
+    } ?: false
+    Timber.tag(tag).d("Image in disk cache for URL: $finalImageUrl: $isInDiskCache")
+
     val errorImageRequest = ImageRequest.Builder(context)
         .data(errorImageRes)
         .build()
 
-    val request = ImageRequest.Builder(LocalContext.current)
+    val request = ImageRequest.Builder(context)
         .data(finalImageUrl)
         .crossfade(true)
-        .scale(Scale.FIT)
         .memoryCachePolicy(CachePolicy.ENABLED)
         .diskCachePolicy(CachePolicy.ENABLED)
+        .allowHardware(false)
         .build()
 
     Box(modifier = modifier) {
         SubcomposeAsyncImage(
             model = request,
+            imageLoader = imageLoader,
             contentDescription = contentDescription,
             contentScale = contentScale,
             modifier = Modifier.fillMaxSize(),
@@ -103,13 +112,15 @@ fun AppImage(
                     }
                 }
             },
-            success = { _ ->
+            success = { state ->
+                Timber.tag(tag).d("Image loaded successfully for URL: $finalImageUrl with result: memoryCache:${state.result.memoryCacheKey} diskCache:${state.result.diskCacheKey}")
                 SubcomposeAsyncImageContent(
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = contentScale,
+                    contentScale = contentScale
                 )
             },
-            error = { _ ->
+            error = { state ->
+                Timber.tag(tag).e("Image load failed for URL: $finalImageUrl, error: ${state.result.throwable}")
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize()

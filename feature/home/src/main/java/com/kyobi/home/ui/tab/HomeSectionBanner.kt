@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.zIndex
+import coil.ImageLoader
 import com.kyobi.composable.image.AppImage
 import com.kyobi.composable.space.XsSpaceX
 import com.kyobi.theme.kyobiTheme
@@ -36,7 +37,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun HomeSectionBanner(
-    banners: List<String>
+    banners: List<String>,
+    imageLoader: ImageLoader
 ) {
     val pagerState = rememberPagerState(pageCount = { banners.size })
     val coroutineScope = rememberCoroutineScope()
@@ -70,9 +72,10 @@ fun HomeSectionBanner(
                 beyondViewportPageCount = pagerState.pageCount - 1
             ) { page ->
                 AppImage(
-                    imageUrl = banners[page],
-                    contentDescription = "Banner Item $page",
                     modifier = Modifier.fillMaxSize(),
+                    imageUrl = banners[page],
+                    contentDescription = "Banner item $page",
+                    imageLoader = imageLoader
                 )
             }
             Row(

@@ -32,10 +32,23 @@ class HomeTabViewModel @Inject constructor(
         "https://images.unsplash.com/photo-1483985988355-763728e1935b"
     )
 
+    private val recommendedReels = listOf(
+        LookbookItem("0", "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExaGJmNDA3cXcwaHFvbG9ydHcxM3lmbjlrd2M1cWtvYzlxaHV4Z2k0MiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lMsT2f47tDxFMYdJMC/giphy.gif", "#croptop"),
+        LookbookItem("1", "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExaWk5c3BsemM4aXFtcHZhb2YzNGF2YXFxMTE4cHRzZHcxeDdvaXhiZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/iFmbcbjYR52zChZzQM/giphy.gif", "#dresses"),
+        LookbookItem("2", "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ2o2cWl6OTI4bGttY2puN3o5czhudjF6aDU5aHdrenhuMDlraWhmaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ZCxO1TRVPO1CL00Z2a/giphy.gif", "#floral"),
+        LookbookItem("3", "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExNmdnbGZsOHlpcWNzbTJqb2dlcjVpYXp5ZHFoaGFjNnh2cGtnNTAxbCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Woi8xNcuMeHB4EGziP/giphy.gif", "#jeans"),
+        LookbookItem("4","https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWM5enQ4enF6aGRkOThzZ3c3N2R3eHRhbmVoczRyNXVtNW5rYzcweCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/W07gfOm19B7GwoyXMp/giphy.gif", "#jeans"),
+        LookbookItem("5","https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnpwY3g5czM0bjI2bGh3NjBhc214eHZkMWYyb3dsODhrb2gzN3pzMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lMyDzkQUQvDXSDccup/giphy.gif", "#jeans"),
+        LookbookItem("6","https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZDQ5anQ0ZHRmcHc5dnRmbGtsbzFkazZjeWRkZWcyc3p5cWoxaDFycCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/dxVJFZRsq41X9nA1YF/giphy.gif", "#jeans"),
+    )
+
     init {
         fetchBanners()
+        fetchRecommendedReels()
         fetchProducts()
     }
+
+    fun getImageLoader(): ImageLoader = imageLoader
 
     fun getBanners(): List<String> = banners
 
@@ -55,9 +68,37 @@ class HomeTabViewModel @Inject constructor(
                 }
                 deferredList.awaitAll() // parallel
                 val duration = System.currentTimeMillis() - startTime
-                Timber.tag(tag).d("Preload completed in $duration ms")
+                Timber.tag(tag).d("Preload banner images completed in $duration ms")
             } catch (e: Exception) {
-                Timber.tag(tag).e(e, "Preload failed")
+                Timber.tag(tag).e(e, "Preload banner images failed")
+            }
+        }
+    }
+
+    fun getRecommendedReels(): List<LookbookItem> = recommendedReels
+
+    private fun fetchRecommendedReels() {
+        viewModelScope.launchOnIO {
+            val startTime = System.currentTimeMillis()
+            try {
+                val deferredList = recommendedReels.take(3).map { reel ->
+                    async {
+                        val request = ImageRequest.Builder(context)
+                            .data(reel.imageUrl)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .allowHardware(false)
+                            .build()
+                        val result = imageLoader.execute(request)
+                        Timber.tag(tag).d("Preload reel: ${reel.imageUrl}, success: ${result is coil.request.SuccessResult}")
+                        result
+                    }
+                }
+                deferredList.awaitAll() // parallel
+                val duration = System.currentTimeMillis() - startTime
+                Timber.tag(tag).d("Preload recommended reel images completed in $duration ms")
+            } catch (e: Exception) {
+                Timber.tag(tag).e(e, "Preload recommended reel images failed")
             }
         }
     }

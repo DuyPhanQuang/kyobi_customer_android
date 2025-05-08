@@ -2,6 +2,7 @@ package com.kyobi.composable.di
 
 import android.content.Context
 import coil.ImageLoader
+import coil.decode.ImageDecoderDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import dagger.Module
@@ -20,15 +21,20 @@ object ImageLoaderModule {
         return ImageLoader.Builder(context)
             .memoryCache {
                 MemoryCache.Builder(context)
-                    .maxSizePercent(0.25) // Dùng 25% bộ nhớ cho cache
+                    .maxSizePercent(0.5) // Dùng 50% bộ nhớ cho cache
                     .build()
             }
             .diskCache {
                 DiskCache.Builder()
                     .directory(context.cacheDir.resolve("image_cache"))
-                    .maxSizePercent(0.05) // Dùng 5% dung lượng disk
+                    .maxSizePercent(0.35) // Dùng 35% dung lượng disk
                     .build()
             }
+            .components {
+                // Decoder để hỗ trợ GIF
+                add(ImageDecoderDecoder.Factory()) // Dùng ImageDecoderDecoder cho Android 9+
+            }
+            .respectCacheHeaders(false) // Bỏ qua cache headers từ server để ưu tiên cache cục bộ
             .build()
     }
 }
