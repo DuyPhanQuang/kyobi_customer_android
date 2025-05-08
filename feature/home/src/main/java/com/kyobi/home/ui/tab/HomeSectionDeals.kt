@@ -87,25 +87,23 @@ fun HomeSectionDeals(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_lightning),
                         contentDescription = "Lightning Icon",
-                        modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.md),
                         tint = Color.Unspecified
                     )
                     XxsSpaceX()
                     Text(
                         text = "Super Deals",
-                        color = Color.White,
+                        color = MaterialTheme.kyobiTheme.colors.onPrimary,
                         style = MaterialTheme.kyobiTheme.typography.paragraphMd,
                     )
                     XxsSpaceX()
                     Icon(
                         painter = painterResource(id = R.drawable.ic_arrow_right),
                         contentDescription = "Arrow Right Icon",
-                        modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.xs),
                         tint = Color.Unspecified
                     )
                 }
                 Row(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(2f),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.End
                 ) {

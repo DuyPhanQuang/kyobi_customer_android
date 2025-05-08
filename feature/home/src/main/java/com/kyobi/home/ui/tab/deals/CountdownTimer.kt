@@ -23,12 +23,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallMd
+import com.kyobi.theme.paragraphRegularXs
 import kotlinx.coroutines.delay
 
 @Composable
@@ -43,15 +45,24 @@ fun CountdownFlipTimer(totalSeconds: Int) {
         seconds / 10, seconds % 10
     )
 
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        digits.forEach { newDigit ->
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp1),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "End in:",
+            color = MaterialTheme.kyobiTheme.colors.onPrimary,
+            style = MaterialTheme.kyobiTheme.typography.paragraphRegularXs,
+            textAlign = TextAlign.End
+        )
+        digits.forEachIndexed { index, newDigit ->
             var previousDigit by remember { mutableIntStateOf(newDigit) }
             var isFlipping by remember { mutableStateOf(false) }
 
             LaunchedEffect(newDigit) {
                 if (newDigit != previousDigit) {
                     isFlipping = true
-                    delay(950) // đợi animation flip xong
+                    delay(700) // đợi animation flip xong
                     previousDigit = newDigit
                     isFlipping = false
                 }
@@ -60,8 +71,20 @@ fun CountdownFlipTimer(totalSeconds: Int) {
                 currentDigit = previousDigit,
                 targetDigit = newDigit,
                 isFlipping = isFlipping,
-                modifier = Modifier.padding(2.dp)
+                modifier = Modifier.padding(MaterialTheme.kyobiTheme.spacing.dp1)
             )
+            // Thêm dấu ":" sau giờ và phút
+            if (index == 1 || index == 3) {
+                Text(
+                    text = ":",
+                    style = MaterialTheme.kyobiTheme.typography.labelSmallMd.copy(
+                        lineHeight = 12.sp
+                    ),
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.kyobiTheme.colors.onPrimary,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
@@ -73,7 +96,6 @@ fun FlipDigit(
     isFlipping: Boolean,
     modifier: Modifier = Modifier
 ) {
-    // tạo Animatable riêng để tránh xung đột nhiều FlipDigit cùng lúc
     val topFlipAngle = remember { Animatable(0f) }
     val bottomFlipAngle = remember { Animatable(90f) }
 
@@ -83,16 +105,19 @@ fun FlipDigit(
             bottomFlipAngle.snapTo(90f)
             topFlipAngle.animateTo(
                 -90f,
-                tween(durationMillis = 950, easing = LinearOutSlowInEasing)
+                tween(durationMillis = 700, easing = LinearOutSlowInEasing)
             )
             bottomFlipAngle.animateTo(
                 0f,
-                tween(durationMillis = 950, easing = FastOutLinearInEasing)
+                tween(durationMillis = 700, easing = FastOutLinearInEasing)
             )
         }
     }
 
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
         // Static top face (luôn luôn hiển thị digit hiện tại)
         DigitFace(digit = currentDigit, isTop = true)
         // Top flip
@@ -120,7 +145,7 @@ fun DigitFace(
         modifier = Modifier
             .graphicsLayer {
                 this.rotationX = rotationX
-                cameraDistance = 8 * density
+                cameraDistance = 8f * density
                 transformOrigin = if (isTop) {
                     TransformOrigin(0.5f, 1f)
                 } else {
@@ -128,15 +153,19 @@ fun DigitFace(
                 }
             }
             .clipToBounds()
-            .background(if (isTop) Color.DarkGray else Color.Gray)
-            .height(20.dp)
-            .width(20.dp),
+            .background(if (isTop) MaterialTheme.kyobiTheme.colors.primary
+            else MaterialTheme.kyobiTheme.colors.onPrimary)
+            .height(MaterialTheme.kyobiTheme.height.dp20)
+            .width(MaterialTheme.kyobiTheme.width.dp20),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = digit.toString(),
-            style = MaterialTheme.kyobiTheme.typography.labelSmallMd,
-            color = Color.White
+            style = MaterialTheme.kyobiTheme.typography.labelSmallMd.copy(
+                lineHeight = 12.sp
+            ),
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.kyobiTheme.colors.onPrimary
         )
     }
 }
