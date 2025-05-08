@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kyobi.home.ui.tab.HomeRecommendedReel
 import com.kyobi.home.ui.tab.HomeSectionBanner
+import com.kyobi.home.ui.tab.HomeSectionDeals
 import com.kyobi.home.ui.tab.HomeSectionHeader
 import com.kyobi.home.ui.tab.HomeSectionTopCatalog
 import com.kyobi.theme.kyobiTheme
@@ -25,6 +26,12 @@ data class LookbookItem(
     val id: String,
     val imageUrl: String, // URL của ảnh hoặc GIF
     val hashtag: String, // Hashtag của video
+)
+
+data class ProductItem(
+    val id: String,
+    val imageUrl: String,
+    val price: String,
 )
 
 @Composable
@@ -42,6 +49,7 @@ fun HomeTab(
     val banners = viewModel.getBanners()
     val mockReels = viewModel.getRecommendedReels()
     val mockTopCatalogs = viewModel.getTopCatalog()
+    val mockProductDeals = viewModel.getProductDeals()
 
     Surface(
         modifier = Modifier
@@ -80,6 +88,16 @@ fun HomeTab(
                 ) {
                     HomeSectionTopCatalog(
                         items = mockTopCatalogs,
+                        imageLoader = imageLoader,
+                    )
+                }
+            }
+            item {
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    HomeSectionDeals(
+                        items = mockProductDeals,
                         imageLoader = imageLoader,
                     )
                 }

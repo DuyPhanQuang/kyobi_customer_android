@@ -22,7 +22,10 @@ object Dimension {
     val dp80 = 80.dp
     val dp88 = 88.dp
     val dp100 = 100.dp
+    val dp120 = 120.dp
     val dp135 = 135.dp
+    val dp156 = 156.dp
     val dp195 = 195.dp
+    val dp244 = 244.dp
     val dp356 = 356.dp
 }

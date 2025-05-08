@@ -27,6 +27,7 @@ data class Colors(
     val white: Color = Color(0xFFFFFFFF),
     val black: Color = Color(0xFF000000),
     val red500: Color = Color(0xFFFB2C36),
+    val red600: Color = Color(0xFFD92D20),
     val red700: Color = Color(0xFFB91C1C),
     val logo: Color = Color(0xFFCE2C2C),
     val primary700: Color = Color(0xFFB42318),

@@ -193,9 +193,19 @@ class HomeTabViewModel @Inject constructor(
         )
     )
 
+    private val productDeals = listOf(
+        ProductItem("1", "https://images.unsplash.com/photo-1506157786151-b8491531f063", "19.90"),
+        ProductItem("2", "https://images.unsplash.com/photo-1511556820780-d912e42b4980", "59.90"),
+        ProductItem("3", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e", "49.90"),
+        ProductItem("4", "https://images.unsplash.com/photo-1483985988355-763728e1935b", "29.90"),
+        ProductItem("5", "https://images.unsplash.com/photo-1536514498073-50e69d39c6cf", "29.90")
+    )
+
     init {
         fetchBanners()
         fetchRecommendedReels()
+        fetchTopCatalog()
+        fetchProductDeals()
         fetchProducts()
     }
 
@@ -255,6 +265,34 @@ class HomeTabViewModel @Inject constructor(
     }
 
     fun getTopCatalog(): List<TopCatalog> = topCatalogs
+
+    private fun fetchTopCatalog() {
+    }
+
+    fun getProductDeals(): List<ProductItem> = productDeals
+
+    private fun fetchProductDeals() {
+        viewModelScope.launchOnIO {
+            val startTime = System.currentTimeMillis()
+            try {
+                val deferredList = productDeals.map { product ->
+                    async {
+                        val request = ImageRequest.Builder(context)
+                            .data(product.imageUrl)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .build()
+                        imageLoader.execute(request)
+                    }
+                }
+                deferredList.awaitAll() // parallel
+                val duration = System.currentTimeMillis() - startTime
+                Timber.tag(tag).d("Preload product deal images completed in $duration ms")
+            } catch (e: Exception) {
+                Timber.tag(tag).e(e, "Preload banner images failed")
+            }
+        }
+    }
 
     private fun fetchProducts() {
         viewModelScope.launchOnIO {
