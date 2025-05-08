@@ -27,9 +27,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.zIndex
 import com.kyobi.composable.image.AppImage
 import com.kyobi.composable.space.XsSpaceX
-import com.kyobi.home.ui.animate.animateShapeAsState
 import com.kyobi.theme.kyobiTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -59,12 +59,14 @@ fun HomeSectionBanner(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(MaterialTheme.kyobiTheme.height.dp320)
+            .height(MaterialTheme.kyobiTheme.height.dp356)
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().zIndex(0f),
                 beyondViewportPageCount = pagerState.pageCount - 1
             ) { page ->
                 AppImage(
@@ -78,7 +80,8 @@ fun HomeSectionBanner(
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
                     .padding(
-                        bottom = MaterialTheme.kyobiTheme.spacing.dp8
+                        bottom = MaterialTheme.kyobiTheme.spacing.dp36 +
+                            MaterialTheme.kyobiTheme.spacing.dp8
                     ),
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -91,20 +94,13 @@ fun HomeSectionBanner(
                         animationSpec = tween(durationMillis = 300),
                         label = "DotWidthAnimation"
                     )
-                    val targetShape by animateShapeAsState(
-                        targetValue = if (isSelected)
-                            MaterialTheme.kyobiTheme.shapes.extraSmall else
-                                CircleShape,
-                        animationSpec = tween(durationMillis = 300)
-                    )
-
                     Box(
                         modifier = Modifier
                             .size(
                                 width = targetWidth,
                                 height = MaterialTheme.kyobiTheme.width.dp8
                             )
-                            .clip(targetShape)
+                            .clip(CircleShape)
                             .background(MaterialTheme.kyobiTheme.colors.bg.stone100)
                             .clickable {
                                 isUserInteracting = true
@@ -121,6 +117,12 @@ fun HomeSectionBanner(
                     )
                     XsSpaceX()
                 }
+            }
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+            ) {
+                HomeSectionVoucher()
             }
         }
     }
