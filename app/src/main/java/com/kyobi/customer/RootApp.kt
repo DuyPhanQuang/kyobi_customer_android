@@ -1,6 +1,5 @@
 package com.kyobi.customer
 
-import android.annotation.SuppressLint
 import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -38,7 +37,6 @@ import ly.img.camera.core.CameraResult
 // Tạo CompositionLocal để cung cấp AuthViewModel
 val LocalAuthViewModel = compositionLocalOf<AuthViewModel> { error("No AuthViewModel provided") }
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun RootApp(
     navController: NavHostController,

@@ -181,6 +181,7 @@ object Libraries {
 
     object Coil {
         const val coilCompose = "io.coil-kt:coil-compose:${Version.Coil}"
+        const val coilGif = "io.coil-kt:coil-gif:${Version.Coil}"
     }
 
     object Test {

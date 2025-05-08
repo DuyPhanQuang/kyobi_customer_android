@@ -27,8 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import coil.compose.AsyncImage
+import com.kyobi.composable.image.AppImage
 import com.kyobi.composable.space.XsSpaceX
 import com.kyobi.home.ui.animate.animateShapeAsState
 import com.kyobi.theme.kyobiTheme
@@ -36,13 +35,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun HomeSectionBanner() {
-    val banners = listOf(
-        "https://images.unsplash.com/photo-1506157786151-b8491531f063",
-        "https://images.unsplash.com/photo-1511556820780-d912e42b4980",
-        "https://images.unsplash.com/photo-1483985988355-763728e1935b"
-    )
-
+fun HomeSectionBanner(
+    banners: List<String>
+) {
     val pagerState = rememberPagerState(pageCount = { banners.size })
     val coroutineScope = rememberCoroutineScope()
     var isUserInteracting by remember { mutableStateOf(false) }
@@ -69,13 +64,13 @@ fun HomeSectionBanner() {
         Box(modifier = Modifier.fillMaxSize()) {
             HorizontalPager(
                 state = pagerState,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                beyondViewportPageCount = pagerState.pageCount - 1
             ) { page ->
-                AsyncImage(
-                    model = banners[page],
+                AppImage(
+                    imageUrl = banners[page],
                     contentDescription = "Banner Item $page",
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
                 )
             }
             Row(
@@ -110,13 +105,11 @@ fun HomeSectionBanner() {
                                 height = MaterialTheme.kyobiTheme.width.dp8
                             )
                             .clip(targetShape)
-                            .background(if (isSelected)
-                                MaterialTheme.kyobiTheme.colors.bg.stone800 else
-                                    MaterialTheme.kyobiTheme.colors.bg.stone100)
+                            .background(MaterialTheme.kyobiTheme.colors.bg.stone100)
                             .clickable {
                                 isUserInteracting = true
                                 coroutineScope.launch {
-                                    val targetPage = if (index == 0 && pagerState.currentPage == banners.size - 1) {
+                                    val targetPage = if (pagerState.currentPage == banners.size - 1 && index == 0) {
                                         0
                                     } else {
                                         index

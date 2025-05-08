@@ -26,19 +26,17 @@ import com.kyobi.theme.paragraphXs
 @Composable
 fun HomeSearchForm(
     modifier: Modifier,
-    searchBorderColor: Color,
     onSearchClick: () -> Unit,
-    contentColor: Color
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(MaterialTheme.kyobiTheme.height.dp40)
             .clip(MaterialTheme.kyobiTheme.shapes.extraLarge)
-            .background(Color.Transparent)
+            .background(MaterialTheme.kyobiTheme.colors.background)
             .border(
                 MaterialTheme.kyobiTheme.width.dp1,
-                searchBorderColor,
+                Color.Transparent,
                 MaterialTheme.kyobiTheme.shapes.extraLarge)
             .clickable { onSearchClick() },
         contentAlignment = Alignment.CenterStart
@@ -54,19 +52,14 @@ fun HomeSearchForm(
                 painter = painterResource(id = R.drawable.ic_search_normal),
                 contentDescription = "Manual search",
                 modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg),
-                tint = contentColor
+                tint = MaterialTheme.kyobiTheme.colors.bg.stone500
             )
             SmSpaceX()
             Text(
+                modifier = Modifier.weight(1f),
                 text = "Search",
-                color = searchBorderColor,
+                color = MaterialTheme.kyobiTheme.colors.text.neutral500,
                 style = MaterialTheme.kyobiTheme.typography.paragraphXs,
-            )
-            Icon(
-                painter = painterResource(id = R.drawable.ic_scan_similar),
-                contentDescription = "Visual search",
-                modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg),
-                tint = contentColor
             )
         }
     }

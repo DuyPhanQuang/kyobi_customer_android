@@ -52,6 +52,7 @@ fun DependencyHandler.composeDependencies() {
 
     //coil
     implementation(Libraries.Coil.coilCompose)
+    implementation(Libraries.Coil.coilGif)
 
     //hilt navigation
     implementation(Libraries.Hilt.hiltNavigationCompose)

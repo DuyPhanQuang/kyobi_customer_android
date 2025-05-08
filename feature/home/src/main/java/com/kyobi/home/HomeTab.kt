@@ -34,15 +34,10 @@ fun HomeTab(
     topPadding: Dp,
     bottomPadding: Dp,
 ) {
+    val tag = "HomeTab"
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
-    val maxScrollOffset = 200f // total height of section header + section banner / 2
-    val scrollOffset = remember { derivedStateOf { lazyListState.firstVisibleItemScrollOffset } }
-    val scrollAlphaAnimation by animateFloatAsState(
-        targetValue = (scrollOffset.value.toFloat() / maxScrollOffset).coerceIn(0f, 1f),
-        animationSpec = tween(durationMillis = 300),
-        label = "ScrollAlphaAnimation"
-    )
+    val banners = viewModel.getBanners()
 
     Surface(
         modifier = Modifier
@@ -61,7 +56,9 @@ fun HomeTab(
                     .fillMaxSize()
             ) {
                 item {
-                    HomeSectionBanner()
+                    HomeSectionBanner(
+                        banners = banners
+                    )
                 }
                 item {
                     Box(
@@ -72,13 +69,12 @@ fun HomeTab(
                     )
                 }
             }
-            // absolute - pinned top
+            // pinned top
             Box(
                 modifier = Modifier.zIndex(1f)
             ) {
                 HomeSectionHeader(
                     topPadding = topPadding,
-                    scrollAlpha = scrollAlphaAnimation,
                     onSearchClick = {
                     },
                     onFavouritesClick = {
