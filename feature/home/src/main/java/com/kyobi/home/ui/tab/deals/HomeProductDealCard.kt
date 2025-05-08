@@ -1,4 +1,4 @@
-package com.kyobi.home.ui.tab.product
+package com.kyobi.home.ui.tab.deals
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

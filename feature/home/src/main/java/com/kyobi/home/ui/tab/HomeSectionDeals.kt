@@ -23,20 +23,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import coil.ImageLoader
 import com.kyobi.composable.image.AppImage
 import com.kyobi.composable.R
 import com.kyobi.composable.space.XxsSpaceX
 import com.kyobi.home.ProductItem
-import com.kyobi.home.ui.tab.product.HomeProductDealCard
-import com.kyobi.theme.headingLg
+import com.kyobi.home.ui.tab.deals.CountdownTimerController
+import com.kyobi.home.ui.tab.deals.HomeProductDealCard
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
 import com.kyobi.theme.paragraphMd
@@ -46,6 +44,7 @@ fun HomeSectionDeals(
     imageLoader: ImageLoader,
     items: List<ProductItem>,
 ) {
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -110,13 +109,7 @@ fun HomeSectionDeals(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Text(
-                        modifier = Modifier.weight(1f),
-                        text = "End in 12:43:12",
-                        color = Color.White,
-                        style = MaterialTheme.kyobiTheme.typography.headingLg,
-                        textAlign = TextAlign.End
-                    )
+                    CountdownTimerController()
                 }
             }
             LazyRow(
