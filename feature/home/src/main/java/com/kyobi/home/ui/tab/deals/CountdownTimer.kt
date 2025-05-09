@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,11 +22,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import com.kyobi.theme.Dimension
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallMd
 import com.kyobi.theme.paragraphRegularXs
@@ -71,7 +74,6 @@ fun CountdownFlipTimer(totalSeconds: Int) {
                 currentDigit = previousDigit,
                 targetDigit = newDigit,
                 isFlipping = isFlipping,
-                modifier = Modifier.padding(MaterialTheme.kyobiTheme.spacing.dp1)
             )
             // Thêm dấu ":" sau giờ và phút
             if (index == 1 || index == 3) {
@@ -140,6 +142,22 @@ fun DigitFace(
     angle: Float = 0f
 ) {
     val rotationX = if (isTop) angle else angle - 90f
+    // Gradient để tạo hiệu ứng đen bóng
+    val glossyGradient = if (isTop) {
+        Brush.verticalGradient(
+            colors = listOf(
+                MaterialTheme.kyobiTheme.colors.primary, // Đỉnh đen đậm
+                Color.DarkGray // Dưới nhạt hơn để tạo hiệu ứng ánh sáng
+            )
+        )
+    } else {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color.DarkGray, // Trên nhạt hơn
+                MaterialTheme.kyobiTheme.colors.primary // Dưới đen đậm
+            )
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -152,9 +170,13 @@ fun DigitFace(
                     TransformOrigin(0.5f, 0f)
                 }
             }
+            .shadow(
+                elevation = Dimension.dp4,
+                ambientColor = MaterialTheme.kyobiTheme.colors.primary.copy(alpha = 0.6f),
+                spotColor = MaterialTheme.kyobiTheme.colors.primary.copy(alpha = 0.4f)
+            )
             .clipToBounds()
-            .background(if (isTop) MaterialTheme.kyobiTheme.colors.primary
-            else MaterialTheme.kyobiTheme.colors.onPrimary)
+            .background(glossyGradient)
             .height(MaterialTheme.kyobiTheme.height.dp20)
             .width(MaterialTheme.kyobiTheme.width.dp20),
         contentAlignment = Alignment.Center
