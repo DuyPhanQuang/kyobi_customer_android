@@ -20,6 +20,7 @@ import com.kyobi.home.ui.tab.HomeSectionBanner
 import com.kyobi.home.ui.tab.HomeSectionDeals
 import com.kyobi.home.ui.tab.HomeSectionHeader
 import com.kyobi.home.ui.tab.HomeSectionTopCatalog
+import com.kyobi.home.ui.tab.deals.flip_clock.Flipper
 import com.kyobi.theme.kyobiTheme
 
 data class LookbookItem(

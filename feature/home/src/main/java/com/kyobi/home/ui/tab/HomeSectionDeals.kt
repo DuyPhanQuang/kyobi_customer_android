@@ -33,8 +33,8 @@ import com.kyobi.composable.image.AppImage
 import com.kyobi.composable.R
 import com.kyobi.composable.space.XxsSpaceX
 import com.kyobi.home.ProductItem
-import com.kyobi.home.ui.tab.deals.CountdownTimerController
 import com.kyobi.home.ui.tab.deals.HomeProductDealCard
+import com.kyobi.home.ui.tab.deals.flip_clock.Flipper
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
 import com.kyobi.theme.paragraphMd
@@ -107,7 +107,7 @@ fun HomeSectionDeals(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.End
                 ) {
-                    CountdownTimerController()
+                    Flipper()
                 }
             }
             LazyRow(
