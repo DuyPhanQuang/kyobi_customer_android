@@ -53,7 +53,7 @@ fun CountdownFlipTimer(totalSeconds: Int) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "End in:",
+            text = "Ends in:",
             color = MaterialTheme.kyobiTheme.colors.onPrimary,
             style = MaterialTheme.kyobiTheme.typography.paragraphRegularXs,
             textAlign = TextAlign.End
@@ -142,19 +142,25 @@ fun DigitFace(
     angle: Float = 0f
 ) {
     val rotationX = if (isTop) angle else angle - 90f
+    // Bóng đổ đậm hơn khi gần 90 độ (bẻ mạnh hơn)
+    val darkness = if (isTop) {
+        ((-angle) / 90f).coerceIn(0f, 1f)
+    } else {
+        ((90f - angle) / 90f).coerceIn(0f, 1f)
+    }
     // Gradient để tạo hiệu ứng đen bóng
     val glossyGradient = if (isTop) {
-        Brush.verticalGradient(
+        Brush.sweepGradient(
             colors = listOf(
-                MaterialTheme.kyobiTheme.colors.primary, // Đỉnh đen đậm
-                Color.DarkGray // Dưới nhạt hơn để tạo hiệu ứng ánh sáng
+                MaterialTheme.kyobiTheme.colors.primary,
+                Color.DarkGray
             )
         )
     } else {
-        Brush.verticalGradient(
+        Brush.sweepGradient(
             colors = listOf(
-                Color.DarkGray, // Trên nhạt hơn
-                MaterialTheme.kyobiTheme.colors.primary // Dưới đen đậm
+                Color.DarkGray,
+                MaterialTheme.kyobiTheme.colors.primary
             )
         )
     }
@@ -163,11 +169,15 @@ fun DigitFace(
         modifier = Modifier
             .graphicsLayer {
                 this.rotationX = rotationX
-                cameraDistance = 8f * density
+                cameraDistance = 32f * density // tăng độ sâu để giả lập perspective
                 transformOrigin = if (isTop) {
                     TransformOrigin(0.5f, 1f)
                 } else {
                     TransformOrigin(0.5f, 0f)
+                }
+                // Optional: co lại nhẹ để giả lập gập (fold)
+                if (rotationX < 0f || rotationX > 0f) {
+                    this.scaleY = 1f - 0.1f * darkness
                 }
             }
             .shadow(
