@@ -7,10 +7,12 @@ import coil.ImageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.kyobi.core.coroutines.launchOnIO
+import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.ShopifyMedia
 import com.kyobi.domain.model.ShopifyMediaImage
 import com.kyobi.domain.model.TopCatalog
 import com.kyobi.domain.model.TopCatalogStatus
+import com.kyobi.domain.usecase.GetBannersUseCase
 import com.kyobi.domain.usecase.GetProductsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,16 +27,12 @@ import javax.inject.Inject
 class HomeTabViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val getProductsUseCase: GetProductsUseCase,
+    private val getBannersUseCase: GetBannersUseCase,
     private val imageLoader: ImageLoader
 ): ViewModel() {
     private val tag = "HomeTabViewModel"
     private val _uiState = MutableStateFlow(HomeTabUiState())
     val uiState = _uiState.asStateFlow()
-    private val banners = listOf(
-        "https://images.unsplash.com/photo-1506157786151-b8491531f063",
-        "https://images.unsplash.com/photo-1511556820780-d912e42b4980",
-        "https://images.unsplash.com/photo-1483985988355-763728e1935b"
-    )
 
     private val recommendedReels = listOf(
         LookbookItem("0", "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExaGJmNDA3cXcwaHFvbG9ydHcxM3lmbjlrd2M1cWtvYzlxaHV4Z2k0MiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lMsT2f47tDxFMYdJMC/giphy.gif", "#croptop"),
@@ -211,25 +209,34 @@ class HomeTabViewModel @Inject constructor(
 
     fun getImageLoader(): ImageLoader = imageLoader
 
-    fun getBanners(): List<String> = banners
-
     private fun fetchBanners() {
         viewModelScope.launchOnIO {
-            val startTime = System.currentTimeMillis()
             try {
-                val deferredList = banners.map { url ->
-                    async {
-                        val request = ImageRequest.Builder(context)
-                            .data(url)
-                            .memoryCachePolicy(CachePolicy.ENABLED)
-                            .diskCachePolicy(CachePolicy.ENABLED)
-                            .build()
-                        imageLoader.execute(request)
+                getBannersUseCase().collect { result ->
+                    _uiState.value = _uiState.value.copy(bannersResult = result)
+                    // Preload images after banners are fetched
+                    if (result is DomainNetworkResult.Success) {
+                        val banners = result.data
+                        val startTime = System.currentTimeMillis()
+                        val deferredList = banners.mapNotNull { banner ->
+                            val imageData = banner.image?.image
+                            imageData?.let { url ->
+                                async {
+                                    val request = ImageRequest.Builder(context)
+                                        .data(url)
+                                        .memoryCachePolicy(CachePolicy.ENABLED)
+                                        .diskCachePolicy(CachePolicy.ENABLED)
+                                        .build()
+                                    Timber.tag(tag).d("Preloading image: $url")
+                                    imageLoader.execute(request)
+                                }
+                            }
+                        }
+                        deferredList.awaitAll() // parallel
+                        val duration = System.currentTimeMillis() - startTime
+                        Timber.tag(tag).d("Preload banner images completed in $duration ms")
                     }
                 }
-                deferredList.awaitAll() // parallel
-                val duration = System.currentTimeMillis() - startTime
-                Timber.tag(tag).d("Preload banner images completed in $duration ms")
             } catch (e: Exception) {
                 Timber.tag(tag).e(e, "Preload banner images failed")
             }
@@ -304,7 +311,7 @@ class HomeTabViewModel @Inject constructor(
                 first = null,
             ).collect { result ->
                 _uiState.value = _uiState.value.copy(
-                    productsResult = result)
+                    recommendationProductsResult = result)
             }
         }
     }

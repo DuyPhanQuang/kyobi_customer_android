@@ -3,10 +3,12 @@ package com.kyobi.data.di
 import com.kyobi.data.repository.AppConfigRepositoryImpl
 import com.kyobi.data.repository.AuthRepositoryImpl
 import com.kyobi.data.repository.NotificationRepositoryImpl
+import com.kyobi.data.repository.PageRepositoryImpl
 import com.kyobi.data.repository.ProductRepositoryImpl
 import com.kyobi.domain.repository.AppConfigRepository
 import com.kyobi.domain.repository.AuthRepository
 import com.kyobi.domain.repository.NotificationRepository
+import com.kyobi.domain.repository.PageRepository
 import com.kyobi.domain.repository.ProductRepository
 import dagger.Binds
 import dagger.Module
@@ -32,4 +34,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindNotificationRepository(impl: NotificationRepositoryImpl): NotificationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPageRepository(impl: PageRepositoryImpl): PageRepository
 }

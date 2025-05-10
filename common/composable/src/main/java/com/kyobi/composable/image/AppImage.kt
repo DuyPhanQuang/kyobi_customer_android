@@ -73,7 +73,7 @@ fun AppImage(
     val isInDiskCache = imageUrl?.let { url ->
         imageLoader.diskCache?.openSnapshot(url)?.use { true } ?: false
     } ?: false
-    Timber.tag(tag).d("Image in disk cache for URL: $finalImageUrl: $isInDiskCache")
+//    Timber.tag(tag).d("Image in disk cache for URL: $finalImageUrl: $isInDiskCache")
 
     val errorImageRequest = ImageRequest.Builder(context)
         .data(errorImageRes)
@@ -113,14 +113,14 @@ fun AppImage(
                 }
             },
             success = { state ->
-                Timber.tag(tag).d("Image loaded successfully for URL: $finalImageUrl with result: memoryCache:${state.result.memoryCacheKey} diskCache:${state.result.diskCacheKey}")
+//                Timber.tag(tag).d("Image loaded successfully for URL: $finalImageUrl with result: memoryCache:${state.result.memoryCacheKey} diskCache:${state.result.diskCacheKey}")
                 SubcomposeAsyncImageContent(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = contentScale
                 )
             },
             error = { state ->
-                Timber.tag(tag).e("Image load failed for URL: $finalImageUrl, error: ${state.result.throwable}")
+//                Timber.tag(tag).e("Image load failed for URL: $finalImageUrl, error: ${state.result.throwable}")
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize()

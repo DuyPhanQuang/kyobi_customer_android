@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,13 +32,14 @@ import androidx.compose.ui.zIndex
 import coil.ImageLoader
 import com.kyobi.composable.image.AppImage
 import com.kyobi.composable.space.XsSpaceX
+import com.kyobi.domain.model.Banner
 import com.kyobi.theme.kyobiTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun HomeSectionBanner(
-    banners: List<String>,
+    banners: List<Banner>,
     imageLoader: ImageLoader
 ) {
     val pagerState = rememberPagerState(pageCount = { banners.size })
@@ -71,12 +73,19 @@ fun HomeSectionBanner(
                 modifier = Modifier.fillMaxWidth().zIndex(0f),
                 beyondViewportPageCount = pagerState.pageCount - 1
             ) { page ->
-                AppImage(
-                    modifier = Modifier.fillMaxSize(),
-                    imageUrl = banners[page],
-                    contentDescription = "Banner item $page",
-                    imageLoader = imageLoader
-                )
+                val imageData = banners[page].image?.image
+                if (imageData != null) {
+                    AppImage(
+                        modifier = Modifier.fillMaxSize(),
+                        imageUrl = imageData.url,
+                        contentDescription = imageData.altText,
+                        imageLoader = imageLoader
+                    )
+                } else {
+                    Box {
+                        Spacer(modifier = Modifier)
+                    }
+                }
             }
             Row(
                 modifier = Modifier

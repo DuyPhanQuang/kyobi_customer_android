@@ -1,0 +1,19 @@
+query getHomepageKeyData($handle: String!, $key: String!) {
+    page(handle: $handle) {
+        id
+        metafield(namespace: "kyobi", key: $key) {
+            id
+            references(first: 10) {
+                nodes {
+                    ... on Metaobject {
+                        id
+                        fields {
+                            key
+                            value
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
