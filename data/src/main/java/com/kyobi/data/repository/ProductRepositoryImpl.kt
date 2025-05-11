@@ -25,4 +25,22 @@ class ProductRepositoryImpl @Inject constructor(
         )
         return response
     }
+
+    override suspend fun getProductRecommendationsFromShopify(productId: String): List<Product> {
+        val response = shopifyApiService.getProductRecommendations(
+            productId
+        )
+        return response
+    }
+
+    override suspend fun getProductsByIdsFromShopify(
+        ids: List<String>,
+        identifiers: List<MetafieldIdentifierRequest>?
+    ): List<Product> {
+        val response = shopifyApiService.getProductsByIds(
+            ids,
+            identifiers
+        )
+        return response
+    }
 }

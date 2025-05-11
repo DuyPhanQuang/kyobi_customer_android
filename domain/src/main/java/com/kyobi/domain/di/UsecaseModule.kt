@@ -4,6 +4,8 @@ import com.kyobi.domain.usecase.AppVersionUsecase
 import com.kyobi.domain.usecase.AssetSourceUsecase
 import com.kyobi.domain.usecase.AssetUsecase
 import com.kyobi.domain.usecase.GetHomePagesUseCase
+import com.kyobi.domain.usecase.GetProductRecommendationsUseCase
+import com.kyobi.domain.usecase.GetProductsByIdsUseCase
 import com.kyobi.domain.usecase.GetProductsUseCase
 import com.kyobi.domain.usecase.GetUserUsecase
 import com.kyobi.domain.usecase.LoginUseCase
@@ -14,6 +16,8 @@ import com.kyobi.domain.usecase.impl.AppVersionUsecaseImpl
 import com.kyobi.domain.usecase.impl.AssetSourceUsecaseImpl
 import com.kyobi.domain.usecase.impl.AssetUsecaseImpl
 import com.kyobi.domain.usecase.impl.GetHomePagesUseCaseImpl
+import com.kyobi.domain.usecase.impl.GetProductRecommendationsUseCaseImpl
+import com.kyobi.domain.usecase.impl.GetProductsByIdsUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetProductsUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetUserUsecaseImpl
 import com.kyobi.domain.usecase.impl.LoginUsecaseImpl
@@ -68,4 +72,12 @@ abstract class UseCaseModule {
     @Binds
     @Singleton
     abstract fun bindGetBannersUseCase(impl: GetHomePagesUseCaseImpl): GetHomePagesUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindGetProductsByIdsUseCase(impl: GetProductsByIdsUseCaseImpl): GetProductsByIdsUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindGetProductRecommendationsUseCase(impl: GetProductRecommendationsUseCaseImpl): GetProductRecommendationsUseCase
 }

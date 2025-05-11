@@ -15,6 +15,15 @@ interface ShopifyApiService {
         first: Int?
     ): List<Product>
 
+    suspend fun getProductRecommendations(
+        productId: String,
+    ): List<Product>
+
+    suspend fun getProductsByIds(
+        ids: List<String>,
+        identifiers: List<MetafieldIdentifierRequest>?
+    ): List<Product>
+
     suspend fun getBanners(
         handle: String,
         key: String

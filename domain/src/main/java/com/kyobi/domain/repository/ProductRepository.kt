@@ -11,4 +11,13 @@ interface ProductRepository {
         identifiers: List<MetafieldIdentifierRequest>?,
         first: Int?
     ): List<Product>
+
+    suspend fun getProductRecommendationsFromShopify(
+        productId: String
+    ): List<Product>
+
+    suspend fun getProductsByIdsFromShopify(
+        ids: List<String>,
+        identifiers: List<MetafieldIdentifierRequest>?
+    ): List<Product>
 }
