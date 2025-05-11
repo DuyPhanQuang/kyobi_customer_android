@@ -22,6 +22,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kyobi.composable.skeleton.SkeletonContainer
+import com.kyobi.composable.skeleton.SkeletonProductGridView
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.home.ui.tab.HomeRecommendedReel
 import com.kyobi.home.ui.tab.HomeSectionBanner
@@ -128,7 +129,7 @@ fun HomeTab(
                 item {
                     when (uiState.topCatalogsResult) {
                         is DomainNetworkResult.Loading -> {
-                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                            Spacer(modifier = Modifier.fillMaxWidth())
                         }
                         is DomainNetworkResult.Success -> {
                             Timber.tag(tag).d("Check catalogs: $topCatalogs")
@@ -159,7 +160,7 @@ fun HomeTab(
                 item {
                     when (uiState.recommendedProductsResult) {
                         is DomainNetworkResult.Loading -> {
-                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                            SkeletonProductGridView(modifier = Modifier.fillMaxWidth())
                         }
                         is DomainNetworkResult.Success -> {
                             if (recommendedProducts.isNotEmpty()) {

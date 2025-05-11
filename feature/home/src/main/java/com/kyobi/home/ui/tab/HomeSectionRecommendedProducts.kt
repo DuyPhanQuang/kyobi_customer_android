@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import coil.ImageLoader
+import com.kyobi.composable.space.MdSpaceX
 import com.kyobi.domain.model.Product
 import com.kyobi.home.ui.common.HomeProductCard
 import com.kyobi.theme.kyobiTheme
@@ -40,6 +41,7 @@ fun HomeSectionRecommendedProducts(
             style = MaterialTheme.kyobiTheme.typography.paragraphMd,
             color = MaterialTheme.kyobiTheme.colors.onBackground
         )
+        MdSpaceX()
         rows.forEach { rowItems ->
             Row(
                 Modifier.fillMaxWidth(),
