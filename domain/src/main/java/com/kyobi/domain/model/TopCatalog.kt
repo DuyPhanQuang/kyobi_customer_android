@@ -9,4 +9,4 @@ data class TopCatalog(
     val status: TopCatalogStatus
 )
 
-enum class TopCatalogStatus { active, inactive }
+enum class TopCatalogStatus { ACTIVE, INACTIVE }

@@ -55,10 +55,15 @@ fun HomeTab(
     val imageLoader = viewModel.getImageLoader()
 
     val mockReels = viewModel.getRecommendedReels()
-    val mockTopCatalogs = viewModel.getTopCatalog()
     val mockProductDeals = viewModel.getProductDeals()
 
     val banners = when (val result = uiState.bannersResult) {
+        is DomainNetworkResult.Success -> result.data
+        is DomainNetworkResult.Loading -> emptyList()
+        is DomainNetworkResult.Error -> emptyList()
+    }
+
+    val topCatalogs = when (val result = uiState.topCatalogsResult) {
         is DomainNetworkResult.Success -> result.data
         is DomainNetworkResult.Loading -> emptyList()
         is DomainNetworkResult.Error -> emptyList()
@@ -113,11 +118,25 @@ fun HomeTab(
                     }
                 }
                 item {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        HomeSectionTopCatalog(
-                            items = mockTopCatalogs,
-                            imageLoader = imageLoader
-                        )
+                    when (uiState.topCatalogsResult) {
+                        is DomainNetworkResult.Loading -> {
+                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                        }
+                        is DomainNetworkResult.Success -> {
+                            if (topCatalogs.isNotEmpty()) {
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    HomeSectionTopCatalog(
+                                        items = topCatalogs,
+                                        imageLoader = imageLoader
+                                    )
+                                }
+                            } else {
+                                Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                            }
+                        }
+                        is DomainNetworkResult.Error -> {
+                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                        }
                     }
                 }
                 item {

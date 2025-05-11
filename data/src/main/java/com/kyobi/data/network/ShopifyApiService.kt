@@ -3,6 +3,7 @@ package com.kyobi.data.network
 import com.kyobi.domain.model.Banner
 import com.kyobi.domain.model.Product
 import com.kyobi.domain.model.ShopifyMedia
+import com.kyobi.domain.model.TopCatalog
 import com.kyobi.domain.model.request.MetafieldIdentifierRequest
 
 interface ShopifyApiService {
@@ -18,6 +19,11 @@ interface ShopifyApiService {
         handle: String,
         key: String
     ): List<Banner>
+
+    suspend fun getTopCatalogs(
+        handle: String,
+        key: String
+    ): List<TopCatalog>
 
     suspend fun getMediaImagesByIds(
         mediaIds: List<String>
