@@ -1,7 +1,6 @@
 package com.kyobi.home
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +29,7 @@ import com.kyobi.home.ui.tab.HomeSectionDeals
 import com.kyobi.home.ui.tab.HomeSectionHeader
 import com.kyobi.home.ui.tab.HomeSectionRecommendedProducts
 import com.kyobi.home.ui.tab.HomeSectionTopCatalog
+import com.kyobi.home.ui.tab.top_catalogs.SkeletonTopCatalogGridView
 import com.kyobi.theme.kyobiTheme
 import timber.log.Timber
 
@@ -129,7 +129,7 @@ fun HomeTab(
                 item {
                     when (uiState.topCatalogsResult) {
                         is DomainNetworkResult.Loading -> {
-                            Spacer(modifier = Modifier.fillMaxWidth())
+                            SkeletonTopCatalogGridView(modifier = Modifier.fillMaxWidth())
                         }
                         is DomainNetworkResult.Success -> {
                             Timber.tag(tag).d("Check catalogs: $topCatalogs")
