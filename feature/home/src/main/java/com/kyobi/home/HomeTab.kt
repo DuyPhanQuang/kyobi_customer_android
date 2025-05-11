@@ -123,6 +123,7 @@ fun HomeTab(
                             Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
                         }
                         is DomainNetworkResult.Success -> {
+                            Timber.tag(tag).d("Check catalogs: $topCatalogs")
                             if (topCatalogs.isNotEmpty()) {
                                 Box(modifier = Modifier.fillMaxWidth()) {
                                     HomeSectionTopCatalog(

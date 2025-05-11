@@ -11,3 +11,8 @@ data class Page(
     val updatedAt: String,
     val metafield: ShopifyPageMetafield? = null,
 )
+
+data class ShopifyPageMetafield(
+    val id: String,
+    val references: ShopifyReferences
+)
