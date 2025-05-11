@@ -58,7 +58,8 @@ fun HomeSectionDeals(
             modifier = Modifier
                 .zIndex(0f)
                 .fillMaxWidth()
-                .height(MaterialTheme.kyobiTheme.height.dp244),
+                .height(MaterialTheme.kyobiTheme.height.dp244)
+                .clip(MaterialTheme.kyobiTheme.shapes.small),
             contentScale = ContentScale.Crop,
             contentDescription = "Super Deals Background",
             imageLoader = imageLoader
