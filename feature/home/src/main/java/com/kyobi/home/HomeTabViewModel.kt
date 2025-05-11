@@ -8,7 +8,9 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.domain.model.DomainNetworkResult
+import com.kyobi.domain.model.Product
 import com.kyobi.domain.usecase.GetHomePagesUseCase
+import com.kyobi.domain.usecase.GetProductRecommendationsUseCase
 import com.kyobi.domain.usecase.GetProductsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,6 +26,7 @@ class HomeTabViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val getProductsUseCase: GetProductsUseCase,
     private val getHomePagesUseCase: GetHomePagesUseCase,
+    private val getProductRecommendationsUseCase: GetProductRecommendationsUseCase,
     private val imageLoader: ImageLoader
 ): ViewModel() {
     private val tag = "HomeTabViewModel"
@@ -53,7 +56,7 @@ class HomeTabViewModel @Inject constructor(
         fetchRecommendedReels()
         fetchTopCatalog()
         fetchProductDeals()
-        fetchProducts()
+        fetchProductRecommendations(emptyList(), emptyList())
     }
 
     fun getImageLoader(): ImageLoader = imageLoader
@@ -63,7 +66,6 @@ class HomeTabViewModel @Inject constructor(
             try {
                 getHomePagesUseCase.getHomeBanners().collect { result ->
                     _uiState.value = _uiState.value.copy(bannersResult = result)
-                    // Preload images after banners are fetched
                     if (result is DomainNetworkResult.Success) {
                         val banners = result.data
                         val startTime = System.currentTimeMillis()
@@ -153,17 +155,49 @@ class HomeTabViewModel @Inject constructor(
         }
     }
 
-    private fun fetchProducts() {
+    private fun fetchProductRecommendations(
+        cartProductIds: List<String>,
+        recentlyViewedProductIds: List<String>
+    ) {
         viewModelScope.launchOnIO {
-            getProductsUseCase.invoke(
-                query = null,
-                reverse = null,
-                sortKey = null,
-                identifiers = null,
-                first = null,
-            ).collect { result ->
+            _uiState.value = _uiState.value.copy(
+                recommendedProductsResult = DomainNetworkResult.Loading)
+            try {
+                val allProductIds = (cartProductIds + recentlyViewedProductIds).distinct()
+                val recommendedProducts = mutableListOf<Product>()
+                // Limit to 10 ids
+                for (productId in allProductIds.take(10)) {
+                    getProductRecommendationsUseCase.invoke(productId).collect { result ->
+                        if (result is DomainNetworkResult.Success) {
+                            result.data.forEach { product ->
+                                if (!recommendedProducts.any { it.id == product.id }) {
+                                    recommendedProducts.add(product)
+                                }
+                            }
+                        }
+                    }
+                }
+                if (recommendedProducts.isEmpty()) {
+                    getProductsUseCase.invoke(
+                        query = "tag:women",
+                        reverse = null,
+                        sortKey = null,
+                        identifiers = null,
+                        first = null,
+                    ).collect { result ->
+                        _uiState.value = _uiState.value.copy(
+                            recommendedProductsResult = result)
+                    }
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        recommendedProductsResult = DomainNetworkResult.Success(recommendedProducts)
+                    )
+                }
+            } catch (e: Exception) {
+                Timber.tag(tag).e(e, "Failed to fetch product recommendations")
                 _uiState.value = _uiState.value.copy(
-                    recommendationProductsResult = result)
+                    recommendedProductsResult = DomainNetworkResult.Error.Generic(e)
+                )
             }
         }
     }

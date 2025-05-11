@@ -1,6 +1,7 @@
 package com.kyobi.home
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,6 +27,7 @@ import com.kyobi.home.ui.tab.HomeRecommendedReel
 import com.kyobi.home.ui.tab.HomeSectionBanner
 import com.kyobi.home.ui.tab.HomeSectionDeals
 import com.kyobi.home.ui.tab.HomeSectionHeader
+import com.kyobi.home.ui.tab.HomeSectionRecommendedProducts
 import com.kyobi.home.ui.tab.HomeSectionTopCatalog
 import com.kyobi.theme.kyobiTheme
 import timber.log.Timber
@@ -64,6 +66,12 @@ fun HomeTab(
     }
 
     val topCatalogs = when (val result = uiState.topCatalogsResult) {
+        is DomainNetworkResult.Success -> result.data
+        is DomainNetworkResult.Loading -> emptyList()
+        is DomainNetworkResult.Error -> emptyList()
+    }
+
+    val recommendedProducts = when (val result = uiState.recommendedProductsResult) {
         is DomainNetworkResult.Success -> result.data
         is DomainNetworkResult.Loading -> emptyList()
         is DomainNetworkResult.Error -> emptyList()
@@ -146,6 +154,28 @@ fun HomeTab(
                             items = mockProductDeals,
                             imageLoader = imageLoader
                         )
+                    }
+                }
+                item {
+                    when (uiState.recommendedProductsResult) {
+                        is DomainNetworkResult.Loading -> {
+                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                        }
+                        is DomainNetworkResult.Success -> {
+                            if (recommendedProducts.isNotEmpty()) {
+                                Timber.tag(tag).d("check recommendedProducts: $recommendedProducts")
+                                HomeSectionRecommendedProducts(
+                                    items = recommendedProducts,
+                                    imageLoader = imageLoader,
+                                    onProductClick = {}
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                            }
+                        }
+                        is DomainNetworkResult.Error -> {
+                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                        }
                     }
                 }
             }

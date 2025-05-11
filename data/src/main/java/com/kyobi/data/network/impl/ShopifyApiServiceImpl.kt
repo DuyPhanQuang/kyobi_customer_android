@@ -139,15 +139,12 @@ class ShopifyApiServiceImpl @Inject constructor(
                 .query(
                     GetHomepageKeyDataQuery(
                         handle = handle,
-                        key = key,
-                    )
-                )
+                        key = key))
                 .execute()
             if (response.hasErrors()) {
                 throw ShopifyApiException(
                     message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
-                    errorCode = null
-                )
+                    errorCode = null)
             }
             val nodes = response.data?.page?.metafield?.references?.nodes ?: return emptyList()
             // Fetch media details
@@ -160,9 +157,7 @@ class ShopifyApiServiceImpl @Inject constructor(
                 } catch (e: Exception) {
                     emptyList()
                 }
-            } else {
-                emptyList()
-            }
+            } else { emptyList() }
             return mapBanners(nodes, mediaData)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
@@ -177,15 +172,12 @@ class ShopifyApiServiceImpl @Inject constructor(
                 .query(
                     GetHomepageKeyDataQuery(
                         handle = handle,
-                        key = key,
-                    )
-                )
+                        key = key))
                 .execute()
             if (response.hasErrors()) {
                 throw ShopifyApiException(
                     message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
-                    errorCode = null
-                )
+                    errorCode = null)
             }
             val nodes = response.data?.page?.metafield?.references?.nodes ?: return emptyList()
             // Fetch media details
@@ -198,9 +190,7 @@ class ShopifyApiServiceImpl @Inject constructor(
                 } catch (e: Exception) {
                     emptyList()
                 }
-            } else {
-                emptyList()
-            }
+            } else { emptyList() }
             return mapTopCatalogs(nodes, mediaData)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)

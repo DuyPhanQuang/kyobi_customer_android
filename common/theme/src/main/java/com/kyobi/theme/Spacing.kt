@@ -30,5 +30,6 @@ object Dimension {
     val dp156 = 156.dp
     val dp195 = 195.dp
     val dp244 = 244.dp
+    val dpHeightImageThumbnail = 238.667.dp
     val dp356 = 356.dp
 }

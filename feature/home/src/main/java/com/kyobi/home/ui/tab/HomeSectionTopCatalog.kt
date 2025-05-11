@@ -30,7 +30,7 @@ fun HomeSectionTopCatalog(
     imageLoader: ImageLoader,
 ) {
     val itemsPerRow = 5
-    val rows = items.chunked(itemsPerRow) // Chia danh sách thành các hàng, mỗi hàng tối đa 5 item
+    val rows = items.chunked(itemsPerRow)
 
     Column(
         modifier = Modifier.padding(
@@ -45,7 +45,7 @@ fun HomeSectionTopCatalog(
                 horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp12)
             ) {
                 rowItems.forEach { catalog ->
-                    CatalogItemView(
+                    TopCatalogTile(
                         modifier = Modifier.weight(1f), // Chia đều chiều rộng cho mỗi item
                         catalog = catalog,
                         imageLoader = imageLoader,
@@ -54,10 +54,7 @@ fun HomeSectionTopCatalog(
                 }
                 // Nếu hàng không đủ 5 item, thêm khoảng trống để giữ layout đồng đều
                 repeat(itemsPerRow - rowItems.size) {
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                    ) {}
+                    Column(modifier = Modifier.weight(1f)) {}
                 }
             }
         }
@@ -65,7 +62,7 @@ fun HomeSectionTopCatalog(
 }
 
 @Composable
-fun CatalogItemView(
+fun TopCatalogTile(
     modifier: Modifier = Modifier,
     catalog: TopCatalog,
     imageLoader: ImageLoader,
