@@ -3,6 +3,7 @@ package com.kyobi.home.ui.common
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +26,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import coil.ImageLoader
 import com.kyobi.composable.image.AppImage
 import com.kyobi.composable.space.XxsSpaceX
+import com.kyobi.composable.utils.ColorUtils
+import com.kyobi.domain.extension.toColorsOption
+import com.kyobi.domain.extension.toFormattedOriginalPrice
+import com.kyobi.domain.extension.toFormattedSalePrice
 import com.kyobi.domain.model.Product
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
@@ -36,6 +43,7 @@ fun HomeProductCard(
     onClick: () -> Unit,
 ) {
     val imageThumbnail = product.featuredImage
+    val colorsOption = product.toColorsOption
 
     Column(
         modifier = modifier
@@ -44,8 +52,8 @@ fun HomeProductCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(0.668f)
                 .clip(MaterialTheme.kyobiTheme.shapes.small)
+                .aspectRatio(0.668f)
         ) {
             AppImage(
                 modifier = Modifier
@@ -102,17 +110,46 @@ fun HomeProductCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(top = MaterialTheme.kyobiTheme.spacing.dp4),
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp6),
+            ) {
+                colorsOption.forEach { color ->
+                    val colorValue = ColorUtils.getColorValue(color)
+                    Box(
+                        modifier = Modifier
+                            .size(MaterialTheme.kyobiTheme.width.dp16)
+                            .clip(CircleShape)
+                            .border(
+                                width = MaterialTheme.kyobiTheme.width.dp1,
+                                color = MaterialTheme.kyobiTheme.colors.bg.stone300,
+                                shape = CircleShape)
+                            .background(color = MaterialTheme.kyobiTheme.colors.bg.white)
+                            .padding(MaterialTheme.kyobiTheme.spacing.dp2),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                                .background(color = colorValue),
+                        )
+                    }
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(
                     vertical = MaterialTheme.kyobiTheme.spacing.dp4),
             ) {
                 Text(
-                    text = "${product.priceRange.minVariantPrice.currencyCode} ${product.priceRange.minVariantPrice.amount}",
+                    text = product.toFormattedSalePrice,
                     style = MaterialTheme.typography.labelSmallXs,
                     color = MaterialTheme.kyobiTheme.colors.text.red700,
                 )
                 XxsSpaceX()
                 Text(
-                    text = "${product.compareAtPriceRange.minVariantPrice.currencyCode} ${product.compareAtPriceRange.minVariantPrice.amount}",
+                    text = product.toFormattedOriginalPrice,
                     style = MaterialTheme.typography.labelSmallXs.copy(
                         textDecoration = TextDecoration.LineThrough
                     ),

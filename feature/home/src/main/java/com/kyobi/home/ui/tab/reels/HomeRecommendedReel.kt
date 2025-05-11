@@ -1,4 +1,4 @@
-package com.kyobi.home.ui.tab
+package com.kyobi.home.ui.tab.reels
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

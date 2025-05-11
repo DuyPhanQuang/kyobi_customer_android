@@ -36,8 +36,8 @@ fun SkeletonTopCatalogGridView(
                 SkeletonContainer(
                     modifier = Modifier
                         .weight(1f)
-                        .aspectRatio(1f)
                         .clip(CircleShape)
+                        .aspectRatio(1f)
                 )
             }
         }

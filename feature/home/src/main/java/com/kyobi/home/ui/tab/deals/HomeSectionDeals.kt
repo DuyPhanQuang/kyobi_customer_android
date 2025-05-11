@@ -1,4 +1,4 @@
-package com.kyobi.home.ui.tab
+package com.kyobi.home.ui.tab.deals
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,7 +33,6 @@ import com.kyobi.composable.image.AppImage
 import com.kyobi.composable.R
 import com.kyobi.composable.space.XxsSpaceX
 import com.kyobi.home.ProductItem
-import com.kyobi.home.ui.tab.deals.HomeProductDealCard
 import com.kyobi.home.ui.tab.deals.flip_clock.Flipper
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
@@ -48,11 +47,11 @@ fun HomeSectionDeals(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(MaterialTheme.kyobiTheme.shapes.small)
             .background(Color.Transparent)
             .padding(
                 horizontal = MaterialTheme.kyobiTheme.spacing.dp12
             )
-            .clip(MaterialTheme.kyobiTheme.shapes.small)
     ) {
         AppImage(
             imageUrl = null,

@@ -1,4 +1,4 @@
-package com.kyobi.home.ui.tab
+package com.kyobi.home.ui.tab.top_catalogs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -82,13 +82,13 @@ fun TopCatalogTile(
             AppImage(
                 imageUrl = imageData.url,
                 modifier = Modifier
-                    .aspectRatio(1f)
                     .clip(CircleShape)
                     .border(
                         width = MaterialTheme.kyobiTheme.width.dp1,
                         color = MaterialTheme.kyobiTheme.colors.bg.stone100,
                         shape = CircleShape
                     )
+                    .aspectRatio(1f)
                     .background(
                         color = MaterialTheme.kyobiTheme.colors.background,
                         shape = CircleShape

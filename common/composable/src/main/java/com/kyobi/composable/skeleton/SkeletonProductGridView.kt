@@ -36,8 +36,8 @@ fun SkeletonProductGridView(
                         SkeletonContainer(
                             modifier = Modifier
                                 .weight(1f)
-                                .aspectRatio(aspectRatio)
                                 .clip(MaterialTheme.kyobiTheme.shapes.small)
+                                .aspectRatio(aspectRatio)
                         )
                     } else {
                         Spacer(modifier = Modifier.weight(1f))

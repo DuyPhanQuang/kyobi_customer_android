@@ -1,4 +1,4 @@
-package com.kyobi.home.ui.tab
+package com.kyobi.home.ui.tab.recommended_products
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

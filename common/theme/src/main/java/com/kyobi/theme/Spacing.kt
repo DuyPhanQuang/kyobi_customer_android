@@ -9,9 +9,12 @@ object Dimension {
     val dp2 = 2.dp
     val dp3 = 3.dp
     val dp4 = 4.dp
+    val dp5 = 5.dp
+    val dp6 = 6.dp
     val dp8 = 8.dp
     val dp12 = 12.dp
     val dp14 = 14.dp
+    val dp15 = 15.dp
     val dp16 = 16.dp
     val dp18 = 18.dp
     val dp20 = 20.dp

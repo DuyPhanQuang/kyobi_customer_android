@@ -1,4 +1,4 @@
-package com.kyobi.home.ui.tab
+package com.kyobi.home.ui.tab.banners
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween

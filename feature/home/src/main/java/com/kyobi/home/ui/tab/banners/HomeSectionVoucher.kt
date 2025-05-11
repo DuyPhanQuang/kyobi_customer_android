@@ -1,7 +1,6 @@
-package com.kyobi.home.ui.tab
+package com.kyobi.home.ui.tab.banners
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -18,22 +17,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kyobi.composable.R
-import com.kyobi.composable.space.LgSpaceX
-import com.kyobi.composable.space.XsSpaceX
 import com.kyobi.composable.space.XxsSpaceX
-import com.kyobi.theme.Colors
-import com.kyobi.theme.Dimension
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelXs
 

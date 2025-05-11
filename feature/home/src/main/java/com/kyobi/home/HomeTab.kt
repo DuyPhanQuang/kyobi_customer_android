@@ -23,12 +23,12 @@ import androidx.navigation.NavHostController
 import com.kyobi.composable.skeleton.SkeletonContainer
 import com.kyobi.composable.skeleton.SkeletonProductGridView
 import com.kyobi.domain.model.DomainNetworkResult
-import com.kyobi.home.ui.tab.HomeRecommendedReel
-import com.kyobi.home.ui.tab.HomeSectionBanner
-import com.kyobi.home.ui.tab.HomeSectionDeals
+import com.kyobi.home.ui.tab.reels.HomeRecommendedReel
+import com.kyobi.home.ui.tab.banners.HomeSectionBanner
+import com.kyobi.home.ui.tab.deals.HomeSectionDeals
 import com.kyobi.home.ui.tab.HomeSectionHeader
-import com.kyobi.home.ui.tab.HomeSectionRecommendedProducts
-import com.kyobi.home.ui.tab.HomeSectionTopCatalog
+import com.kyobi.home.ui.tab.recommended_products.HomeSectionRecommendedProducts
+import com.kyobi.home.ui.tab.top_catalogs.HomeSectionTopCatalog
 import com.kyobi.home.ui.tab.top_catalogs.SkeletonTopCatalogGridView
 import com.kyobi.theme.kyobiTheme
 import timber.log.Timber
