@@ -56,6 +56,7 @@ class HomeTabViewModel @Inject constructor(
         fetchRecommendedReels()
         fetchTopCatalog()
         fetchProductDeals()
+        fetchTrendingResearchs()
         fetchProductRecommendations(emptyList(), emptyList())
     }
 
@@ -126,6 +127,27 @@ class HomeTabViewModel @Inject constructor(
         viewModelScope.launchOnIO {
             getHomePagesUseCase.getHomeTopCatalogs().collect { result ->
                 _uiState.value = _uiState.value.copy(topCatalogsResult = result)
+                if (result is DomainNetworkResult.Success) {
+                    val topCatalogs = result.data
+                    val startTime = System.currentTimeMillis()
+                    val deferredList = topCatalogs.mapNotNull { topCatalog ->
+                        val imageData = topCatalog.image?.image
+                        imageData?.let { url ->
+                            async {
+                                val request = ImageRequest.Builder(context)
+                                    .data(url)
+                                    .memoryCachePolicy(CachePolicy.ENABLED)
+                                    .diskCachePolicy(CachePolicy.ENABLED)
+                                    .build()
+                                Timber.tag(tag).d("Preloading image: $url")
+                                imageLoader.execute(request)
+                            }
+                        }
+                    }
+                    deferredList.awaitAll() // parallel
+                    val duration = System.currentTimeMillis() - startTime
+                    Timber.tag(tag).d("Preload top catalog images completed in $duration ms")
+                }
             }
         }
     }
@@ -133,24 +155,13 @@ class HomeTabViewModel @Inject constructor(
     fun getProductDeals(): List<ProductItem> = productDeals
 
     private fun fetchProductDeals() {
+
+    }
+
+    private fun fetchTrendingResearchs() {
         viewModelScope.launchOnIO {
-            val startTime = System.currentTimeMillis()
-            try {
-                val deferredList = productDeals.map { product ->
-                    async {
-                        val request = ImageRequest.Builder(context)
-                            .data(product.imageUrl)
-                            .memoryCachePolicy(CachePolicy.ENABLED)
-                            .diskCachePolicy(CachePolicy.ENABLED)
-                            .build()
-                        imageLoader.execute(request)
-                    }
-                }
-                deferredList.awaitAll() // parallel
-                val duration = System.currentTimeMillis() - startTime
-                Timber.tag(tag).d("Preload product deal images completed in $duration ms")
-            } catch (e: Exception) {
-                Timber.tag(tag).e(e, "Preload banner images failed")
+            getHomePagesUseCase.getHomeTrendingResearchs().collect { result ->
+                _uiState.value = _uiState.value.copy(trendingResearch = result)
             }
         }
     }

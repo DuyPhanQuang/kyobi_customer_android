@@ -2,6 +2,7 @@ package com.kyobi.domain.repository
 
 import com.kyobi.domain.model.Banner
 import com.kyobi.domain.model.TopCatalog
+import com.kyobi.domain.model.TrendingResearch
 
 interface PageRepository {
     suspend fun getBannersFromShopify(
@@ -13,4 +14,9 @@ interface PageRepository {
         handle: String,
         key: String
     ): List<TopCatalog>
+
+    suspend fun getTrendingResearchsFromShopify(
+        handle: String,
+        key: String
+    ): List<TrendingResearch>
 }

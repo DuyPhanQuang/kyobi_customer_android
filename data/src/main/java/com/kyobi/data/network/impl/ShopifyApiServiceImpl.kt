@@ -16,6 +16,7 @@ import com.kyobi.data.graphql.type.ProductSortKeys
 import com.kyobi.data.network.ShopifyApiService
 import com.kyobi.data.utils.mapper.mapBanners
 import com.kyobi.data.utils.mapper.mapTopCatalogs
+import com.kyobi.data.utils.mapper.mapTrendingResearchs
 import com.kyobi.data.utils.mapper.removeEdgesAndNodes
 import com.kyobi.data.utils.mapper.reshapeProduct
 import com.kyobi.domain.model.Banner
@@ -23,6 +24,7 @@ import com.kyobi.domain.model.Product
 import com.kyobi.domain.model.ShopifyImage
 import com.kyobi.domain.model.ShopifyMedia
 import com.kyobi.domain.model.TopCatalog
+import com.kyobi.domain.model.TrendingResearch
 import com.kyobi.domain.model.request.MetafieldIdentifierRequest
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -192,6 +194,39 @@ class ShopifyApiServiceImpl @Inject constructor(
                 }
             } else { emptyList() }
             return mapTopCatalogs(nodes, mediaData)
+        } catch (e: ApolloException) {
+            throw errorHandler.handleError(e)
+        } catch (e: Exception) {
+            throw errorHandler.handleError(e)
+        }
+    }
+
+    override suspend fun getTrendingResearchs(handle: String, key: String): List<TrendingResearch> {
+        try {
+            val response: ApolloResponse<GetHomepageKeyDataQuery.Data> = apolloClient
+                .query(
+                    GetHomepageKeyDataQuery(
+                        handle = handle,
+                        key = key))
+                .execute()
+            if (response.hasErrors()) {
+                throw ShopifyApiException(
+                    message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
+                    errorCode = null)
+            }
+            val nodes = response.data?.page?.metafield?.references?.nodes ?: return emptyList()
+            // Fetch media details
+            val mediaIds = nodes.mapNotNull { node ->
+                node.onMetaobject?.fields?.find { it.key == "thumbnail" }?.value
+            }.filter { it.isNotEmpty() }
+            val mediaData = if (mediaIds.isNotEmpty()) {
+                try {
+                    getMediaImagesByIds(mediaIds)
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            } else { emptyList() }
+            return mapTrendingResearchs(nodes, mediaData)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {
