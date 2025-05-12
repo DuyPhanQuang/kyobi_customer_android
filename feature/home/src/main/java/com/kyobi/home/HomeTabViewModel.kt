@@ -56,6 +56,7 @@ class HomeTabViewModel @Inject constructor(
         fetchRecommendedReels()
         fetchTopCatalog()
         fetchProductDeals()
+        fetchSaleProducts()
         fetchTrendingResearchs()
         fetchProductRecommendations(emptyList(), emptyList())
     }
@@ -156,6 +157,14 @@ class HomeTabViewModel @Inject constructor(
 
     private fun fetchProductDeals() {
 
+    }
+
+    private fun fetchSaleProducts() {
+        viewModelScope.launchOnIO {
+            getHomePagesUseCase.getHomeSaleProducts().collect { result ->
+                _uiState.value = _uiState.value.copy(saleProductsResult = result)
+            }
+        }
     }
 
     private fun fetchTrendingResearchs() {

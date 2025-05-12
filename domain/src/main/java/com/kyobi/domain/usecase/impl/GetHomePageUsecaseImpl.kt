@@ -3,17 +3,23 @@ package com.kyobi.domain.usecase.impl
 import com.kyobi.core.exceptions.ShopifyApiException
 import com.kyobi.domain.model.Banner
 import com.kyobi.domain.model.DomainNetworkResult
+import com.kyobi.domain.model.SaleGroupProduct
 import com.kyobi.domain.model.TopCatalog
 import com.kyobi.domain.model.TrendingResearch
+import com.kyobi.domain.repository.CatalogRepository
 import com.kyobi.domain.repository.PageRepository
+import com.kyobi.domain.repository.ProductRepository
 import com.kyobi.domain.usecase.GetHomePagesUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
+import kotlin.random.Random
 
 class GetHomePagesUseCaseImpl @Inject constructor(
-    private val pageRepository: PageRepository
+    private val pageRepository: PageRepository,
+    private val catalogRepository: CatalogRepository,
+    private val productRepository: ProductRepository
 ) : GetHomePagesUseCase {
     override suspend fun getHomeBanners(): Flow<DomainNetworkResult<List<Banner>>> {
         return flow {
@@ -62,6 +68,41 @@ class GetHomePagesUseCaseImpl @Inject constructor(
                     key = "homepage_trending"
                 )
                 emit(DomainNetworkResult.Success(result))
+            } catch (e: ShopifyApiException) {
+                emit(DomainNetworkResult.Error.ShopifyApi(e))
+            } catch (e: Exception) {
+                emit(DomainNetworkResult.Error.Generic(e))
+            }
+        }.catch { throwable ->
+            emit(DomainNetworkResult.Error.Generic(throwable))
+        }
+    }
+
+    override suspend fun getHomeSaleProducts(): Flow<DomainNetworkResult<List<SaleGroupProduct>>> {
+        return flow {
+            emit(DomainNetworkResult.Loading)
+            try {
+                val catalogs = catalogRepository.getSaleCatalogs()
+                if (catalogs.isEmpty()) {
+                    emit(DomainNetworkResult.Success(emptyList()))
+                    return@flow
+                }
+                val saleGroupProducts = catalogs.map { catalog ->
+                    val query = "tag:${catalog.handle}"
+                    val allProducts = productRepository.getProductsFromShopify(
+                        query = query,
+                        reverse = null,
+                        sortKey = null,
+                        identifiers = null,
+                        first = 10
+                    )
+                    val selectedProducts = allProducts.shuffled(Random.Default).take(2)
+                    SaleGroupProduct(
+                        catalog = catalog,
+                        products = selectedProducts.ifEmpty { emptyList() }
+                    )
+                }
+                emit(DomainNetworkResult.Success(saleGroupProducts))
             } catch (e: ShopifyApiException) {
                 emit(DomainNetworkResult.Error.ShopifyApi(e))
             } catch (e: Exception) {

@@ -9,6 +9,7 @@ import com.kyobi.data.model.AssetsResponse
 import com.kyobi.data.model.AuthUserResponse
 import com.kyobi.data.model.LoginResponse
 import com.kyobi.data.model.NotificationResponse
+import com.kyobi.data.model.SaleCatalogResponse
 import com.kyobi.data.model.SignupResponse
 import com.kyobi.data.network.KyobiApiService
 import com.kyobi.domain.model.request.LoginRequest
@@ -177,6 +178,29 @@ class KyobiApiServiceImpl @Inject constructor(
         try {
             Timber.tag(tag).d("Fetching assets with query: $query, page: $page, perPage: $perPage")
             return api.getAssets(query, page, perPage, locale)
+        } catch (e: Exception) {
+            throw errorHandler.handleError(e)
+        }
+    }
+
+    // da apply handle full error
+    override suspend fun getSaleCatalogs(): List<SaleCatalogResponse> {
+        try {
+            Timber.tag(tag).d("Fetching sale catalogs")
+            return api.getSaleCatalogs()
+        } catch (e: HttpException) {
+            val errorBody = e.response()?.errorBody()?.string() ?: ""
+            when (e.code()) {
+                400 -> {
+                    throw KyobiApiException(
+                        "Failed to fetch catalogs: ${errorBody.ifEmpty { "Unknown error" }}",
+                        e.code()
+                    )
+                }
+                401 -> throw KyobiApiException("Unauthorized access to catalogs", e.code())
+                404 -> throw KyobiApiException("Catalogs not found", e.code())
+                else -> throw errorHandler.handleError(e)
+            }
         } catch (e: Exception) {
             throw errorHandler.handleError(e)
         }

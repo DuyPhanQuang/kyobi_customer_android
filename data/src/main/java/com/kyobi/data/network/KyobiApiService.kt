@@ -8,6 +8,7 @@ import com.kyobi.data.model.AssetSourceResponse
 import com.kyobi.data.model.AssetsResponse
 import com.kyobi.data.model.LoginResponse
 import com.kyobi.data.model.NotificationResponse
+import com.kyobi.data.model.SaleCatalogResponse
 import com.kyobi.data.model.SignupResponse
 import com.kyobi.domain.model.request.LoginRequest
 import com.kyobi.domain.model.request.RegisterTokenRequest
@@ -55,9 +56,11 @@ interface KyobiApiService {
         @Body request: UnregisterTokenRequest
     ): NotificationResponse
 
+    @WithAuthHeaders
     @GET("api/assets/v1/giphy-stickers")
     suspend fun getAssetSource(): AssetSourceResponse
 
+    @WithAuthHeaders
     @GET("api/assets/v1/giphy-stickers/assets")
     suspend fun getAssets(
         @Query("query") query: String? = "fashion style",
@@ -65,4 +68,8 @@ interface KyobiApiService {
         @Query("per_page") perPage: Int? = 10,
         @Query("locale") locale: String? = "en"
     ): AssetsResponse
+
+    @WithAuthHeaders
+    @GET("catalogs")
+    suspend fun getSaleCatalogs(): List<SaleCatalogResponse>
 }
