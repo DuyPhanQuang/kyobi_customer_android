@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -141,7 +142,7 @@ fun OutlineButton(
                             .size(MaterialTheme.kyobiTheme.icon.sm)
                             .padding(end = if (text != null) MaterialTheme.kyobiTheme.spacing.dp8
                             else MaterialTheme.kyobiTheme.spacing.dp0),
-                        tint = leadingIconColor ?: MaterialTheme.kyobiTheme.colors.onSecondary
+                        tint = leadingIconColor ?: LocalContentColor.current
                     )
                 }
                 if (text != null) {
@@ -161,7 +162,7 @@ fun OutlineButton(
                             .padding(
                                 start = if (text != null) MaterialTheme.kyobiTheme.spacing.dp8
                                 else MaterialTheme.kyobiTheme.spacing.dp0),
-                        tint = trailingIconColor ?: MaterialTheme.kyobiTheme.colors.onSecondary
+                        tint = trailingIconColor ?: LocalContentColor.current
                     )
                 }
             }

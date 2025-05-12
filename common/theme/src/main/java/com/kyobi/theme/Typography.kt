@@ -227,6 +227,20 @@ val Typography.paragraphRegularXs: TextStyle
         fontWeight = FontWeight.Normal,
     )
 
+// small sale price
+val Typography.smallTitle: TextStyle
+    get() = labelSmallXs.copy(
+        fontSize = 10.sp,
+        lineHeight = 16.sp,
+    )
+
+val Typography.smallHeader: TextStyle
+    get() = labelSmallXs.copy(
+        lineHeight = 20.sp,
+        fontWeight = FontWeight.Bold
+    )
+
+
 // navigation
 val Typography.navigation: TextStyle
     get() = titleSmall

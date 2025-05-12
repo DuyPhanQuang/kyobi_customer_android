@@ -15,6 +15,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -144,7 +145,7 @@ fun PrimaryButton(
                             .padding(
                                 end = if (text == null) MaterialTheme.kyobiTheme.spacing.dp8
                             else MaterialTheme.kyobiTheme.spacing.dp0),
-                        tint = leadingIconColor ?: MaterialTheme.kyobiTheme.colors.onPrimary
+                        tint = leadingIconColor ?: LocalContentColor.current
                     )
                 }
                 if (text != null) {
@@ -164,7 +165,7 @@ fun PrimaryButton(
                             .padding(
                                 start = if (text == null) MaterialTheme.kyobiTheme.spacing.dp8
                                 else MaterialTheme.kyobiTheme.spacing.dp0),
-                        tint = trailingIconColor ?: MaterialTheme.kyobiTheme.colors.onPrimary
+                        tint = trailingIconColor ?: LocalContentColor.current
                     )
                 }
                 if (isLoading) {

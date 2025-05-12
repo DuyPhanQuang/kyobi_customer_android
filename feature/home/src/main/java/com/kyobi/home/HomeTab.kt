@@ -28,6 +28,7 @@ import com.kyobi.home.ui.tab.banners.HomeSectionBanner
 import com.kyobi.home.ui.tab.deals.HomeSectionDeals
 import com.kyobi.home.ui.tab.HomeSectionHeader
 import com.kyobi.home.ui.tab.recommended_products.HomeSectionRecommendedProducts
+import com.kyobi.home.ui.tab.sale_products.HomeSectionSaleProducts
 import com.kyobi.home.ui.tab.spotlights.HomeSectionSpotlights
 import com.kyobi.home.ui.tab.spotlights.SkeletonSpotlightGridView
 import com.kyobi.home.ui.tab.top_catalogs.HomeSectionTopCatalog
@@ -69,6 +70,12 @@ fun HomeTab(
     }
 
     val topCatalogs = when (val result = uiState.topCatalogsResult) {
+        is DomainNetworkResult.Success -> result.data
+        is DomainNetworkResult.Loading -> emptyList()
+        is DomainNetworkResult.Error -> emptyList()
+    }
+
+    val saleProducts = when (val result = uiState.saleProductsResult) {
         is DomainNetworkResult.Success -> result.data
         is DomainNetworkResult.Loading -> emptyList()
         is DomainNetworkResult.Error -> emptyList()
@@ -163,6 +170,27 @@ fun HomeTab(
                             items = mockProductDeals,
                             imageLoader = imageLoader
                         )
+                    }
+                }
+                item {
+                    when (uiState.saleProductsResult) {
+                        is DomainNetworkResult.Loading -> {
+                            SkeletonProductGridView(modifier = Modifier.fillMaxWidth())
+                        }
+                        is DomainNetworkResult.Success -> {
+                            if (saleProducts.isNotEmpty()) {
+                                HomeSectionSaleProducts(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    saleProducts = saleProducts,
+                                    imageLoader = imageLoader,
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                            }
+                        }
+                        is DomainNetworkResult.Error -> {
+                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                        }
                     }
                 }
                 item {

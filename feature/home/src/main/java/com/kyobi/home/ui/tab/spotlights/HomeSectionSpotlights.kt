@@ -24,10 +24,7 @@ fun HomeSectionSpotlights(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                start = MaterialTheme.kyobiTheme.spacing.dp12,
-                end = MaterialTheme.kyobiTheme.spacing.dp12,
-                top = MaterialTheme.kyobiTheme.spacing.dp16)
+            .padding(horizontal = MaterialTheme.kyobiTheme.spacing.dp12)
     ) {
         XsSpaceY()
         Text(
