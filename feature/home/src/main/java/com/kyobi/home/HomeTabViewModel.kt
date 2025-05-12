@@ -161,7 +161,7 @@ class HomeTabViewModel @Inject constructor(
     private fun fetchTrendingResearchs() {
         viewModelScope.launchOnIO {
             getHomePagesUseCase.getHomeTrendingResearchs().collect { result ->
-                _uiState.value = _uiState.value.copy(trendingResearch = result)
+                _uiState.value = _uiState.value.copy(trendingResearchResult = result)
             }
         }
     }

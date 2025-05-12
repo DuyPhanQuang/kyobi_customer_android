@@ -10,6 +10,6 @@ data class HomeTabUiState(
     val recommendedProductsResult: DomainNetworkResult<List<Product>> = DomainNetworkResult.Success(emptyList()),
     val bannersResult: DomainNetworkResult<List<Banner>> = DomainNetworkResult.Success(emptyList()),
     val topCatalogsResult: DomainNetworkResult<List<TopCatalog>> = DomainNetworkResult.Success(emptyList()),
-    val trendingResearch: DomainNetworkResult<List<TrendingResearch>> = DomainNetworkResult.Success(emptyList()),
+    val trendingResearchResult: DomainNetworkResult<List<TrendingResearch>> = DomainNetworkResult.Success(emptyList()),
 
 )

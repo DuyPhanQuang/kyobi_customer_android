@@ -10,7 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import coil.ImageLoader
-import com.kyobi.composable.space.MdSpaceX
+import com.kyobi.composable.space.XsSpaceY
 import com.kyobi.domain.model.Product
 import com.kyobi.home.ui.common.HomeProductCard
 import com.kyobi.theme.kyobiTheme
@@ -21,7 +21,6 @@ fun HomeSectionRecommendedProducts(
     modifier: Modifier = Modifier,
     items: List<Product>,
     imageLoader: ImageLoader,
-    onProductClick: (Product) -> Unit
 ) {
     val itemsPerRow = 2
     val rows = items.chunked(itemsPerRow)
@@ -30,18 +29,19 @@ fun HomeSectionRecommendedProducts(
         modifier = modifier
             .fillMaxWidth()
             .padding(
-                horizontal = MaterialTheme.kyobiTheme.spacing.dp12)
+                start = MaterialTheme.kyobiTheme.spacing.dp12,
+                end = MaterialTheme.kyobiTheme.spacing.dp12,
+                top = MaterialTheme.kyobiTheme.spacing.dp16)
     ) {
+        XsSpaceY()
         Text(
-            modifier = Modifier
-                .padding(
-                    vertical = MaterialTheme.kyobiTheme.spacing.dp8
-                ),
+            modifier = Modifier.fillMaxWidth(),
             text = "For You",
             style = MaterialTheme.kyobiTheme.typography.paragraphMd,
             color = MaterialTheme.kyobiTheme.colors.onBackground
         )
-        MdSpaceX()
+        XsSpaceY()
+
         rows.forEach { rowItems ->
             Row(
                 Modifier.fillMaxWidth(),
@@ -54,7 +54,7 @@ fun HomeSectionRecommendedProducts(
                             .weight(1f),  // Chia đều chiều rộng cho mỗi item
                         product = product,
                         imageLoader = imageLoader,
-                        onClick = { onProductClick(product) }
+                        onClick = {  }
                     )
                 }
                 // Nếu hàng không đủ 2 item, thêm khoảng trống để giữ layout đồng đều

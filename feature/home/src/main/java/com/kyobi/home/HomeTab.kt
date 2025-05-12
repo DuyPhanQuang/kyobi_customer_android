@@ -28,6 +28,7 @@ import com.kyobi.home.ui.tab.banners.HomeSectionBanner
 import com.kyobi.home.ui.tab.deals.HomeSectionDeals
 import com.kyobi.home.ui.tab.HomeSectionHeader
 import com.kyobi.home.ui.tab.recommended_products.HomeSectionRecommendedProducts
+import com.kyobi.home.ui.tab.spotlights.HomeSectionSpotlights
 import com.kyobi.home.ui.tab.top_catalogs.HomeSectionTopCatalog
 import com.kyobi.home.ui.tab.top_catalogs.SkeletonTopCatalogGridView
 import com.kyobi.theme.kyobiTheme
@@ -67,6 +68,12 @@ fun HomeTab(
     }
 
     val topCatalogs = when (val result = uiState.topCatalogsResult) {
+        is DomainNetworkResult.Success -> result.data
+        is DomainNetworkResult.Loading -> emptyList()
+        is DomainNetworkResult.Error -> emptyList()
+    }
+
+    val trendingResearchs = when (val result = uiState.trendingResearchResult) {
         is DomainNetworkResult.Success -> result.data
         is DomainNetworkResult.Loading -> emptyList()
         is DomainNetworkResult.Error -> emptyList()
@@ -158,17 +165,35 @@ fun HomeTab(
                     }
                 }
                 item {
+                    when (uiState.trendingResearchResult) {
+                        is DomainNetworkResult.Loading -> {
+                            SkeletonProductGridView(modifier = Modifier.fillMaxWidth())
+                        }
+                        is DomainNetworkResult.Success -> {
+                            if (trendingResearchs.isNotEmpty()) {
+                                HomeSectionSpotlights(
+                                    items = trendingResearchs,
+                                    imageLoader = imageLoader,
+                                )
+                            } else {
+                                Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                            }
+                        }
+                        is DomainNetworkResult.Error -> {
+                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                        }
+                    }
+                }
+                item {
                     when (uiState.recommendedProductsResult) {
                         is DomainNetworkResult.Loading -> {
                             SkeletonProductGridView(modifier = Modifier.fillMaxWidth())
                         }
                         is DomainNetworkResult.Success -> {
                             if (recommendedProducts.isNotEmpty()) {
-                                Timber.tag(tag).d("check recommendedProducts: $recommendedProducts")
                                 HomeSectionRecommendedProducts(
                                     items = recommendedProducts,
-                                    imageLoader = imageLoader,
-                                    onProductClick = {}
+                                    imageLoader = imageLoader
                                 )
                             } else {
                                 Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))

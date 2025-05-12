@@ -11,4 +11,15 @@ data class TrendingResearch(
     val order: Int,
     val hashtag: List<String>? = null,
     val trendReviewIds: List<String>? = null,
-)
+) {
+    companion object {
+        fun empty() = TrendingResearch(
+            title = "",
+            label = "",
+            descriptionHtml = "",
+            link = "",
+            tag = "",
+            order = 0
+        )
+    }
+}
