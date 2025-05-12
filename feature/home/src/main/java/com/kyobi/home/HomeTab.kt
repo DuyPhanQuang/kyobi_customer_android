@@ -29,6 +29,7 @@ import com.kyobi.home.ui.tab.deals.HomeSectionDeals
 import com.kyobi.home.ui.tab.HomeSectionHeader
 import com.kyobi.home.ui.tab.recommended_products.HomeSectionRecommendedProducts
 import com.kyobi.home.ui.tab.spotlights.HomeSectionSpotlights
+import com.kyobi.home.ui.tab.spotlights.SkeletonSpotlightGridView
 import com.kyobi.home.ui.tab.top_catalogs.HomeSectionTopCatalog
 import com.kyobi.home.ui.tab.top_catalogs.SkeletonTopCatalogGridView
 import com.kyobi.theme.kyobiTheme
@@ -167,7 +168,7 @@ fun HomeTab(
                 item {
                     when (uiState.trendingResearchResult) {
                         is DomainNetworkResult.Loading -> {
-                            SkeletonProductGridView(modifier = Modifier.fillMaxWidth())
+                            SkeletonSpotlightGridView(modifier = Modifier.fillMaxWidth())
                         }
                         is DomainNetworkResult.Success -> {
                             if (trendingResearchs.isNotEmpty()) {
