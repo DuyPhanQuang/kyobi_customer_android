@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
-class LogoutUsecaseImpl @Inject constructor(
+class LogoutUseCaseImpl @Inject constructor(
     private val authRepository: AuthRepository,
 ): LogoutUseCase {
     override fun logout(): Flow<DomainNetworkResult<Unit>> {

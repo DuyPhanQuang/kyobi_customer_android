@@ -26,7 +26,12 @@ class AppConfigRepositoryImpl @Inject constructor(
         perPage: Int?,
         locale: String?
     ): Assets {
-        val response = apiService.getAssets(query, page, perPage, locale)
+        val response = apiService.getAssets(
+            query = query,
+            page = page,
+            perPage = perPage,
+            locale = locale
+        )
         return response.toAssets()
     }
 }

@@ -294,7 +294,7 @@ fun TrendTab(
             viewCount = 0,
             createdAt = "2025-04-17T12:00:00Z",
             thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
-            tags = null
+            tags = emptyList()
         ),
         Reel(
             id = "reel_5",
@@ -307,7 +307,7 @@ fun TrendTab(
             viewCount = 0,
             createdAt = "2025-04-17T12:00:00Z",
             thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
-            tags = null
+            tags = emptyList()
         ),
         Reel(
             id = "reel_6",
@@ -333,7 +333,7 @@ fun TrendTab(
             viewCount = 0,
             createdAt = "2025-04-17T12:00:00Z",
             thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
-            tags = null
+            tags = emptyList()
         )
     )
 

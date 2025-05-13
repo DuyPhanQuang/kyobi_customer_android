@@ -1,6 +1,8 @@
 package com.kyobi.data.network
 
 import com.kyobi.domain.model.Banner
+import com.kyobi.domain.model.ShopifyCollection
+import com.kyobi.domain.model.FlashSaleInfo
 import com.kyobi.domain.model.Product
 import com.kyobi.domain.model.ShopifyMedia
 import com.kyobi.domain.model.TopCatalog
@@ -43,4 +45,16 @@ interface ShopifyApiService {
     suspend fun getMediaImagesByIds(
         mediaIds: List<String>
     ): List<ShopifyMedia>
+
+    suspend fun getCollectionProducts(
+        handle: String,
+        reverse: Boolean?,
+        sortKey: String?,
+        identifiers: List<MetafieldIdentifierRequest>?,
+        first: Int?
+    ): ShopifyCollection
+
+    suspend fun getFlashSaleInfosByMetaobjectIds(
+        metaobjectIds: List<String>
+    ): List<FlashSaleInfo>
 }

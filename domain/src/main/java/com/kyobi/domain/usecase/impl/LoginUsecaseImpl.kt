@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
-class LoginUsecaseImpl @Inject constructor(
+class LoginUseCaseImpl @Inject constructor(
     private val authRepository: AuthRepository
 ): LoginUseCase {
     override suspend operator fun invoke(email: String, password: String): Flow<DomainNetworkResult<LoggedInUser>> {

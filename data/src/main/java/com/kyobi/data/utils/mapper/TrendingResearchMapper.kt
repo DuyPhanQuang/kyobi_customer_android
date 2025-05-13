@@ -29,17 +29,17 @@ fun mapTrendingResearchs(
                         fieldMap["hashtag"]?.let { json ->
                             val jsonArray = JSONArray(json)
                             (0 until jsonArray.length()).map { jsonArray.getString(it) }
-                        }
+                        } ?: emptyList()
                     } catch (e: JSONException) {
-                        null
+                        emptyList()
                     },
                     trendReviewIds = try {
                         fieldMap["trend_reviews"]?.let { json ->
                             val jsonArray = JSONArray(json)
                             (0 until jsonArray.length()).map { jsonArray.getString(it) }
-                        }
+                        } ?: emptyList()
                     } catch (e: JSONException) {
-                        null
+                        emptyList()
                     }
                 )
             } catch (e: Exception) {

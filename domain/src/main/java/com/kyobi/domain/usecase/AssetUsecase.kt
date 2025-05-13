@@ -4,7 +4,7 @@ import com.kyobi.domain.model.Assets
 import com.kyobi.domain.model.DomainNetworkResult
 import kotlinx.coroutines.flow.Flow
 
-interface AssetUsecase {
+interface AssetUseCase {
     suspend fun getGiphyAssets(
         query: String?,
         page: Int?,

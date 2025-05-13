@@ -17,18 +17,20 @@ class ProductRepositoryImpl @Inject constructor(
         first: Int?
     ): List<Product> {
         val response = shopifyApiService.getProducts(
-            query,
-            reverse,
-            sortKey,
-            identifiers,
-            first
+            query = query,
+            reverse = reverse,
+            sortKey = sortKey,
+            identifiers = identifiers,
+            first = first
         )
         return response
     }
 
-    override suspend fun getProductRecommendationsFromShopify(productId: String): List<Product> {
+    override suspend fun getProductRecommendationsFromShopify(
+        productId: String
+    ): List<Product> {
         val response = shopifyApiService.getProductRecommendations(
-            productId
+            productId = productId
         )
         return response
     }
@@ -38,8 +40,8 @@ class ProductRepositoryImpl @Inject constructor(
         identifiers: List<MetafieldIdentifierRequest>?
     ): List<Product> {
         val response = shopifyApiService.getProductsByIds(
-            ids,
-            identifiers
+            ids = ids,
+            identifiers = identifiers
         )
         return response
     }

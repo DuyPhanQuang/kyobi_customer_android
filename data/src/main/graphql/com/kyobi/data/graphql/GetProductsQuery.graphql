@@ -1,4 +1,10 @@
-query GetProducts($first: Int, $identifiers: [HasMetafieldsIdentifier!]!, $sortKey: ProductSortKeys, $reverse: Boolean, $query: String) {
+query GetProducts(
+    $first: Int,
+    $identifiers: [HasMetafieldsIdentifier!]!,
+    $sortKey: ProductSortKeys,
+    $reverse: Boolean,
+    $query: String
+) {
     products(sortKey: $sortKey, reverse: $reverse, query: $query, first: $first) {
         edges {
             node {

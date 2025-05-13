@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.kyobi.core.coroutines.handleErrors
 import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.domain.model.DomainNetworkResult
-import com.kyobi.domain.usecase.AppVersionUsecase
+import com.kyobi.domain.usecase.AppVersionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +23,7 @@ import timber.log.Timber
 
 @HiltViewModel
 class AppVersionViewModel @Inject constructor(
-    private val appVersionUseCase: AppVersionUsecase,
+    private val appVersionUseCase: AppVersionUseCase,
     private val sharedPreferences: SharedPreferences,
     val sessionEventBus: SessionEventBus
 ): ViewModel() {

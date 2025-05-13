@@ -3,12 +3,16 @@ package com.kyobi.data.di
 import com.kyobi.data.repository.AppConfigRepositoryImpl
 import com.kyobi.data.repository.AuthRepositoryImpl
 import com.kyobi.data.repository.CatalogRepositoryImpl
+import com.kyobi.data.repository.CollectionRepositoryImpl
+import com.kyobi.data.repository.MetaobjectRepositoryImpl
 import com.kyobi.data.repository.NotificationRepositoryImpl
 import com.kyobi.data.repository.PageRepositoryImpl
 import com.kyobi.data.repository.ProductRepositoryImpl
 import com.kyobi.domain.repository.AppConfigRepository
 import com.kyobi.domain.repository.AuthRepository
 import com.kyobi.domain.repository.CatalogRepository
+import com.kyobi.domain.repository.CollectionRepository
+import com.kyobi.domain.repository.MetaobjectRepository
 import com.kyobi.domain.repository.NotificationRepository
 import com.kyobi.domain.repository.PageRepository
 import com.kyobi.domain.repository.ProductRepository
@@ -44,4 +48,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCatalogRepository(impl: CatalogRepositoryImpl): CatalogRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMetaobjectRepository(impl: MetaobjectRepositoryImpl): MetaobjectRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCollectionRepository(impl: CollectionRepositoryImpl): CollectionRepository
 }

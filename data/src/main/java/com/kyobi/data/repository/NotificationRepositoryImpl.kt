@@ -15,14 +15,26 @@ class NotificationRepositoryImpl @Inject constructor(
     private val tokenStorage: TokenStorage
 ) : NotificationRepository {
 
-    override suspend fun registerToken(userId: String, request: RegisterTokenRequest): Notification {
-        val response = apiService.register(userId, request)
+    override suspend fun registerToken(
+        userId: String,
+        request: RegisterTokenRequest
+    ): Notification {
+        val response = apiService.register(
+            id = userId,
+            request = request
+        )
         tokenStorage.saveFcmToken(request.token)
         return response.toNotification()
     }
 
-    override suspend fun unregisterToken(userId: String, request: UnregisterTokenRequest): Notification {
-        val response = apiService.unregister(userId, request)
+    override suspend fun unregisterToken(
+        userId: String,
+        request: UnregisterTokenRequest
+    ): Notification {
+        val response = apiService.unregister(
+            id = userId,
+            request = request
+        )
         tokenStorage.clearFcmToken()
         return response.toNotification()
     }

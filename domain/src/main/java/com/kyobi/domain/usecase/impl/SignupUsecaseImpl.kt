@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
-class SignupUsecaseImpl @Inject constructor(
+class SignupUseCaseImpl @Inject constructor(
     private val authRepository: AuthRepository
 ): SignUpUseCase {
     override suspend fun signUp(

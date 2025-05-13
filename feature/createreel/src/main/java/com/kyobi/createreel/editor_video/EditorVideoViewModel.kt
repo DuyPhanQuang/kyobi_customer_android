@@ -7,8 +7,8 @@ import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kyobi.createreel.CreateReelUtils.saveVideoToGallery
-import com.kyobi.domain.usecase.AssetSourceUsecase
-import com.kyobi.domain.usecase.AssetUsecase
+import com.kyobi.domain.usecase.AssetSourceUseCase
+import com.kyobi.domain.usecase.AssetUseCase
 import com.kyobi.feature.createreel.R
 import com.kyobi.createreel.editor_video.asset.addGiphyAssetSources
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,8 +42,8 @@ import ly.img.engine.AssetPayload
 
 @HiltViewModel
 class EditorVideoViewModel @Inject constructor(
-    private val assetSourceUsecase: AssetSourceUsecase,
-    private val assetUsecase: AssetUsecase
+    private val assetSourceUsecase: AssetSourceUseCase,
+    private val assetUsecase: AssetUseCase
 ) : ViewModel() {
     private val tag = "EditorVideoViewModel"
     private val stickerMiscId = "ly.img.sticker.misc"

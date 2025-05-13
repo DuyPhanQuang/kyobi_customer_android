@@ -13,7 +13,7 @@ data class Product(
     val variants: List<ProductVariant>,
     val featuredImage: ShopifyImage? = null,
     val images: List<ShopifyImage>,
-    val metafields: List<ShopifyProductMetafield>? = null,
+    val metafields: List<ShopifyMetafield>? = null,
     val seo: SEO,
     val tags: List<String>,
     val updatedAt: String
@@ -48,14 +48,6 @@ data class ProductVariant(
     val quantityRule: QuantityRule,
     val taxable: Boolean,
     val compareAtPrice: Money? = null,
-)
-
-data class ShopifyProductMetafield(
-    val id: String,
-    val type: String,
-    val key: String,
-    val value: String,
-    val references: ShopifyReferences? = null,
 )
 
 data class SelectedOption(

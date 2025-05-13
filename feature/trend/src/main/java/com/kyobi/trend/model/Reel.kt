@@ -11,5 +11,5 @@ data class Reel(
     val shareCount: Int,
     val viewCount: Int,
     val createdAt: String,
-    val tags: List<String>? = null
+    val tags: List<String> = emptyList()
 )

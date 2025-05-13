@@ -4,6 +4,6 @@ import com.kyobi.domain.model.AppVersion
 import com.kyobi.domain.model.DomainNetworkResult
 import kotlinx.coroutines.flow.Flow
 
-interface AppVersionUsecase {
+interface AppVersionUseCase {
     suspend fun getAppVersion(): Flow<DomainNetworkResult<AppVersion>>
 }

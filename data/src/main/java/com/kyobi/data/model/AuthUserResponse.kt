@@ -9,7 +9,7 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class AppMetadata(
     val provider: String?,
-    val providers: List<String>?
+    val providers: List<String> = emptyList()
 )
 
 @JsonClass(generateAdapter = true)

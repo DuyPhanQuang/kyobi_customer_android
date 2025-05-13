@@ -3,14 +3,14 @@ package com.kyobi.domain.usecase.impl
 import com.kyobi.domain.model.Assets
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.repository.AppConfigRepository
-import com.kyobi.domain.usecase.AssetUsecase
+import com.kyobi.domain.usecase.AssetUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
-class AssetUsecaseImpl @Inject constructor(
+class AssetUseCaseImpl @Inject constructor(
     private val appConfigRepository: AppConfigRepository
-) : AssetUsecase {
+) : AssetUseCase {
     override suspend fun getGiphyAssets(
         query: String?,
         page: Int?,

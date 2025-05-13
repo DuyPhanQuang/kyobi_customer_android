@@ -2,8 +2,8 @@ package com.kyobi.createreel.editor_video.asset
 
 import com.kyobi.domain.model.Assets
 import com.kyobi.domain.model.DomainNetworkResult
-import com.kyobi.domain.usecase.AssetSourceUsecase
-import com.kyobi.domain.usecase.AssetUsecase
+import com.kyobi.domain.usecase.AssetSourceUseCase
+import com.kyobi.domain.usecase.AssetUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -33,8 +33,8 @@ const val tag = "RemoteAssetSource"
 
 suspend fun Engine.addRemoteAssetSources(
     paths: Set<RemoteAssetSource.Path>,
-    assetSourceUsecase: AssetSourceUsecase,
-    assetUsecase: AssetUsecase
+    assetSourceUsecase: AssetSourceUseCase,
+    assetUsecase: AssetUseCase
 ) = coroutineScope {
     paths
         .map { async { RemoteAssetSource(engine = this@addRemoteAssetSources, path = it, assetSourceUsecase, assetUsecase).create() } }
@@ -47,8 +47,8 @@ suspend fun Engine.addRemoteAssetSources(
 }
 
 suspend fun Engine.addGiphyAssetSources(
-    assetSourceUsecase: AssetSourceUsecase,
-    assetUsecase: AssetUsecase
+    assetSourceUsecase: AssetSourceUseCase,
+    assetUsecase: AssetUseCase
 ) = coroutineScope {
     val paths = setOf(RemoteAssetSource.Path.GiphyStickers)
     Timber.tag(tag).d("Adding Giphy asset sources")
@@ -58,8 +58,8 @@ suspend fun Engine.addGiphyAssetSources(
 class RemoteAssetSource @Inject constructor(
     private val engine: Engine,
     private val path: Path,
-    private val assetSourceUsecase: AssetSourceUsecase,
-    private val assetUsecase: AssetUsecase
+    private val assetSourceUsecase: AssetSourceUseCase,
+    private val assetUsecase: AssetUseCase
 ) {
     enum class Path(
         val pathString: String,

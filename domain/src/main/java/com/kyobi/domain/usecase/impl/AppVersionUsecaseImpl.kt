@@ -4,15 +4,15 @@ import com.kyobi.core.exceptions.KyobiApiException
 import com.kyobi.domain.model.AppVersion
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.repository.AppConfigRepository
-import com.kyobi.domain.usecase.AppVersionUsecase
+import com.kyobi.domain.usecase.AppVersionUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
-class AppVersionUsecaseImpl @Inject constructor(
+class AppVersionUseCaseImpl @Inject constructor(
     private val appConfigRepository: AppConfigRepository
-): AppVersionUsecase {
+): AppVersionUseCase {
     override suspend fun getAppVersion(): Flow<DomainNetworkResult<AppVersion>> {
         return flow {
             try {

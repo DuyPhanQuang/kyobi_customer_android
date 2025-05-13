@@ -7,7 +7,7 @@ import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.core.storage.TokenStorage
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.LoggedInUser
-import com.kyobi.domain.usecase.GetUserUsecase
+import com.kyobi.domain.usecase.GetUserUseCase
 import com.kyobi.domain.usecase.LoginUseCase
 import com.kyobi.domain.usecase.LogoutUseCase
 import com.kyobi.featurecommon.auth.session.Session
@@ -20,7 +20,7 @@ import javax.inject.Inject
 class AuthViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
     private val logoutUseCase: LogoutUseCase,
-    private val getUserUsecase: GetUserUsecase,
+    private val getUserUsecase: GetUserUseCase,
     private val authStateProvider: AuthStateProvider,
     private val tokenStorage: TokenStorage,
     private val sessionEventBus: SessionEventBus,
