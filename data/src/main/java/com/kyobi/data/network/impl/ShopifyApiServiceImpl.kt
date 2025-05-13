@@ -289,7 +289,7 @@ class ShopifyApiServiceImpl @Inject constructor(
                     errorCode = null)
             }
             val nodes = response.data?.nodes ?: return emptyList()
-            return mapFlashSaleInfos(nodes, emptyList())
+            return mapFlashSaleInfos(nodes)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {

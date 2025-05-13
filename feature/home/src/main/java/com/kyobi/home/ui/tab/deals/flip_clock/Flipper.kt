@@ -9,44 +9,48 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.kyobi.home.ui.tab.deals.flip_clock.ui.FlipClock
-import com.kyobi.home.ui.tab.deals.flip_clock.ui.FlipClockEvents
 import kotlinx.coroutines.delay
+import java.time.Duration
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 import kotlin.math.ceil
 import kotlin.math.max
 
 @Composable
 fun Flipper(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    endTime: String
 ) {
-    var endTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var endTimeMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var remainingSeconds by remember { mutableIntStateOf(0) }
 
     fun updateRemainingTime() {
-        remainingSeconds = ceil(max(endTime - System.currentTimeMillis(), 0L).toFloat() / 1000F).toInt()
+        remainingSeconds = ceil(max(endTimeMillis  - System.currentTimeMillis(), 0L).toFloat() / 1000F).toInt()
     }
 
     fun addTime(millis: Long) {
-        endTime = max(endTime, System.currentTimeMillis()) + millis
+        endTimeMillis  = max(endTimeMillis, System.currentTimeMillis()) + millis
         updateRemainingTime()
     }
 
-    fun addHours(hours: Int) {
-        addTime(hours * 3600 * 1000L)
-    }
-
-    fun addMinutes(minutes: Int) {
-        addTime(minutes * 60 * 1000L)
-    }
-
-    fun addSeconds(seconds: Int) {
-        addTime(seconds * 1000L)
-    }
+    fun addHours(hours: Int) = addTime(hours * 3600 * 1000L)
+    fun addMinutes(minutes: Int) = addTime(minutes * 60 * 1000L)
+    fun addSeconds(seconds: Int) = addTime(seconds * 1000L)
 
     LaunchedEffect(Unit) {
-        // Mock 12:43:12 bằng cách gọi các hàm add
-        addHours(12)
-        addMinutes(43)
-        addSeconds(12)
+        val formatter = DateTimeFormatter.ISO_DATE_TIME
+        val endInstant = Instant.from(formatter.parse(endTime))
+        val now = Instant.now()
+        val remainingMillis = Duration.between(now, endInstant).toMillis().coerceAtLeast(0)
+        val totalSeconds = (remainingMillis / 1000).toInt()
+
+        val hours = totalSeconds / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val seconds = totalSeconds % 60
+
+        addHours(hours)
+        addMinutes(minutes)
+        addSeconds(seconds)
 
         while (true) {
             updateRemainingTime()
@@ -56,14 +60,6 @@ fun Flipper(
 
     FlipClock(
         seconds = remainingSeconds,
-        endMillis = endTime,
-        events = FlipClockEvents(
-            onHoursIncrement = { addHours(1) },
-            onHoursDecrement = { addHours(-1) },
-            onMinutesIncrement = { addMinutes(1) },
-            onMinutesDecrement = { addMinutes(-1) },
-            onSecondsIncrement = { addSeconds(1) },
-            onSecondsDecrement = { addSeconds(-1) }
-        )
+        endMillis = endTimeMillis,
     )
 }

@@ -9,6 +9,7 @@ import coil.request.ImageRequest
 import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.Product
+import com.kyobi.domain.usecase.GetFlashSaleUseCase
 import com.kyobi.domain.usecase.GetHomePagesUseCase
 import com.kyobi.domain.usecase.GetProductRecommendationsUseCase
 import com.kyobi.domain.usecase.GetProductsUseCase
@@ -27,6 +28,7 @@ class HomeTabViewModel @Inject constructor(
     private val getProductsUseCase: GetProductsUseCase,
     private val getHomePagesUseCase: GetHomePagesUseCase,
     private val getProductRecommendationsUseCase: GetProductRecommendationsUseCase,
+    private val getFlashSaleUseCase: GetFlashSaleUseCase,
     private val imageLoader: ImageLoader
 ): ViewModel() {
     private val tag = "HomeTabViewModel"
@@ -41,14 +43,6 @@ class HomeTabViewModel @Inject constructor(
         LookbookItem("4","https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWM5enQ4enF6aGRkOThzZ3c3N2R3eHRhbmVoczRyNXVtNW5rYzcweCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/W07gfOm19B7GwoyXMp/giphy.gif", "#jeans"),
         LookbookItem("5","https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnpwY3g5czM0bjI2bGh3NjBhc214eHZkMWYyb3dsODhrb2gzN3pzMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/lMyDzkQUQvDXSDccup/giphy.gif", "#jeans"),
         LookbookItem("6","https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZDQ5anQ0ZHRmcHc5dnRmbGtsbzFkazZjeWRkZWcyc3p5cWoxaDFycCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/dxVJFZRsq41X9nA1YF/giphy.gif", "#jeans"),
-    )
-
-    private val productDeals = listOf(
-        ProductItem("1", "https://images.unsplash.com/photo-1506157786151-b8491531f063", "19.90"),
-        ProductItem("2", "https://images.unsplash.com/photo-1511556820780-d912e42b4980", "59.90"),
-        ProductItem("3", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e", "49.90"),
-        ProductItem("4", "https://images.unsplash.com/photo-1483985988355-763728e1935b", "29.90"),
-        ProductItem("5", "https://images.unsplash.com/photo-1536514498073-50e69d39c6cf", "29.90")
     )
 
     init {
@@ -153,10 +147,30 @@ class HomeTabViewModel @Inject constructor(
         }
     }
 
-    fun getProductDeals(): List<ProductItem> = productDeals
-
     private fun fetchProductDeals() {
-
+        viewModelScope.launchOnIO {
+            getFlashSaleUseCase.getFlashSale(
+                handle = "flash-sale-disco"
+            ).collect { result ->
+                _uiState.value = _uiState.value.copy(flashSaleResult = result)
+                if (result is DomainNetworkResult.Success) {
+                    val flashSaleData = result.data
+                    val imageData = flashSaleData.flashSaleInfo.background?.image
+                    val startTime = System.currentTimeMillis()
+                    imageData?.let { url ->
+                        val request = ImageRequest.Builder(context)
+                            .data(url)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .build()
+                        Timber.tag(tag).d("Preloading image: $url")
+                        imageLoader.execute(request)
+                    }
+                    val duration = System.currentTimeMillis() - startTime
+                    Timber.tag(tag).d("Preload flashsale background image completed in $duration ms")
+                }
+            }
+        }
     }
 
     private fun fetchSaleProducts() {

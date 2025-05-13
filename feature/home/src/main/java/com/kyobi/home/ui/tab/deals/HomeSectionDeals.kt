@@ -32,18 +32,20 @@ import coil.ImageLoader
 import com.kyobi.composable.image.AppImage
 import com.kyobi.composable.R
 import com.kyobi.composable.space.XxsSpaceX
-import com.kyobi.home.ProductItem
+import com.kyobi.domain.model.FlashSale
 import com.kyobi.home.ui.tab.deals.flip_clock.Flipper
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
+import com.kyobi.theme.paragraph2Xl
 import com.kyobi.theme.paragraphMd
 
 @Composable
 fun HomeSectionDeals(
     imageLoader: ImageLoader,
-    items: List<ProductItem>,
+    flashSaleData: FlashSale,
 ) {
-
+    val backgroundImage = flashSaleData.flashSaleInfo.background?.image
+    val endTime = flashSaleData.flashSaleInfo.endTime
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -54,14 +56,14 @@ fun HomeSectionDeals(
             )
     ) {
         AppImage(
-            imageUrl = null,
+            imageUrl = backgroundImage?.url,
             modifier = Modifier
                 .zIndex(0f)
                 .fillMaxWidth()
-                .height(MaterialTheme.kyobiTheme.height.dp244)
+                .height(MaterialTheme.kyobiTheme.height.dp284)
                 .clip(MaterialTheme.kyobiTheme.shapes.small),
             contentScale = ContentScale.Crop,
-            contentDescription = "Super Deals Background",
+            contentDescription = backgroundImage?.altText,
             imageLoader = imageLoader
         )
         Box(
@@ -85,6 +87,7 @@ fun HomeSectionDeals(
                     horizontalArrangement = Arrangement.Start
                 ) {
                     Icon(
+                        modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.xxl),
                         painter = painterResource(id = R.drawable.ic_lightning),
                         contentDescription = "Lightning Icon",
                         tint = Color.Unspecified
@@ -102,37 +105,44 @@ fun HomeSectionDeals(
                         tint = Color.Unspecified
                     )
                 }
-                Row(
-                    modifier = Modifier.weight(2f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    Flipper()
+                if (endTime != null) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Flipper(
+                            endTime = endTime
+                        )
+                    }
                 }
             }
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = MaterialTheme.kyobiTheme.spacing.dp8 +
-                            MaterialTheme.kyobiTheme.spacing.dp28 +
-                                MaterialTheme.kyobiTheme.spacing.dp16,
-                        bottom = MaterialTheme.kyobiTheme.spacing.dp12),
-                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp8),
-                contentPadding = PaddingValues(
-                    start = MaterialTheme.kyobiTheme.spacing.dp12
-                )
-            ) {
-                items(items.take(5)) { product ->
-                    HomeProductDealCard(
-                        product = product,
-                        imageLoader = imageLoader
+            if (flashSaleData.products.isNotEmpty()) {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            top = MaterialTheme.kyobiTheme.spacing.dp8 +
+                                    MaterialTheme.kyobiTheme.spacing.dp28 +
+                                    MaterialTheme.kyobiTheme.spacing.dp16 +
+                                    MaterialTheme.kyobiTheme.spacing.dp40,
+                            bottom = MaterialTheme.kyobiTheme.spacing.dp12),
+                    horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp8),
+                    contentPadding = PaddingValues(
+                        start = MaterialTheme.kyobiTheme.spacing.dp12
                     )
-                }
-                item {
-                    ViewMoreButton(
-                        onViewMoreClick = {},
-                    )
+                ) {
+                    items(flashSaleData.products.take(5)) { product ->
+                        HomeProductDealCard(
+                            product = product,
+                            imageLoader = imageLoader
+                        )
+                    }
+                    item {
+                        ViewMoreButton(
+                            onViewMoreClick = {},
+                        )
+                    }
                 }
             }
         }
@@ -158,7 +168,7 @@ fun ViewMoreButton(
                 .size(MaterialTheme.kyobiTheme.width.dp48)
                 .clip(CircleShape)
                 .background(
-                    MaterialTheme.kyobiTheme.colors.bg.white,
+                    MaterialTheme.kyobiTheme.colors.bg.stone300,
                     shape = CircleShape)
                 .clickable { onViewMoreClick() },
             contentAlignment = Alignment.Center
@@ -166,7 +176,7 @@ fun ViewMoreButton(
             Icon(
                 painter = painterResource(id = R.drawable.ic_arrow_right),
                 contentDescription = "View More Icon",
-                modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.xl),
+                modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg),
                 tint = MaterialTheme.kyobiTheme.colors.bg.stone950
             )
         }
@@ -174,7 +184,7 @@ fun ViewMoreButton(
             modifier = Modifier
                 .padding(top = MaterialTheme.kyobiTheme.spacing.dp4),
             text = "View more",
-            color = MaterialTheme.kyobiTheme.colors.text.neutral950,
+            color = MaterialTheme.kyobiTheme.colors.text.neutral500,
             style = MaterialTheme.kyobiTheme.typography.labelSmallXs,
             textAlign = TextAlign.Center
         )

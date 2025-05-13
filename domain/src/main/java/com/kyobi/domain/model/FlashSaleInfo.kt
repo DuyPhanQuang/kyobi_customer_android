@@ -7,6 +7,6 @@ data class FlashSaleInfo(
     val name: String? = null,
     val startTime: String? = null,
     val endTime: String? = null,
-    val background: ShopifyImage? = null,
+    val background: ShopifyMedia? = null,
     val productIds: List<String> = emptyList()
 )

@@ -1,8 +1,10 @@
 package com.kyobi.domain.usecase.impl
 
 import com.kyobi.core.exceptions.ShopifyApiException
+import com.kyobi.domain.extension.toDeviceTimeZone
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.FlashSale
+import com.kyobi.domain.model.request.MetafieldIdentifierRequest
 import com.kyobi.domain.repository.CollectionRepository
 import com.kyobi.domain.repository.MetaobjectRepository
 import com.kyobi.domain.repository.ProductRepository
@@ -22,33 +24,40 @@ class GetFlashSaleUseCaseImpl @Inject constructor(
             emit(DomainNetworkResult.Loading)
             try {
                 // Step1: get metaobject id từ collection
+                val identifiers = listOf(
+                    MetafieldIdentifierRequest(
+                        namespace = "kyobi",
+                        key = "flashsale_disco"
+                    )
+                )
                 val collection = collectionRepository.getCollectionProducts(
                     handle = handle,
                     reverse = null,
                     sortKey = null,
-                    identifiers = null,
+                    identifiers = identifiers,
                     first = null)
-                val metaobjectId = collection.metafields.find { metafield ->
-                    metafield.key == "flash-sale-disco"
-                }?.value ?: throw ShopifyApiException(
-                    message = "Flashsale metaobject ID not found in collection metafields",
-                    errorCode = null)
+                val metaobjectId = collection.metafields.firstOrNull()?.value
+                    ?: throw ShopifyApiException(
+                        message = "Flashsale metaobject ID not found in collection metafields",
+                        errorCode = null)
                 // Step2: get FlashSaleInfo từ metaobject id
                 val flashSaleInfos = metaobjectRepository.getFlashSaleInfosByMetaobjectIds(
                     metaobjectIds = listOf(metaobjectId))
                 val flashSaleInfo = flashSaleInfos.firstOrNull() ?: throw ShopifyApiException(
                     message = "Flashsale info not found for metaobject ID: $metaobjectId",
                     errorCode = null)
-                // Step3: get list product từ productIds
+                // Step 3: Convert startTime and endTime to device timezone
+                val convertedFlashSaleInfo = flashSaleInfo.toDeviceTimeZone()
+                // Step4: get list product từ productIds
                 val products = if (flashSaleInfo.productIds.isNotEmpty()) {
                     productRepository.getProductsByIdsFromShopify(
-                        ids = flashSaleInfo.productIds,
+                        ids = convertedFlashSaleInfo.productIds,
                         identifiers = null)
                 } else {
                     emptyList()
                 }
                 val flashSale = FlashSale(
-                    flashSaleInfo = flashSaleInfo,
+                    flashSaleInfo = convertedFlashSaleInfo,
                     products = products
                 )
                 emit(DomainNetworkResult.Success(flashSale))

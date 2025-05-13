@@ -43,12 +43,6 @@ data class LookbookItem(
     val hashtag: String, // Hashtag của video
 )
 
-data class ProductItem(
-    val id: String,
-    val imageUrl: String,
-    val price: String,
-)
-
 @Composable
 fun HomeTab(
     navController: NavHostController,
@@ -62,7 +56,6 @@ fun HomeTab(
     val imageLoader = viewModel.getImageLoader()
 
     val mockReels = viewModel.getRecommendedReels()
-    val mockProductDeals = viewModel.getProductDeals()
 
     val banners = when (val result = uiState.bannersResult) {
         is DomainNetworkResult.Success -> result.data
@@ -74,6 +67,12 @@ fun HomeTab(
         is DomainNetworkResult.Success -> result.data
         is DomainNetworkResult.Loading -> emptyList()
         is DomainNetworkResult.Error -> emptyList()
+    }
+
+    val flashSaleData = when (val result = uiState.flashSaleResult) {
+        is DomainNetworkResult.Success -> result.data
+        is DomainNetworkResult.Loading -> null
+        is DomainNetworkResult.Error -> null
     }
 
     val saleProducts = when (val result = uiState.saleProductsResult) {
@@ -166,11 +165,15 @@ fun HomeTab(
                     }
                 }
                 item {
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        HomeSectionDeals(
-                            items = mockProductDeals,
-                            imageLoader = imageLoader
-                        )
+                    if (flashSaleData != null) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            HomeSectionDeals(
+                                flashSaleData = flashSaleData,
+                                imageLoader = imageLoader
+                            )
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
                     }
                 }
                 item {

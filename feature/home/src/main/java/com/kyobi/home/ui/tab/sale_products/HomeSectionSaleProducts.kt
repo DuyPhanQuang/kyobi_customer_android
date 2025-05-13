@@ -77,12 +77,19 @@ fun HomeSectionSaleProducts(
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp4)
                         ) {
-                            saleGroup.products.take(itemsPerRow).forEach { product ->
+                            val productItems = saleGroup.products.take(itemsPerRow)
+                            productItems.forEach { product ->
                                 HomeSaleProductCard(
                                     modifier = Modifier.weight(1f),
                                     product = product,
                                     imageLoader = imageLoader,
                                 )
+                            }
+                            // Fill empty space if this row has only 1 item
+                            if (productItems.size < itemsPerRow) {
+                                repeat(itemsPerRow - productItems.size) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
                             }
                         }
                     }

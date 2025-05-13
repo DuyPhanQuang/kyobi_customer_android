@@ -73,8 +73,8 @@ fun Flap(
                         y = if (position == FlapPosition.TOP) flapHeight / 2 else -flapHeight / 2
                     ),
                 text = text,
-                color = MaterialTheme.kyobiTheme.colors.onPrimary,
                 style = MaterialTheme.kyobiTheme.typography.headingLg,
+                color = MaterialTheme.kyobiTheme.colors.onPrimary,
                 textAlign = TextAlign.Center
             )
         }

@@ -1,24 +1,25 @@
 package com.kyobi.home.ui.tab.deals.flip_clock.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import com.kyobi.composable.space.XsSpaceX
+import com.kyobi.composable.space.XxsSpaceX
+import com.kyobi.composable.space.XxsSpaceY
 import com.kyobi.home.ui.tab.deals.flip_clock.getTimeParts
-import com.kyobi.theme.headingLg
 import com.kyobi.theme.kyobiTheme
-import com.kyobi.theme.paragraphRegularXs
+import com.kyobi.theme.paragraphMd
 import kotlin.math.ceil
 
 @Composable
 fun FlipClock(
     seconds: Int,
     endMillis: Long,
-    events: FlipClockEvents
 ) {
     val animatedSeconds by animateFloatAsState(key = endMillis, targetValue = seconds.toFloat())
 
@@ -28,48 +29,39 @@ fun FlipClock(
     val currentParts = getTimeParts(currentSeconds)
     val nextParts = getTimeParts(nextSeconds)
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp4),
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Ends in:",
+            text = "Ends in",
             color = MaterialTheme.kyobiTheme.colors.onPrimary,
-            style = MaterialTheme.kyobiTheme.typography.paragraphRegularXs
+            style = MaterialTheme.kyobiTheme.typography.paragraphMd,
         )
-        FlapSection(
-            currentValue = currentParts.hours,
-            nextValue = nextParts.hours,
-            factor = if (currentParts.hours == nextParts.hours) 0F else factor
-        )
-        Text(
-            text = ":",
-            color = MaterialTheme.kyobiTheme.colors.onPrimary,
-            style = MaterialTheme.kyobiTheme.typography.headingLg
-        )
-        FlapSection(
-            currentValue = currentParts.minutes,
-            nextValue = nextParts.minutes,
-            factor = if (currentParts.minutes == nextParts.minutes) 0F else factor
-        )
-        Text(
-            text = ":",
-            color = MaterialTheme.kyobiTheme.colors.onPrimary,
-            style = MaterialTheme.kyobiTheme.typography.headingLg
-        )
-        FlapSection(
-            currentValue = currentParts.seconds,
-            nextValue = nextParts.seconds,
-            factor = if (currentParts.seconds == nextParts.seconds) 0F else factor
-        )
+        XxsSpaceY()
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FlapSection(
+                currentValue = currentParts.hours,
+                nextValue = nextParts.hours,
+                factor = if (currentParts.hours == nextParts.hours) 0F else factor,
+                label = "Hours",
+            )
+            XsSpaceX()
+            FlapSection(
+                currentValue = currentParts.minutes,
+                nextValue = nextParts.minutes,
+                factor = if (currentParts.minutes == nextParts.minutes) 0F else factor,
+                label = "Minutes",
+            )
+            XxsSpaceX()
+            FlapSection(
+                currentValue = currentParts.seconds,
+                nextValue = nextParts.seconds,
+                factor = if (currentParts.seconds == nextParts.seconds) 0F else factor,
+                label = "Seconds",
+            )
+        }
     }
 }
-
-data class FlipClockEvents(
-    val onHoursIncrement: () -> Unit,
-    val onHoursDecrement: () -> Unit,
-    val onMinutesIncrement: () -> Unit,
-    val onMinutesDecrement: () -> Unit,
-    val onSecondsIncrement: () -> Unit,
-    val onSecondsDecrement: () -> Unit
-)

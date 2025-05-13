@@ -36,6 +36,7 @@ object Dimension {
     val dp195 = 195.dp
     val dp220 = 220.dp
     val dp244 = 244.dp
+    val dp284 = 284.dp
     val dp330 = 330.dp
     val dp356 = 356.dp
 }
