@@ -13,14 +13,14 @@ abstract class BaseProductListViewModel(
     protected val addToCartUseCase: AddToCartUseCase,
     protected val addRemoveProductToFavoriteUseCase: AddRemoveProductToFavoriteUseCase
 ): ViewModel() {
-    protected val _products = MutableStateFlow<DomainNetworkResult<List<ProductUiState>>>(DomainNetworkResult.Loading)
-    val products = _products.asStateFlow()
+    protected val productsResult = MutableStateFlow<DomainNetworkResult<List<ProductUiState>>>(DomainNetworkResult.Loading)
+    val products = productsResult.asStateFlow()
 
-    protected val _itemStates = MutableStateFlow<Map<String, ProductUiState>>(emptyMap())
-    val itemStates = _itemStates.asStateFlow()
+    private val itemStatesResult = MutableStateFlow<Map<String, ProductUiState>>(emptyMap())
+    val itemStates = itemStatesResult.asStateFlow()
 
     protected fun updateItemState(productId: String, update: (ProductUiState) -> ProductUiState) {
-        _itemStates.value = _itemStates.value.toMutableMap().apply {
+        itemStatesResult.value = itemStatesResult.value.toMutableMap().apply {
             val currentState = this[productId] ?: ProductUiState(
                 id = productId,
                 product = Product.empty(productId),

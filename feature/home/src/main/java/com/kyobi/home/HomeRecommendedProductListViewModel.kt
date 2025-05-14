@@ -32,7 +32,7 @@ class HomeRecommendedProductListViewModel @Inject constructor(
         recentlyViewedProductIds: List<String>
     ) {
         viewModelScope.launchOnIO {
-            _products.value = DomainNetworkResult.Loading
+            productsResult.value = DomainNetworkResult.Loading
             try {
                 val allProductIds = (cartProductIds + recentlyViewedProductIds).distinct()
                 val recommendedProducts = mutableListOf<Product>()
@@ -57,26 +57,26 @@ class HomeRecommendedProductListViewModel @Inject constructor(
                     ).collect { result ->
                         when (result) {
                             is DomainNetworkResult.Success -> {
-                                _products.value = DomainNetworkResult.Success(
+                                productsResult.value = DomainNetworkResult.Success(
                                     result.data.map { ProductUiState.fromProduct(it) }
                                 )
                             }
                             is DomainNetworkResult.Loading -> {
-                                _products.value = DomainNetworkResult.Loading
+                                productsResult.value = DomainNetworkResult.Loading
                             }
                             is DomainNetworkResult.Error -> {
-                                _products.value = result
+                                productsResult.value = result
                             }
                         }
                     }
                 } else {
-                    _products.value = DomainNetworkResult.Success(
+                    productsResult.value = DomainNetworkResult.Success(
                         recommendedProducts.map { ProductUiState.fromProduct(it) }
                     )
                 }
             } catch (e: Exception) {
                 Timber.tag(tag).e(e, "Failed to fetch product recommendations")
-                _products.value = DomainNetworkResult.Error.Generic(e)
+                productsResult.value = DomainNetworkResult.Error.Generic(e)
             }
         }
     }
