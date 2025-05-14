@@ -25,7 +25,7 @@ import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.paragraphMd
 
 @Composable
-fun HomeSectionRecommendedProducts(
+fun HomeSectionRecommendedProductsGridView(
     modifier: Modifier = Modifier,
     imageLoader: ImageLoader,
     productListViewModel: HomeRecommendedProductListViewModel = hiltViewModel()

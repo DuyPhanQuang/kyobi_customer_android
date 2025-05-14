@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -26,7 +27,7 @@ import com.kyobi.home.ui.tab.reels.HomeRecommendedReel
 import com.kyobi.home.ui.tab.banners.HomeSectionBanner
 import com.kyobi.home.ui.tab.deals.HomeSectionDeals
 import com.kyobi.home.ui.tab.HomeSectionHeader
-import com.kyobi.home.ui.tab.recommended_products.HomeSectionRecommendedProducts
+import com.kyobi.home.ui.tab.recommended_products.HomeSectionRecommendedProductsGridView
 import com.kyobi.home.ui.tab.sale_products.HomeSectionSaleProducts
 import com.kyobi.home.ui.tab.sale_products.SkeletonSaleProductGridView
 import com.kyobi.home.ui.tab.spotlights.HomeSectionSpotlights
@@ -211,7 +212,7 @@ fun HomeTab(
                     }
                 }
                 item {
-                    HomeSectionRecommendedProducts(
+                    HomeSectionRecommendedProductsGridView(
                         modifier = Modifier.fillMaxWidth(),
                         imageLoader = imageLoader
                     )
@@ -219,13 +220,13 @@ fun HomeTab(
             }
             HomeSectionHeader(
                 modifier = Modifier
+                    .statusBarsPadding()
                     .zIndex(1f)
                     .fillMaxWidth()
                     .height(MaterialTheme.kyobiTheme.height.dp88)
                     .padding(
                         start = MaterialTheme.kyobiTheme.spacing.dp12,
                         end = MaterialTheme.kyobiTheme.spacing.dp12,
-                        top = topPadding,
                         bottom = MaterialTheme.kyobiTheme.spacing.dp8,
                     )
                     .align(Alignment.TopStart),
