@@ -58,6 +58,7 @@ import kotlin.time.Duration.Companion.seconds
 
 enum class NavBarItemType {
     HOME,
+    CATALOG,
     LOOKBOOK,
     TREND,
     PROFILE
@@ -74,7 +75,12 @@ val bottomNavItems = listOf(
     BottomNavItem(
         route = "home",
         iconResId = R.drawable.ic_home_tab,
-        label = "Home"
+        label = "Shop"
+    ),
+    BottomNavItem(
+        route = "catalog",
+        iconResId = R.drawable.ic_category_tab,
+        label = "Catalog"
     ),
     BottomNavItem(
         route = "create-reel",
@@ -150,9 +156,10 @@ fun BottomNavigationBar(
         containerColor = MaterialTheme.kyobiTheme.colors.surface,
         contentColor = MaterialTheme.kyobiTheme.colors.onSurface
     ) {
-        // Danh sách các item theo thứ tự: Home, Category, Lookbook, Trend, Profile
+        // Danh sách các item theo thứ tự: Home, Catalog, Lookbook, Trend, Profile
         listOf(
             NavBarItemType.HOME,
+            NavBarItemType.CATALOG,
             NavBarItemType.LOOKBOOK,
             NavBarItemType.TREND,
             NavBarItemType.PROFILE
@@ -187,11 +194,12 @@ fun BottomNavigationBar(
                     )
                 }
                 else -> {
-                    // Các item khác (Home, Category, Trend, Profile)
+                    // Các item khác (Home, Catalog, Trend, Profile)
                     val index = when (itemType) {
                         NavBarItemType.HOME -> 0
-                        NavBarItemType.TREND -> 2
-                        NavBarItemType.PROFILE -> 3
+                        NavBarItemType.CATALOG -> 1
+                        NavBarItemType.TREND -> 3
+                        NavBarItemType.PROFILE -> 4
                         else -> 0 // Không xảy ra
                     }
                     val item = bottomNavItems[index]

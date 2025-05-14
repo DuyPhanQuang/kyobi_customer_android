@@ -28,6 +28,7 @@ import com.kyobi.createreel.editor_video.EditorVideoScreen
 import com.kyobi.createreel.editor_video.EditorVideoViewModel
 import com.kyobi.createreel.editor_video.SelectMediaType
 import com.kyobi.customer.extension.composable
+import com.kyobi.feature.catalog.CatalogTab
 import com.kyobi.featurecommon.routes.Screen
 import com.kyobi.featurecommon.routes.getDecodedByKey
 import com.kyobi.featurecommon.routes.getDecodedUserId
@@ -66,6 +67,14 @@ fun RootApp(
                     }
                     "/home" -> {
                         navController.navigate(Screen.Home.routeScheme) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                    "/catalog" -> {
+                        navController.navigate(Screen.Catalog.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
@@ -126,6 +135,23 @@ fun RootApp(
                         bottomPadding = innerPadding.calculateBottomPadding()
                     )
                 }
+                composable(screen = Screen.Catalog) {
+                    CatalogTab(
+                        navController = navController,
+                        topPadding = innerPadding.calculateTopPadding(),
+                        bottomPadding = innerPadding.calculateBottomPadding()
+                    )
+                }
+                composable(screen = Screen.Trend) {
+                    TrendTab(
+                        navController = navController,
+                        topPadding = innerPadding.calculateTopPadding(),
+                        bottomPadding = innerPadding.calculateBottomPadding()
+                    )
+                }
+                composable(screen = Screen.Profile) {
+                    ProfileTab(navController = navController)
+                }
                 // EditorVideoScreen
                 composable(screen = Screen.EditorVideo) {
                     val selectTypeString = it.getDecodedByKey("selectType")
@@ -155,16 +181,6 @@ fun RootApp(
                             }
                         )
                     }
-                }
-                composable(screen = Screen.Trend) {
-                    TrendTab(
-                        navController = navController,
-                        topPadding = innerPadding.calculateTopPadding(),
-                        bottomPadding = innerPadding.calculateBottomPadding()
-                    )
-                }
-                composable(screen = Screen.Profile) {
-                    ProfileTab(navController = navController)
                 }
             }
         }

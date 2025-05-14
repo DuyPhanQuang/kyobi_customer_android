@@ -3,7 +3,6 @@ package com.kyobi.home
 import com.kyobi.domain.model.Banner
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.FlashSale
-import com.kyobi.domain.model.Product
 import com.kyobi.domain.model.SaleGroupProduct
 import com.kyobi.domain.model.TopCatalog
 import com.kyobi.domain.model.TrendingResearch

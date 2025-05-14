@@ -29,6 +29,11 @@ sealed class Screen(
         arguments = emptyList(),
     )
 
+    data object Catalog : Screen(
+        routeScheme = "catalog",
+        arguments = emptyList(),
+    )
+
     // EditorVideoScreen
     data object EditorVideo : Screen(
         routeScheme = "editor-video?selectType={selectType}&uri={uri}&userId={userId}",
