@@ -4,9 +4,11 @@ plugins {
 
 dependencies {
     CORE
+    COMMON_COMPOSABLE
+    COMMON_THEME
     DATA
     DOMAIN
 }
 android {
-    namespace = "com.kyobi.featurecommon.auth"
+    namespace = "com.kyobi.featurecommon.product"
 }

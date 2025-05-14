@@ -11,7 +11,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class AuthStateModule {
-
     @Binds
     @Singleton
     abstract fun provideAuthStateProvider(impl: AuthStateProviderImpl): AuthStateProvider

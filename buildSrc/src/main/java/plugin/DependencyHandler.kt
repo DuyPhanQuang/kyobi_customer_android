@@ -188,6 +188,7 @@ fun DependencyHandler.moduleDependencies() {
     FEATURECOMMON_AUTH
     FEATURECOMMON_MONITOR
     FEATURECOMMON_ROUTES
+    FEATURECOMMON_PRODUCT
     FEATURE_HOME
     FEATURE_PROFILE
     FEATURE_AUTHENTICATION
@@ -218,6 +219,9 @@ val DependencyHandler.FEATURECOMMON_MONITOR
 
 val DependencyHandler.FEATURECOMMON_ROUTES
     get() = implementation(project(mapOf("path" to ":featurecommon:routes")))
+
+val DependencyHandler.FEATURECOMMON_PRODUCT
+    get() = implementation(project(mapOf("path" to ":featurecommon:product")))
 
 val DependencyHandler.FEATURE_HOME
     get() = implementation(project(mapOf("path" to ":feature:home")))

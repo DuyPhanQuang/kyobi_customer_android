@@ -1,4 +1,4 @@
-package com.kyobi.home.ui.common
+package com.kyobi.featurecommon.product
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,18 +30,18 @@ import com.kyobi.composable.utils.ColorUtils
 import com.kyobi.domain.extension.toColorsOption
 import com.kyobi.domain.extension.toFormattedOriginalPrice
 import com.kyobi.domain.extension.toFormattedSalePrice
-import com.kyobi.domain.model.Product
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
 import com.kyobi.theme.paragraphXs
 
 @Composable
-fun HomeProductCard(
+fun ProductCard(
     modifier: Modifier = Modifier,
-    product: Product,
+    productUiState: ProductUiState,
     imageLoader: ImageLoader,
     onClick: () -> Unit,
 ) {
+    val product = productUiState.product
     val imageThumbnail = product.featuredImage
     val colorsOption = product.toColorsOption
 
@@ -93,10 +93,10 @@ fun HomeProductCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                top = MaterialTheme.kyobiTheme.spacing.dp8,
-                start = MaterialTheme.kyobiTheme.spacing.dp8,
-                end = MaterialTheme.kyobiTheme.spacing.dp8,
-            )
+                    top = MaterialTheme.kyobiTheme.spacing.dp8,
+                    start = MaterialTheme.kyobiTheme.spacing.dp8,
+                    end = MaterialTheme.kyobiTheme.spacing.dp8,
+                )
         ) {
             Text(
                 modifier = Modifier
@@ -140,7 +140,7 @@ fun HomeProductCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                    vertical = MaterialTheme.kyobiTheme.spacing.dp4),
+                        vertical = MaterialTheme.kyobiTheme.spacing.dp4),
             ) {
                 Text(
                     text = product.toFormattedSalePrice,

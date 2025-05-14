@@ -21,7 +21,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kyobi.composable.skeleton.SkeletonContainer
-import com.kyobi.composable.skeleton.SkeletonProductGridView
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.home.ui.tab.reels.HomeRecommendedReel
 import com.kyobi.home.ui.tab.banners.HomeSectionBanner
@@ -82,12 +81,6 @@ fun HomeTab(
     }
 
     val trendingResearchs = when (val result = uiState.trendingResearchResult) {
-        is DomainNetworkResult.Success -> result.data
-        is DomainNetworkResult.Loading -> emptyList()
-        is DomainNetworkResult.Error -> emptyList()
-    }
-
-    val recommendedProducts = when (val result = uiState.recommendedProductsResult) {
         is DomainNetworkResult.Success -> result.data
         is DomainNetworkResult.Loading -> emptyList()
         is DomainNetworkResult.Error -> emptyList()
@@ -218,24 +211,10 @@ fun HomeTab(
                     }
                 }
                 item {
-                    when (uiState.recommendedProductsResult) {
-                        is DomainNetworkResult.Loading -> {
-                            SkeletonProductGridView(modifier = Modifier.fillMaxWidth())
-                        }
-                        is DomainNetworkResult.Success -> {
-                            if (recommendedProducts.isNotEmpty()) {
-                                HomeSectionRecommendedProducts(
-                                    items = recommendedProducts,
-                                    imageLoader = imageLoader
-                                )
-                            } else {
-                                Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
-                            }
-                        }
-                        is DomainNetworkResult.Error -> {
-                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
-                        }
-                    }
+                    HomeSectionRecommendedProducts(
+                        modifier = Modifier.fillMaxWidth(),
+                        imageLoader = imageLoader
+                    )
                 }
             }
             HomeSectionHeader(

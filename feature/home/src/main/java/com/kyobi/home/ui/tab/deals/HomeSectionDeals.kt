@@ -36,7 +36,6 @@ import com.kyobi.domain.model.FlashSale
 import com.kyobi.home.ui.tab.deals.flip_clock.Flipper
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
-import com.kyobi.theme.paragraph2Xl
 import com.kyobi.theme.paragraphMd
 
 @Composable

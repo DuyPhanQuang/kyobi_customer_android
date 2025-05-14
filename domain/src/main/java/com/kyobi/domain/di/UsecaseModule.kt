@@ -1,5 +1,7 @@
 package com.kyobi.domain.di
 
+import com.kyobi.domain.usecase.AddRemoveProductToFavoriteUseCase
+import com.kyobi.domain.usecase.AddToCartUseCase
 import com.kyobi.domain.usecase.AppVersionUseCase
 import com.kyobi.domain.usecase.AssetSourceUseCase
 import com.kyobi.domain.usecase.AssetUseCase
@@ -13,6 +15,8 @@ import com.kyobi.domain.usecase.LoginUseCase
 import com.kyobi.domain.usecase.LogoutUseCase
 import com.kyobi.domain.usecase.NotificationUseCase
 import com.kyobi.domain.usecase.SignUpUseCase
+import com.kyobi.domain.usecase.impl.AddRemoveProductToFavoriteUseCaseImpl
+import com.kyobi.domain.usecase.impl.AddToCartUseCaseImpl
 import com.kyobi.domain.usecase.impl.AppVersionUseCaseImpl
 import com.kyobi.domain.usecase.impl.AssetSourceUseCaseImpl
 import com.kyobi.domain.usecase.impl.AssetUseCaseImpl
@@ -85,5 +89,13 @@ abstract class UseCaseModule {
 
     @Binds
     @Singleton
-    abstract fun bindGetFlashSaleUsecase(impl: GetFlashSaleUseCaseImpl): GetFlashSaleUseCase
+    abstract fun bindGetFlashSaleUseCase(impl: GetFlashSaleUseCaseImpl): GetFlashSaleUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindAddToCartUseCase(impl: AddToCartUseCaseImpl): AddToCartUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindAddRemoveProductToFavoriteUseCase(impl: AddRemoveProductToFavoriteUseCaseImpl): AddRemoveProductToFavoriteUseCase
 }

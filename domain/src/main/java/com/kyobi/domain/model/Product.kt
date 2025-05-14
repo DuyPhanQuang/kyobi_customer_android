@@ -1,24 +1,5 @@
 package com.kyobi.domain.model
 
-data class Product(
-    val id: String,
-    val handle: String,
-    val availableForSale: Boolean,
-    val title: String,
-    val description: String,
-    val descriptionHtml: String,
-    val options: List<ProductOption>,
-    val priceRange: ProductPriceRange,
-    val compareAtPriceRange: ProductPriceRange,
-    val variants: List<ProductVariant>,
-    val featuredImage: ShopifyImage? = null,
-    val images: List<ShopifyImage>,
-    val metafields: List<ShopifyMetafield>? = null,
-    val seo: SEO,
-    val tags: List<String>,
-    val updatedAt: String
-)
-
 data class ProductOption(
     val id: String,
     val name: String,
@@ -60,3 +41,51 @@ data class QuantityRule(
     val minimum: Int,
     val maximum: Int? = null
 )
+
+data class Product(
+    val id: String,
+    val handle: String,
+    val availableForSale: Boolean,
+    val title: String,
+    val description: String,
+    val descriptionHtml: String,
+    val options: List<ProductOption>,
+    val priceRange: ProductPriceRange,
+    val compareAtPriceRange: ProductPriceRange,
+    val variants: List<ProductVariant>,
+    val featuredImage: ShopifyImage? = null,
+    val images: List<ShopifyImage>,
+    val metafields: List<ShopifyMetafield>? = null,
+    val seo: SEO,
+    val tags: List<String>,
+    val updatedAt: String
+) {
+    companion object {
+        fun empty(id: String): Product {
+            return Product(
+                id = id,
+                handle = "",
+                availableForSale = false,
+                title = "",
+                description = "",
+                descriptionHtml = "",
+                options = emptyList(),
+                priceRange = ProductPriceRange(
+                    maxVariantPrice = Money(amount = "0.0", currencyCode = ""),
+                    minVariantPrice = Money(amount = "0.0", currencyCode = "")
+                ),
+                compareAtPriceRange = ProductPriceRange(
+                    maxVariantPrice = Money(amount = "0.0", currencyCode = ""),
+                    minVariantPrice = Money(amount = "0.0", currencyCode = "")
+                ),
+                variants = emptyList(),
+                featuredImage = null,
+                images = emptyList(),
+                metafields = null,
+                seo = SEO(title = "", description = ""),
+                tags = emptyList(),
+                updatedAt = ""
+            )
+        }
+    }
+}
