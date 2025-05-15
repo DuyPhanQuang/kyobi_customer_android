@@ -18,7 +18,9 @@ fun CollectionSectionCategory(
     imageLoader: ImageLoader,
     expanded: Boolean = false,
     onAllClick: () -> Unit = {},
-    onCollapseClick: () -> Unit = {}
+    selectedCategoryId: String?,
+    onCollapseClick: () -> Unit = {},
+    onCategoryClick: (String) -> Unit = {}
 ) {
     AnimatedContent(
         targetState = expanded,
@@ -32,14 +34,18 @@ fun CollectionSectionCategory(
                 modifier = modifier,
                 categories = categories,
                 imageLoader = imageLoader,
-                onAllClick = onAllClick
+                onAllClick = onAllClick,
+                selectedCategoryId = selectedCategoryId,
+                onCategoryClick = onCategoryClick
             )
         } else {
             ExpandedCategoryGrid(
                 modifier = modifier,
                 categories = categories,
                 imageLoader = imageLoader,
-                onCollapseClick = onCollapseClick
+                onCollapseClick = onCollapseClick,
+                selectedCategoryId = selectedCategoryId,
+                onCategoryClick = onCategoryClick
             )
         }
     }

@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import coil.ImageLoader
 import com.kyobi.composable.image.AppImage
@@ -29,6 +30,7 @@ fun CollectionCategoryTile(
     modifier: Modifier = Modifier,
     category: CategoryMenu,
     imageLoader: ImageLoader,
+    isSelected: Boolean = false,
     onItemClick: () -> Unit,
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
@@ -46,8 +48,9 @@ fun CollectionCategoryTile(
                 .size(width.dp48)
                 .clip(CircleShape)
                 .border(
-                    width = width.dp1,
-                    color = MaterialTheme.kyobiTheme.colors.bg.stone100,
+                    width = if (isSelected) width.dp2 else width.dp1,
+                    color = if (isSelected) MaterialTheme.kyobiTheme.colors.bg.stone950 else
+                        MaterialTheme.kyobiTheme.colors.bg.stone100,
                     shape = CircleShape
                 )
                 .aspectRatio(1f)
@@ -67,6 +70,7 @@ fun CollectionCategoryTile(
             color = if (category.title.lowercase(Locale.getDefault()) == "sale")
                 MaterialTheme.kyobiTheme.colors.text.red700 else
                 MaterialTheme.kyobiTheme.colors.onBackground,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             textAlign = TextAlign.Center,
         )
     }

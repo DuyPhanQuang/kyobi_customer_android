@@ -40,7 +40,9 @@ fun CompactCategoryRow(
     modifier: Modifier,
     categories: List<CategoryMenu>,
     imageLoader: ImageLoader,
-    onAllClick: () -> Unit
+    onAllClick: () -> Unit,
+    selectedCategoryId: String?,
+    onCategoryClick: (String) -> Unit = {}
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
     val iconSize = MaterialTheme.kyobiTheme.icon.lg
@@ -68,7 +70,8 @@ fun CompactCategoryRow(
                     ),
                     category = category,
                     imageLoader = imageLoader,
-                    onItemClick = { }
+                    isSelected = category.id == selectedCategoryId,
+                    onItemClick = { onCategoryClick(category.id) }
                 )
             }
         }

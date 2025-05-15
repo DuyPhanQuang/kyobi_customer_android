@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
 import com.kyobi.core.coroutines.launchOnIO
+import com.kyobi.domain.usecase.GetProductsUseCase
 import com.kyobi.domain.usecase.GetSubMenusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,13 +34,15 @@ class CollectionTabViewModel @Inject constructor(
         viewModelScope.launchOnIO {
             try {
                 getSubMenusUseCase.getSubMenus(handle = "women").collect { result ->
-                    _uiState.value = _uiState.value.copy(
-                        subMenusResult = result,
-                    )
+                    _uiState.value = _uiState.value.copy(subMenusResult = result)
                 }
             } catch (e: Exception) {
                 Timber.tag(tag).e(e, "Fetch submenus failed")
             }
         }
+    }
+
+    fun updateCategorySelected(categoryId: String?) {
+        _uiState.value = _uiState.value.copy(selectedCategoryId = categoryId)
     }
 }

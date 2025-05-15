@@ -20,7 +20,10 @@ class HomeRecommendedProductListViewModel @Inject constructor(
     private val getProductsUseCase: GetProductsUseCase,
     addToCartUseCase: AddToCartUseCase,
     addRemoveProductToFavoriteUseCase: AddRemoveProductToFavoriteUseCase,
-): BaseProductListViewModel(addToCartUseCase, addRemoveProductToFavoriteUseCase) {
+): BaseProductListViewModel(
+    addToCartUseCase,
+    addRemoveProductToFavoriteUseCase
+) {
     private val tag = "HomeRecommendedProductListViewModel"
 
     init {

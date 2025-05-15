@@ -12,9 +12,13 @@ import androidx.compose.ui.Modifier
 import com.kyobi.theme.kyobiTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.painterResource
 import com.kyobi.composable.R
 import com.kyobi.composable.space.XxsSpaceX
+import com.kyobi.theme.Colors
+import com.kyobi.theme.Dimension
 import com.kyobi.theme.paragraphXs
 
 @Composable
@@ -28,9 +32,17 @@ fun CollectionSectionSortFilter(
     Row(
         modifier = modifier
             .background(MaterialTheme.kyobiTheme.colors.background)
-            .padding(
-            vertical = spacing.dp8,
-            horizontal = spacing.dp12),
+            .drawBehind {
+                val strokeWidth = Dimension.dp1.toPx()
+                val borderColor = Colors().stone100
+                drawLine(
+                    color = borderColor,
+                    start = Offset(0f, size.height),
+                    end = Offset(size.width, size.height),
+                    strokeWidth = strokeWidth
+                )
+            }
+            .padding(vertical = spacing.dp8),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {

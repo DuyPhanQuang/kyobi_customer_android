@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -62,7 +63,7 @@ fun CollectionTab(
     val imageLoader = viewModel.getImageLoader()
     val lazyListState = rememberLazyListState()
     val subCategoryLazyListState = rememberLazyListState()
-    val productLazyListState = rememberLazyListState()
+    val productLazyListState = rememberLazyGridState()
     val topAppBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topAppBarState)
 
@@ -71,15 +72,22 @@ fun CollectionTab(
     val currentVisibleItemIndex by remember { derivedStateOf { productLazyListState.firstVisibleItemIndex } }
     var showAllCategories by remember { mutableStateOf(false) }
 
+    val selectedCategoryId = uiState.selectedCategoryId
     val categoryMenus = when (val result = uiState.subMenusResult) {
         is DomainNetworkResult.Success -> result.data
         is DomainNetworkResult.Loading -> emptyList()
         is DomainNetworkResult.Error -> emptyList()
     }
-
-    val subCategoryMenus: List<SubcategoryMenu> = categoryMenus
-        .flatMap { category -> category.groups ?: emptyList() }
-        .flatMap { group -> group.subcategories ?: emptyList() }
+    val subCategoryMenus: List<SubcategoryMenu> = if (selectedCategoryId == null) {
+        categoryMenus
+            .flatMap { category -> category.groups ?: emptyList() }
+            .flatMap { group -> group.subcategories ?: emptyList() }
+    } else {
+        categoryMenus
+            .filter { it.id == selectedCategoryId }
+            .flatMap { category -> category.groups ?: emptyList() }
+            .flatMap { group -> group.subcategories ?: emptyList() }
+    }
 
     // Track scroll direction
     LaunchedEffect(currentVisibleItemIndex) {
@@ -160,7 +168,11 @@ fun CollectionTab(
                         imageLoader = imageLoader,
                         expanded = showAllCategories,
                         onAllClick = { showAllCategories = true },
-                        onCollapseClick = { showAllCategories = false }
+                        onCollapseClick = { showAllCategories = false },
+                        selectedCategoryId = selectedCategoryId,
+                        onCategoryClick = { categoryId ->
+                            viewModel.updateCategorySelected(categoryId)
+                        }
                     )
                 }
             }
@@ -193,6 +205,7 @@ fun CollectionTab(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),
+                        imageLoader = imageLoader,
                         lazyListState = productLazyListState,
                         bottomPadding = bottomPadding,
                     )

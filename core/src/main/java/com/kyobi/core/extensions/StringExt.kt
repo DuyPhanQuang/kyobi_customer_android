@@ -9,3 +9,7 @@ fun String.toStringListFromJson(): List<String> {
         emptyList()
     }
 }
+
+fun String.toQueryBySingleTag(): String {
+    return "tag:$this"
+}
