@@ -5,7 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
 import com.kyobi.core.coroutines.launchOnIO
-import com.kyobi.domain.usecase.GetProductsUseCase
+import com.kyobi.domain.model.CategoryMenu
+import com.kyobi.domain.model.SubcategoryMenu
 import com.kyobi.domain.usecase.GetSubMenusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,7 +19,8 @@ import javax.inject.Inject
 class CollectionTabViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val getSubMenusUseCase: GetSubMenusUseCase,
-    private val imageLoader: ImageLoader
+    private val imageLoader: ImageLoader,
+    private val collectionEventBus: CollectionTabEventBus
 ): ViewModel() {
     private val tag = "CollectionTabViewModel"
     private val _uiState = MutableStateFlow(CollectionTabUiState())
@@ -42,7 +44,19 @@ class CollectionTabViewModel @Inject constructor(
         }
     }
 
-    fun updateCategorySelected(categoryId: String?) {
-        _uiState.value = _uiState.value.copy(selectedCategoryId = categoryId)
+    fun updateCategorySelected(category: CategoryMenu) {
+        _uiState.value = _uiState.value.copy(selectedCategoryId = category.id)
+        viewModelScope.launchOnIO {
+            collectionEventBus.emitCollectionTabEvent(CollectionTabEvent.CategorySelected(category.filterHandle))
+            Timber.tag(tag).d("Emitted CategorySelected event with filterHandle: ${category.filterHandle}")
+        }
+    }
+
+    fun updateSubCategorySelected(subCategory: SubcategoryMenu) {
+        _uiState.value = _uiState.value.copy(selectedSubCategoryId = subCategory.id)
+        viewModelScope.launchOnIO {
+            collectionEventBus.emitCollectionTabEvent(CollectionTabEvent.SubCategorySelected(subCategory.filterHandle))
+            Timber.tag(tag).d("Emitted SubCategorySelected event with filterHandle: ${subCategory.filterHandle}")
+        }
     }
 }

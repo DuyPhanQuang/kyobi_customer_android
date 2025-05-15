@@ -10,8 +10,8 @@ import javax.inject.Singleton
 @Singleton
 class SessionEventBus @Inject constructor() {
     private val tag = "SessionEventBus"
-    private val _sessionFlow = MutableSharedFlow<Session?>(replay = 1)
-    val sessionFlow: SharedFlow<Session?> = _sessionFlow
+    private val _sessionEvents = MutableSharedFlow<Session?>(replay = 1)
+    val sessionEvents: SharedFlow<Session?> = _sessionEvents
 
     private val _notificationPermissionGranted = MutableSharedFlow<Boolean?>(replay = 1)
     val notificationPermissionGranted: SharedFlow<Boolean?> = _notificationPermissionGranted.asSharedFlow()
@@ -22,7 +22,7 @@ class SessionEventBus @Inject constructor() {
 
     suspend fun emitSession(session: Session?) {
         Timber.tag(tag).d("Emitting session to SharedFlow: $session")
-        _sessionFlow.emit(session)
+        _sessionEvents.emit(session)
     }
 
     suspend fun emitNotificationPermissionGranted(isGranted: Boolean?) {

@@ -73,6 +73,7 @@ fun CollectionTab(
     var showAllCategories by remember { mutableStateOf(false) }
 
     val selectedCategoryId = uiState.selectedCategoryId
+    val selectedSubCategoryId = uiState.selectedSubCategoryId
     val categoryMenus = when (val result = uiState.subMenusResult) {
         is DomainNetworkResult.Success -> result.data
         is DomainNetworkResult.Loading -> emptyList()
@@ -170,8 +171,8 @@ fun CollectionTab(
                         onAllClick = { showAllCategories = true },
                         onCollapseClick = { showAllCategories = false },
                         selectedCategoryId = selectedCategoryId,
-                        onCategoryClick = { categoryId ->
-                            viewModel.updateCategorySelected(categoryId)
+                        onCategoryClick = { category ->
+                            viewModel.updateCategorySelected(category)
                         }
                     )
                 }
@@ -199,7 +200,11 @@ fun CollectionTab(
                             .fillMaxHeight(),
                         lazyListState = subCategoryLazyListState,
                         bottomPadding = bottomPadding,
-                        subCategories = subCategoryMenus
+                        subCategories = subCategoryMenus,
+                        selectedSubCategoryId = selectedSubCategoryId,
+                        onItemClick = { subCategory ->
+                            viewModel.updateSubCategorySelected(subCategory)
+                        }
                     )
                     CollectionSectionProductsGridView(
                         modifier = Modifier

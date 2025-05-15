@@ -36,9 +36,9 @@ fun RootUpdateVersionDialog() {
      * Đăng nhập trong khi app đang chạy → Gọi onAppForeground().
      * Đăng xuất và đăng nhập lại → Gọi lại onAppForeground().
      * */
-    // Theo dõi sessionFlow từ sessionEventBus
+    // Theo dõi sessionEvents từ sessionEventBus
     val sessionState by produceState<Session?>(initialValue = null, lifecycleOwner) {
-        viewModel.sessionEventBus.sessionFlow
+        viewModel.sessionEventBus.sessionEvents
             .flowWithLifecycle(lifecycleOwner.lifecycle, Lifecycle.State.RESUMED)
             .collectLatest { session ->
                 value = session
@@ -47,7 +47,7 @@ fun RootUpdateVersionDialog() {
                     hasCalledOnAppForeground.value = false
                     Timber.tag(tag).d("Session is null, resetting hasCalledOnAppForeground")
                 } else if (!hasCalledOnAppForeground.value) {
-                    // Kiểm tra điều kiện khi sessionFlow emit giá trị không null
+                    // Kiểm tra điều kiện khi sessionEvents emit giá trị không null
                     Timber.tag(tag).d("Conditions met: session exists (session=$session), calling onAppForeground")
                     viewModel.onAppForeground()
                     hasCalledOnAppForeground.value = true

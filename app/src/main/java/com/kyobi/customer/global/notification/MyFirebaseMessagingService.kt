@@ -51,9 +51,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onCreate() {
         super.onCreate()
-        // Collect sessionFlow ngay lập tức để cập nhật currentSession
+        // Collect sessionEvents ngay lập tức để cập nhật currentSession
         serviceScope.launch {
-            sessionEventBus.sessionFlow.collectLatest { session ->
+            sessionEventBus.sessionEvents.collectLatest { session ->
                 Timber.tag(tag).d("***sessionEventBus*** subscribed - Received new session: $session")
                 currentSession = session
             }
@@ -69,9 +69,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             true
         }
 
-        // Kết hợp sessionFlow và notificationPermissionGranted để kiểm tra điều kiện
+        // Kết hợp sessionEvents và notificationPermissionGranted để kiểm tra điều kiện
         serviceScope.launch {
-            sessionEventBus.sessionFlow
+            sessionEventBus.sessionEvents
                 .combine(sessionEventBus.notificationPermissionGranted) { session, isPermissionGranted ->
                     Timber.tag(tag).d("Combining session:${session?.userId} permission status:${isPermissionGranted}")
                     Pair(session, isPermissionGranted)

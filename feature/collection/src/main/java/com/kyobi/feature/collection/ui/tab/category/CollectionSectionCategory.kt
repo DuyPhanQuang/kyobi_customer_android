@@ -20,7 +20,7 @@ fun CollectionSectionCategory(
     onAllClick: () -> Unit = {},
     selectedCategoryId: String?,
     onCollapseClick: () -> Unit = {},
-    onCategoryClick: (String) -> Unit = {}
+    onCategoryClick: (CategoryMenu) -> Unit = {}
 ) {
     AnimatedContent(
         targetState = expanded,
@@ -36,7 +36,7 @@ fun CollectionSectionCategory(
                 imageLoader = imageLoader,
                 onAllClick = onAllClick,
                 selectedCategoryId = selectedCategoryId,
-                onCategoryClick = onCategoryClick
+                onItemClick = onCategoryClick
             )
         } else {
             ExpandedCategoryGrid(
@@ -45,7 +45,7 @@ fun CollectionSectionCategory(
                 imageLoader = imageLoader,
                 onCollapseClick = onCollapseClick,
                 selectedCategoryId = selectedCategoryId,
-                onCategoryClick = onCategoryClick
+                onItemClick = onCategoryClick
             )
         }
     }

@@ -38,7 +38,7 @@ fun ExpandedCategoryGrid(
     imageLoader: ImageLoader,
     onCollapseClick: () -> Unit,
     selectedCategoryId: String?,
-    onCategoryClick: (String) -> Unit = {}
+    onItemClick: (CategoryMenu) -> Unit = {}
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
     val width = MaterialTheme.kyobiTheme.width
@@ -75,7 +75,7 @@ fun ExpandedCategoryGrid(
                     category = category,
                     imageLoader = imageLoader,
                     isSelected = category.id == selectedCategoryId,
-                    onItemClick = { onCategoryClick(category.id) }
+                    onItemClick = { onItemClick(category) }
                 )
             }
         }
