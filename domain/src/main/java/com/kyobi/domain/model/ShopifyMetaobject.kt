@@ -4,7 +4,7 @@ data class ShopifyMetaobject(
     val id: String,
     val handle: String,
     val type: String? = null,
-    val fields: List<ShopifyMetaobjectField>
+    val fields: List<ShopifyMetaobjectField>? = emptyList()
 )
 
 data class ShopifyMetaobjectField(

@@ -26,4 +26,15 @@ class CollectionRepositoryImpl @Inject constructor(
         return response
     }
 
+    override suspend fun getCollectionsLarge(
+        handle: String,
+        identifiers: List<MetafieldIdentifierRequest>?
+    ): ShopifyCollection {
+        val response = shopifyApiService.getCollectionsLarge(
+            handle = handle,
+            identifiers = identifiers,
+        )
+        return response
+    }
+
 }

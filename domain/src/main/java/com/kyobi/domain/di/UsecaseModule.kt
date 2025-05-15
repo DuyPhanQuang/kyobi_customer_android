@@ -10,6 +10,7 @@ import com.kyobi.domain.usecase.GetHomePagesUseCase
 import com.kyobi.domain.usecase.GetProductRecommendationsUseCase
 import com.kyobi.domain.usecase.GetProductsByIdsUseCase
 import com.kyobi.domain.usecase.GetProductsUseCase
+import com.kyobi.domain.usecase.GetSubMenusUseCase
 import com.kyobi.domain.usecase.GetUserUseCase
 import com.kyobi.domain.usecase.LoginUseCase
 import com.kyobi.domain.usecase.LogoutUseCase
@@ -25,6 +26,7 @@ import com.kyobi.domain.usecase.impl.GetHomePagesUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetProductRecommendationsUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetProductsByIdsUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetProductsUseCaseImpl
+import com.kyobi.domain.usecase.impl.GetSubMenusUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetUserUseCaseImpl
 import com.kyobi.domain.usecase.impl.LoginUseCaseImpl
 import com.kyobi.domain.usecase.impl.LogoutUseCaseImpl
@@ -98,4 +100,8 @@ abstract class UseCaseModule {
     @Binds
     @Singleton
     abstract fun bindAddRemoveProductToFavoriteUseCase(impl: AddRemoveProductToFavoriteUseCaseImpl): AddRemoveProductToFavoriteUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindGetSubMenusUseCase(impl: GetSubMenusUseCaseImpl): GetSubMenusUseCase
 }

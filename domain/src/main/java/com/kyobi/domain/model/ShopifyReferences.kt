@@ -1,5 +1,5 @@
 package com.kyobi.domain.model
 
 data class ShopifyReferences(
-    val nodes: List<ShopifyMetaobject>
+    val nodes: List<ShopifyMetaobject>? = emptyList()
 )

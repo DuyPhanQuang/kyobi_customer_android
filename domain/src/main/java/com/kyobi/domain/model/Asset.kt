@@ -1,7 +1,7 @@
 package com.kyobi.domain.model
 
 data class Assets(
-    val assets: List<Asset>,
+    val assets: List<Asset>? = emptyList(),
     val currentPage: Int?,
     val nextPage: Int?,
     val total: Int

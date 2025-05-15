@@ -7,8 +7,8 @@ data class ShopifyCollection(
     val description: String? = null,
     val seo: SEO? = null,
     val updatedAt: String? = null,
-    val metafields: List<ShopifyMetafield> = emptyList(),
-    val products: List<Product> = emptyList(),
+    val metafields: List<ShopifyMetafield>? = emptyList(),
+    val products: List<Product>? = emptyList(),
     val pageInfo: PageInfo? = null
 )
 

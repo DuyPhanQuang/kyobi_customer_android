@@ -127,7 +127,7 @@ class RemoteAssetSource @Inject constructor(
                 } else {
                     when (result) {
                         is DomainNetworkResult.Success -> {
-                            Timber.tag(tag).d("Assets fetched: ${result.data.assets.size} items")
+                            Timber.tag(tag).d("Assets fetched: ${result.data.assets?.size} items")
                             val mappedResult = mapAssetsToFindAssetsResult(result.data, this)
                             Timber.tag(tag).d("Returning FindAssetsResult with ${mappedResult.assets.size} assets")
                             mappedResult
@@ -198,7 +198,7 @@ class RemoteAssetSource @Inject constructor(
     }
 
     private suspend fun mapAssetsToFindAssetsResult(assets: Assets, assetSource: AssetSource): FindAssetsResult {
-        val mappedAssets = assets.assets.map { asset ->
+        val mappedAssets = assets.assets?.map { asset ->
             val sourceSet = asset.payload.sourceSet.map { source ->
                 val dataUri = try {
                     val imageData = withContext(Dispatchers.IO) {
@@ -244,7 +244,7 @@ class RemoteAssetSource @Inject constructor(
             )
         }
         return FindAssetsResult(
-            assets = mappedAssets,
+            assets = mappedAssets ?: emptyList(),
             currentPage = assets.currentPage ?: -1,
             nextPage = assets.nextPage ?: -1,
             total = assets.total

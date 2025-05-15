@@ -12,5 +12,8 @@ interface CollectionRepository {
         first: Int?
     ): ShopifyCollection
 
-
+    suspend fun getCollectionsLarge(
+        handle: String,
+        identifiers: List<MetafieldIdentifierRequest>?
+    ): ShopifyCollection
 }

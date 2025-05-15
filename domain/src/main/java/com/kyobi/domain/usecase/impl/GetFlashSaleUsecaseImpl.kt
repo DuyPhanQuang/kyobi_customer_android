@@ -36,7 +36,7 @@ class GetFlashSaleUseCaseImpl @Inject constructor(
                     sortKey = null,
                     identifiers = identifiers,
                     first = null)
-                val metaobjectId = collection.metafields.firstOrNull()?.value
+                val metaobjectId = collection.metafields?.firstOrNull()?.value
                     ?: throw ShopifyApiException(
                         message = "Flashsale metaobject ID not found in collection metafields",
                         errorCode = null)
@@ -49,9 +49,9 @@ class GetFlashSaleUseCaseImpl @Inject constructor(
                 // Step 3: Convert startTime and endTime to device timezone
                 val convertedFlashSaleInfo = flashSaleInfo.toDeviceTimeZone()
                 // Step4: get list product từ productIds
-                val products = if (flashSaleInfo.productIds.isNotEmpty()) {
+                val products = if (flashSaleInfo.productIds?.isNotEmpty() == true) {
                     productRepository.getProductsByIdsFromShopify(
-                        ids = convertedFlashSaleInfo.productIds,
+                        ids = convertedFlashSaleInfo.productIds!!,
                         identifiers = null)
                 } else {
                     emptyList()

@@ -78,9 +78,9 @@ val bottomNavItems = listOf(
         label = "Shop"
     ),
     BottomNavItem(
-        route = "catalog",
+        route = "collection",
         iconResId = R.drawable.ic_category_tab,
-        label = "Catalog"
+        label = "Collection"
     ),
     BottomNavItem(
         route = "create-reel",

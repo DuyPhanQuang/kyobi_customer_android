@@ -15,5 +15,5 @@ data class ShopifyMedia(
     val id: String,
     val image: ShopifyImage? = null, //for image
     val previewImage: ShopifyVideoPreviewImage? = null, //for video
-    val sources: List<ShopifySource> = emptyList(), //for video
+    val sources: List<ShopifySource>? = emptyList(), //for video
 )
