@@ -9,12 +9,12 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import coil.ImageLoader
-import com.kyobi.domain.model.TopCatalog
+import com.kyobi.domain.model.CategoryMenu
 
 @Composable
 fun CollectionSectionCategory(
     modifier: Modifier = Modifier,
-    categories: List<TopCatalog>,
+    categories: List<CategoryMenu>,
     imageLoader: ImageLoader,
     expanded: Boolean = false,
     onAllClick: () -> Unit = {},

@@ -36,5 +36,4 @@ class CollectionRepositoryImpl @Inject constructor(
         )
         return response
     }
-
 }

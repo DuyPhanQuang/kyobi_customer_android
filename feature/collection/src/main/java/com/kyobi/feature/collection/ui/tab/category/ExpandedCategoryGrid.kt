@@ -27,14 +27,14 @@ import androidx.compose.ui.text.style.TextAlign
 import coil.ImageLoader
 import com.kyobi.composable.R
 import com.kyobi.composable.space.XxsSpaceX
-import com.kyobi.domain.model.TopCatalog
+import com.kyobi.domain.model.CategoryMenu
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.paragraphXs
 
 @Composable
 fun ExpandedCategoryGrid(
     modifier: Modifier,
-    categories: List<TopCatalog>,
+    categories: List<CategoryMenu>,
     imageLoader: ImageLoader,
     onCollapseClick: () -> Unit
 ) {
@@ -70,7 +70,7 @@ fun ExpandedCategoryGrid(
                         .width(tileWidth)
                         .height(tileHeight)
                         .padding(top = contentPaddingVertical),
-                    catalog = category,
+                    category = category,
                     imageLoader = imageLoader,
                     onItemClick = { }
                 )

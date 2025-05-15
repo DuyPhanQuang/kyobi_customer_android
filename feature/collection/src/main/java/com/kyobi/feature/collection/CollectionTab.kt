@@ -35,7 +35,9 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.TopCatalog
 import com.kyobi.domain.model.TopCatalogStatus
 import com.kyobi.feature.collection.ui.tab.category.CollectionSectionCategory
@@ -56,6 +58,8 @@ fun CollectionTab(
     topPadding: Dp,
     bottomPadding: Dp,
 ) {
+    val tag = "CollectionTab"
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val imageLoader = viewModel.getImageLoader()
     val lazyListState = rememberLazyListState()
     val subCategoryLazyListState = rememberLazyListState()
@@ -67,6 +71,12 @@ fun CollectionTab(
     var lastVisibleItemIndex by remember { mutableIntStateOf(0) }
     val currentVisibleItemIndex by remember { derivedStateOf { productLazyListState.firstVisibleItemIndex } }
     var showAllCategories by remember { mutableStateOf(false) }
+
+    val categoryMenus = when (val result = uiState.subMenusResult) {
+        is DomainNetworkResult.Success -> result.data
+        is DomainNetworkResult.Loading -> emptyList()
+        is DomainNetworkResult.Error -> emptyList()
+    }
 
     // Track scroll direction
     LaunchedEffect(currentVisibleItemIndex) {
@@ -81,97 +91,6 @@ fun CollectionTab(
         }
         lastVisibleItemIndex = currentVisibleItemIndex
     }
-
-    val mockCategory = listOf(
-        TopCatalog(
-            link = "",
-            order = 0,
-            tag = "",
-            title = "New",
-            image = null,
-            status = TopCatalogStatus.ACTIVE,
-        ),
-        TopCatalog(
-            link = "",
-            order = 0,
-            tag = "",
-            title = "New",
-            image = null,
-            status = TopCatalogStatus.ACTIVE,
-        ),
-        TopCatalog(
-            link = "",
-            order = 0,
-            tag = "",
-            title = "New",
-            image = null,
-            status = TopCatalogStatus.ACTIVE,
-        ),
-        TopCatalog(
-            link = "",
-            order = 0,
-            tag = "",
-            title = "New",
-            image = null,
-            status = TopCatalogStatus.ACTIVE,
-        ),
-        TopCatalog(
-            link = "",
-            order = 0,
-            tag = "",
-            title = "New",
-            image = null,
-            status = TopCatalogStatus.ACTIVE,
-        ),
-        TopCatalog(
-            link = "",
-            order = 0,
-            tag = "",
-            title = "New",
-            image = null,
-            status = TopCatalogStatus.ACTIVE,
-        ),
-        TopCatalog(
-            link = "",
-            order = 0,
-            tag = "",
-            title = "New",
-            image = null,
-            status = TopCatalogStatus.ACTIVE,
-        ),
-        TopCatalog(
-            link = "",
-            order = 0,
-            tag = "",
-            title = "New",
-            image = null,
-            status = TopCatalogStatus.ACTIVE,
-        ),
-        TopCatalog(
-            link = "",
-            order = 0,
-            tag = "",
-            title = "New",
-            image = null,
-            status = TopCatalogStatus.ACTIVE,
-        ),
-        TopCatalog(
-            link = "",
-            order = 0,
-            tag = "",
-            title = "New",
-            image = null,
-            status = TopCatalogStatus.ACTIVE,
-        ),
-        TopCatalog(
-            link = "",
-            order = 0,
-            tag = "",
-            title = "New",
-            image = null,
-            status = TopCatalogStatus.ACTIVE,
-        ),
-    )
 
     Scaffold(
         modifier = Modifier
@@ -234,7 +153,7 @@ fun CollectionTab(
                     exit = shrinkVertically() + fadeOut()
                 ) {
                     CollectionSectionCategory(
-                        categories = mockCategory,
+                        categories = categoryMenus,
                         imageLoader = imageLoader,
                         expanded = showAllCategories,
                         onAllClick = { showAllCategories = true },

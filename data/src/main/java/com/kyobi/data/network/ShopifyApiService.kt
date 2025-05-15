@@ -5,6 +5,7 @@ import com.kyobi.domain.model.ShopifyCollection
 import com.kyobi.domain.model.FlashSaleInfo
 import com.kyobi.domain.model.Product
 import com.kyobi.domain.model.ShopifyMedia
+import com.kyobi.domain.model.ShopifyMetaobject
 import com.kyobi.domain.model.TopCatalog
 import com.kyobi.domain.model.TrendingResearch
 import com.kyobi.domain.model.request.MetafieldIdentifierRequest
@@ -57,6 +58,10 @@ interface ShopifyApiService {
     suspend fun getFlashSaleInfosByMetaobjectIds(
         metaobjectIds: List<String>
     ): List<FlashSaleInfo>
+
+    suspend fun getMetaobjectsByIds(
+        metaobjectIds: List<String>
+    ): List<ShopifyMetaobject>
 
     suspend fun getCollectionsLarge(
         handle: String,

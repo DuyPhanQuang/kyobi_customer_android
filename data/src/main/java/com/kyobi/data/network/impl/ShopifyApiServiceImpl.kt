@@ -11,6 +11,7 @@ import com.kyobi.data.graphql.GetCollectionsLargeQuery
 import com.kyobi.data.graphql.GetHomepageKeyDataQuery
 import com.kyobi.data.graphql.GetMediaImagesByIdsQuery
 import com.kyobi.data.graphql.GetMetaobjectsByIdsForFlashsaleQuery
+import com.kyobi.data.graphql.GetMetaobjectsByIdsQuery
 import com.kyobi.data.graphql.GetProductRecommendationsQuery
 import com.kyobi.data.graphql.GetProductsByIdsQuery
 import com.kyobi.data.graphql.GetProductsQuery
@@ -33,6 +34,8 @@ import com.kyobi.domain.model.ShopifyCollection
 import com.kyobi.domain.model.ShopifyImage
 import com.kyobi.domain.model.ShopifyMedia
 import com.kyobi.domain.model.ShopifyMetafield
+import com.kyobi.domain.model.ShopifyMetaobject
+import com.kyobi.domain.model.ShopifyMetaobjectField
 import com.kyobi.domain.model.TopCatalog
 import com.kyobi.domain.model.TrendingResearch
 import com.kyobi.domain.model.request.MetafieldIdentifierRequest
@@ -292,6 +295,40 @@ class ShopifyApiServiceImpl @Inject constructor(
             }
             val nodes = response.data?.nodes ?: return emptyList()
             return mapFlashSaleInfos(nodes)
+        } catch (e: ApolloException) {
+            throw errorHandler.handleError(e)
+        } catch (e: Exception) {
+            throw errorHandler.handleError(e)
+        }
+    }
+
+    override suspend fun getMetaobjectsByIds(metaobjectIds: List<String>): List<ShopifyMetaobject> {
+        try {
+            val response = apolloClient
+                .query(GetMetaobjectsByIdsQuery(ids = metaobjectIds))
+                .execute()
+            if (response.hasErrors()) {
+                throw ShopifyApiException(
+                    message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
+                    errorCode = null)
+            }
+            return response.data?.nodes?.mapNotNull { node ->
+                node?.onMetaobject?.let { metaobject ->
+                    ShopifyMetaobject(
+                        id = metaobject.id,
+                        handle = metaobject.handle,
+                        type = metaobject.type,
+                        fields = metaobject.fields.map { field ->
+                            field.let {
+                                ShopifyMetaobjectField(
+                                    key = it.key,
+                                    value = it.value
+                                )
+                            }
+                        }
+                    )
+                }
+            } ?: emptyList()
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {

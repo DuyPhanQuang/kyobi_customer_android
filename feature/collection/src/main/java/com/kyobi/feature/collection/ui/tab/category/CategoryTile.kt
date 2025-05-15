@@ -19,20 +19,20 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import coil.ImageLoader
 import com.kyobi.composable.image.AppImage
-import com.kyobi.domain.model.TopCatalog
+import com.kyobi.domain.model.CategoryMenu
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.paragraphXs
+import java.util.Locale
 
 @Composable
 fun CollectionCategoryTile(
     modifier: Modifier = Modifier,
-    catalog: TopCatalog,
+    category: CategoryMenu,
     imageLoader: ImageLoader,
     onItemClick: () -> Unit,
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
     val width = MaterialTheme.kyobiTheme.width
-    val imageData = catalog.image?.image
 
     Column(
         modifier = modifier
@@ -41,7 +41,7 @@ fun CollectionCategoryTile(
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         AppImage(
-            imageUrl = imageData?.url,
+            imageUrl = null,
             modifier = Modifier
                 .size(width.dp48)
                 .clip(CircleShape)
@@ -55,16 +55,16 @@ fun CollectionCategoryTile(
                     color = MaterialTheme.kyobiTheme.colors.background,
                     shape = CircleShape
                 ),
-            contentScale = ContentScale.Fit,
-            contentDescription = imageData?.altText,
+            contentScale = ContentScale.Crop,
+            contentDescription = null,
             imageLoader = imageLoader
         )
         Text(
             modifier = Modifier
                 .padding(top = spacing.dp4),
-            text = catalog.title,
+            text = category.title,
             style = MaterialTheme.kyobiTheme.typography.paragraphXs,
-            color = if (catalog.title == "New Arrivals")
+            color = if (category.title.lowercase(Locale.getDefault()) == "sale")
                 MaterialTheme.kyobiTheme.colors.text.red700 else
                 MaterialTheme.kyobiTheme.colors.onBackground,
             textAlign = TextAlign.Center,

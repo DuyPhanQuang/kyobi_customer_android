@@ -31,14 +31,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import coil.ImageLoader
 import com.kyobi.composable.R
-import com.kyobi.domain.model.TopCatalog
+import com.kyobi.domain.model.CategoryMenu
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
 
 @Composable
 fun CompactCategoryRow(
     modifier: Modifier,
-    categories: List<TopCatalog>,
+    categories: List<CategoryMenu>,
     imageLoader: ImageLoader,
     onAllClick: () -> Unit
 ) {
@@ -66,7 +66,7 @@ fun CompactCategoryRow(
                     modifier = Modifier.padding(
                         top = spacing.dp8
                     ),
-                    catalog = category,
+                    category = category,
                     imageLoader = imageLoader,
                     onItemClick = { }
                 )

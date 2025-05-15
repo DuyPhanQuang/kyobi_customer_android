@@ -1,4 +1,4 @@
-query GetMetaobjectsByIdsForFlashsale($ids: [ID!]!) {
+query GetMetaobjectsByIds($ids: [ID!]!) {
     nodes(ids: $ids) {
         ... on Metaobject {
             id
@@ -7,17 +7,6 @@ query GetMetaobjectsByIdsForFlashsale($ids: [ID!]!) {
             fields {
                 key
                 value
-                reference {
-                    ... on MediaImage {
-                        id
-                        image {
-                            url
-                            altText
-                            width
-                            height
-                        }
-                    }
-                }
             }
         }
     }
