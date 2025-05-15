@@ -1,5 +1,6 @@
 package com.kyobi.feature.catalog.ui.tab.category
 
+import android.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,8 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
@@ -33,8 +32,6 @@ import androidx.compose.ui.text.style.TextAlign
 import coil.ImageLoader
 import com.kyobi.composable.R
 import com.kyobi.domain.model.TopCatalog
-import com.kyobi.theme.Colors
-import com.kyobi.theme.Dimension
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
 
@@ -53,23 +50,7 @@ fun CompactCategoryRow(
         modifier = modifier
             .fillMaxWidth()
             .height(MaterialTheme.kyobiTheme.height.dp84)
-            .background(MaterialTheme.kyobiTheme.colors.background)
-            .drawBehind {
-                val strokeWidth = Dimension.dp1.toPx()
-                val borderColor = Colors().stone100
-                drawLine(
-                    color = borderColor,
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f),
-                    strokeWidth = strokeWidth
-                )
-                drawLine(
-                    color = borderColor,
-                    start = Offset(0f, size.height - strokeWidth),
-                    end = Offset(size.width, size.height - strokeWidth),
-                    strokeWidth = strokeWidth
-                )
-            },
+            .background(MaterialTheme.kyobiTheme.colors.background),
         contentAlignment = Alignment.Center
     ) {
         LazyRow(
@@ -102,7 +83,7 @@ fun CompactCategoryRow(
                 .drawBehind {
                     val paint = Paint().asFrameworkPaint().apply {
                         isAntiAlias = true
-                        setShadowLayer(4f, -2f, 0f, android.graphics.Color.argb(25, 0, 0, 0))
+                        setShadowLayer(4f, -2f, 0f, Color.argb(25, 0, 0, 0))
                     }
                     drawContext.canvas.nativeCanvas.apply {
                         save()
@@ -129,7 +110,6 @@ fun CompactCategoryRow(
                         .padding(top = spacing.dp8),
                     painter = painterResource(id = R.drawable.ic_category),
                     contentDescription = "All Category Icon",
-                    tint = Color.Unspecified
                 )
                 Text(
                     modifier = Modifier

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -53,8 +54,7 @@ fun ExpandedCategoryGrid(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.kyobiTheme.colors.bg.stone300)
-            .padding(bottom = spacing.dp12)
+            .background(MaterialTheme.kyobiTheme.colors.background)
     ) {
         LazyHorizontalGrid(
             rows = GridCells.Fixed(rows),
@@ -76,27 +76,31 @@ fun ExpandedCategoryGrid(
                 )
             }
         }
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = spacing.dp12)
+                .padding(vertical = spacing.dp12)
                 .clickable { onCollapseClick() },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "Collapse",
-                style = MaterialTheme.kyobiTheme.typography.paragraphXs,
-                color = MaterialTheme.kyobiTheme.colors.primary,
-                textAlign = TextAlign.Center
-            )
-            XxsSpaceX()
-            Icon(
-                painter = painterResource(id = R.drawable.ic_arrow_up),
-                contentDescription = "Collapse Icon",
-                modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.sm),
-                tint = Color.Unspecified
-            )
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Collapse",
+                    style = MaterialTheme.kyobiTheme.typography.paragraphXs,
+                    color = MaterialTheme.kyobiTheme.colors.primary,
+                    textAlign = TextAlign.Center
+                )
+                XxsSpaceX()
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_arrow_up),
+                    contentDescription = "Collapse Icon",
+                    modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.sm),
+                    tint = Color.Unspecified
+                )
+            }
         }
     }
 }

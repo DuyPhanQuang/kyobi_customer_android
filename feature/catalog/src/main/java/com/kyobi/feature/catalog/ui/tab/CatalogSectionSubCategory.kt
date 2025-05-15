@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import com.kyobi.theme.Colors
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.paragraphXs
@@ -25,14 +26,15 @@ fun CatalogSectionSubCategory(
     lazyListState: LazyListState,
     subCategories: List<String> = List(30) { "Sub $it" },
     selectedIndex: Int = 0,
-    onItemClick: (Int) -> Unit = {}
+    onItemClick: (Int) -> Unit = {},
+    bottomPadding: Dp
 ) {
     LazyColumn(
         state = lazyListState,
         modifier = modifier
             .background(MaterialTheme.kyobiTheme.colors.bg.stone100),
         contentPadding = PaddingValues(
-            bottom = MaterialTheme.kyobiTheme.spacing.dp84
+            bottom = bottomPadding
         )
     ) {
         items(subCategories.size) { index ->

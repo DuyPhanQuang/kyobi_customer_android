@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -32,7 +31,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kyobi.domain.model.TopCatalog
@@ -42,6 +44,8 @@ import com.kyobi.feature.catalog.ui.tab.CatalogSectionHeader
 import com.kyobi.feature.catalog.ui.tab.CatalogSectionProductsGridView
 import com.kyobi.feature.catalog.ui.tab.CatalogSectionSubCategory
 import com.kyobi.featurecommon.auth.AuthViewModel
+import com.kyobi.theme.Colors
+import com.kyobi.theme.Dimension
 import com.kyobi.theme.kyobiTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -209,16 +213,23 @@ fun CatalogTab(
     ) { paddingValues ->
         LazyColumn(
             state = lazyListState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(
-                top = MaterialTheme.kyobiTheme.spacing.dp1,
-                bottom = bottomPadding
-            )
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = paddingValues
         ) {
             item {
                 AnimatedVisibility(
+                    modifier = Modifier
+                        .padding(top = MaterialTheme.kyobiTheme.spacing.dp2)
+                        .drawBehind {
+                            val strokeWidth = Dimension.dp1.toPx()
+                            val borderColor = Colors().stone100
+                            drawLine(
+                                color = borderColor,
+                                start = Offset(0f, 0f),
+                                end = Offset(size.width, 0f),
+                                strokeWidth = strokeWidth
+                            )
+                        },
                     visible = showCategorySection,
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut()
@@ -237,18 +248,31 @@ fun CatalogTab(
                     modifier = Modifier
                         .fillMaxWidth()
                         .fillParentMaxHeight() // important
+                        .drawBehind {
+                            val strokeWidth = Dimension.dp1.toPx()
+                            val borderColor = Colors().stone100
+                            drawLine(
+                                color = borderColor,
+                                start = Offset(0f, 0f),
+                                end = Offset(size.width, 0f),
+                                strokeWidth = strokeWidth
+                            )
+                        }
+                        .padding(top = MaterialTheme.kyobiTheme.spacing.dp2)
                 ) {
                     CatalogSectionSubCategory(
                         modifier = Modifier
                             .fillMaxWidth(0.25f)
                             .fillMaxHeight(),
-                        lazyListState = subCategoryLazyListState
+                        lazyListState = subCategoryLazyListState,
+                        bottomPadding = bottomPadding,
                     )
                     CatalogSectionProductsGridView(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),
-                        lazyListState = productLazyListState
+                        lazyListState = productLazyListState,
+                        bottomPadding = bottomPadding,
                     )
                 }
             }
