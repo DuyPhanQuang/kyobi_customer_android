@@ -15,8 +15,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -27,8 +25,6 @@ import com.kyobi.feature.collection.CollectionTabProductListViewModel
 import com.kyobi.feature.collection.ui.tab.sort_filter.CollectionSectionSortFilter
 import com.kyobi.featurecommon.product.ProductCard
 import com.kyobi.featurecommon.product.ProductUiState
-import com.kyobi.theme.Colors
-import com.kyobi.theme.Dimension
 import com.kyobi.theme.kyobiTheme
 
 @Composable
@@ -58,8 +54,7 @@ fun CollectionSectionProductsGridView(
     ) {
         stickyHeader {
             CollectionSectionSortFilter(
-                modifier = Modifier
-                    .fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             )
         }
         when (productsResult) {
