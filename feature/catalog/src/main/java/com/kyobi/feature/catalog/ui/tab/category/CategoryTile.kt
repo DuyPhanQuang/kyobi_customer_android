@@ -1,14 +1,13 @@
-package com.kyobi.home.ui.tab.top_catalogs
+package com.kyobi.feature.catalog.ui.tab.category
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,46 +22,10 @@ import com.kyobi.composable.image.AppImage
 import com.kyobi.domain.model.TopCatalog
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
+import com.kyobi.theme.paragraphXs
 
 @Composable
-fun HomeSectionTopCatalog(
-    items: List<TopCatalog>,
-    imageLoader: ImageLoader,
-) {
-    val itemsPerRow = 5
-    val rows = items.chunked(itemsPerRow)
-
-    Column(
-        modifier = Modifier.padding(
-            bottom = MaterialTheme.kyobiTheme.spacing.dp8,
-        )
-    ) {
-        rows.forEach { rowItems ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = MaterialTheme.kyobiTheme.spacing.dp8),
-                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp12)
-            ) {
-                rowItems.forEach { catalog ->
-                    TopCatalogTile(
-                        modifier = Modifier.weight(1f), // Chia đều chiều rộng cho mỗi item
-                        catalog = catalog,
-                        imageLoader = imageLoader,
-                        onItemClick = {  },
-                    )
-                }
-                // Nếu hàng không đủ 5 item, thêm khoảng trống để giữ layout đồng đều
-                repeat(itemsPerRow - rowItems.size) {
-                    Column(modifier = Modifier.weight(1f)) {}
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun TopCatalogTile(
+fun CategoryTile(
     modifier: Modifier = Modifier,
     catalog: TopCatalog,
     imageLoader: ImageLoader,
@@ -81,6 +44,7 @@ fun TopCatalogTile(
         AppImage(
             imageUrl = imageData?.url,
             modifier = Modifier
+                .size(MaterialTheme.kyobiTheme.width.dp48)
                 .clip(CircleShape)
                 .border(
                     width = MaterialTheme.kyobiTheme.width.dp1,
@@ -97,9 +61,9 @@ fun TopCatalogTile(
             imageLoader = imageLoader
         )
         Text(
-            modifier = Modifier.padding(top = MaterialTheme.kyobiTheme.spacing.dp8),
+            modifier = Modifier.padding(top = MaterialTheme.kyobiTheme.spacing.dp4),
             text = catalog.title,
-            style = MaterialTheme.kyobiTheme.typography.labelSmallXs,
+            style = MaterialTheme.kyobiTheme.typography.paragraphXs,
             color = if (catalog.title == "New Arrivals")
                 MaterialTheme.kyobiTheme.colors.text.red700 else
                 MaterialTheme.kyobiTheme.colors.onBackground,

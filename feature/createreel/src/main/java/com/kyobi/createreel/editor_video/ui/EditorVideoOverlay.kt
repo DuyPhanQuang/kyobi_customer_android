@@ -34,9 +34,9 @@ fun EditorVideoOverlay(
             painter = painterResource(id = R.drawable.kyobi_logo),
             contentDescription = "Kyobi Logo",
             modifier = Modifier
-                .padding(16.dp)
                 .size(40.dp)
                 .align(Alignment.TopStart)
+                .padding(16.dp)
         )
 
         Column(
@@ -80,7 +80,6 @@ fun EditorVideoOverlay(
             fontSize = 12.sp,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
                 .background(
                     color = Color(0xFF00A1D6),
                     shape = RoundedCornerShape(8.dp)

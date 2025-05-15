@@ -286,8 +286,8 @@ fun BottomNavigationBar(
                     pickVideoLauncher.launch(intent)
                 },
                 modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
                     .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(text = "Chọn video để đăng")
             }
@@ -307,8 +307,8 @@ fun BottomNavigationBar(
                     cameraLauncher.launch(cameraInput)
                 },
                 modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
                     .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
                 Text(text = "Quay video")
             }

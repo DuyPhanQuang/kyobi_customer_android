@@ -67,8 +67,8 @@ fun HomeSectionRecommendedProductsGridView(
                             rowItems.forEach { product ->
                                 ProductCard(
                                     modifier = Modifier
-                                        .padding(bottom = MaterialTheme.kyobiTheme.spacing.dp16)
-                                        .weight(1f),
+                                        .weight(1f)
+                                        .padding(bottom = MaterialTheme.kyobiTheme.spacing.dp16),
                                     productUiState = itemStates[product.id] ?: product,
                                     imageLoader = imageLoader,
                                     onClick = {}
@@ -77,8 +77,8 @@ fun HomeSectionRecommendedProductsGridView(
                             repeat(itemsPerRow - rowItems.size) {
                                 Column(
                                     modifier = Modifier
-                                        .padding(bottom = MaterialTheme.kyobiTheme.spacing.dp16)
                                         .weight(1f)
+                                        .padding(bottom = MaterialTheme.kyobiTheme.spacing.dp16)
                                 ) {}
                             }
                         }

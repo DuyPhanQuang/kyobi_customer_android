@@ -35,6 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.kyobi.domain.model.TopCatalog
+import com.kyobi.domain.model.TopCatalogStatus
 import com.kyobi.feature.catalog.ui.tab.CatalogSectionCategory
 import com.kyobi.feature.catalog.ui.tab.CatalogSectionHeader
 import com.kyobi.feature.catalog.ui.tab.CatalogSectionProductsGridView
@@ -51,6 +53,7 @@ fun CatalogTab(
     topPadding: Dp,
     bottomPadding: Dp,
 ) {
+    val imageLoader = viewModel.getImageLoader()
     val lazyListState = rememberLazyListState()
     val subCategoryLazyListState = rememberLazyListState()
     val productLazyListState = rememberLazyListState()
@@ -74,6 +77,65 @@ fun CatalogTab(
         lastVisibleItemIndex = currentVisibleItemIndex
     }
 
+    val mockCategory = listOf(
+        TopCatalog(
+            link = "",
+            order = 0,
+            tag = "",
+            title = "New",
+            image = null,
+            status = TopCatalogStatus.ACTIVE,
+        ),
+        TopCatalog(
+            link = "",
+            order = 0,
+            tag = "",
+            title = "New",
+            image = null,
+            status = TopCatalogStatus.ACTIVE,
+        ),
+        TopCatalog(
+            link = "",
+            order = 0,
+            tag = "",
+            title = "New",
+            image = null,
+            status = TopCatalogStatus.ACTIVE,
+        ),
+        TopCatalog(
+            link = "",
+            order = 0,
+            tag = "",
+            title = "New",
+            image = null,
+            status = TopCatalogStatus.ACTIVE,
+        ),
+        TopCatalog(
+            link = "",
+            order = 0,
+            tag = "",
+            title = "New",
+            image = null,
+            status = TopCatalogStatus.ACTIVE,
+        ),
+        TopCatalog(
+            link = "",
+            order = 0,
+            tag = "",
+            title = "New",
+            image = null,
+            status = TopCatalogStatus.ACTIVE,
+        ),
+        TopCatalog(
+            link = "",
+            order = 0,
+            tag = "",
+            title = "New",
+            image = null,
+            status = TopCatalogStatus.ACTIVE,
+        )
+    )
+
     Scaffold(
         modifier = Modifier
             .statusBarsPadding(),
@@ -93,13 +155,13 @@ fun CatalogTab(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(MaterialTheme.kyobiTheme.height.dp88)
+                            .background(MaterialTheme.kyobiTheme.colors.background)
                             .padding(
                                 start = MaterialTheme.kyobiTheme.spacing.dp0,
                                 end = MaterialTheme.kyobiTheme.spacing.dp14,
                                 top = MaterialTheme.kyobiTheme.spacing.dp8,
                                 bottom = MaterialTheme.kyobiTheme.spacing.dp8
-                            )
-                            .background(MaterialTheme.kyobiTheme.colors.background),
+                            ),
                         onSearchClick = {
                         },
                         onFavouritesClick = {
@@ -127,7 +189,10 @@ fun CatalogTab(
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut()
                 ) {
-                    CatalogSectionCategory()
+                    CatalogSectionCategory(
+                        categories = mockCategory,
+                        imageLoader = imageLoader,
+                    )
                 }
             }
             item {
@@ -138,7 +203,7 @@ fun CatalogTab(
                 ) {
                     CatalogSectionSubCategory(
                         modifier = Modifier
-                            .fillMaxWidth(0.223f)
+                            .fillMaxWidth(0.25f)
                             .fillMaxHeight(),
                         lazyListState = subCategoryLazyListState
                     )

@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import com.kyobi.composable.R
 import com.kyobi.composable.space.SmSpaceX
@@ -52,7 +51,7 @@ fun CatalogSearchForm(
                 painter = painterResource(id = R.drawable.ic_search_normal),
                 contentDescription = "Manual search",
                 modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg),
-                tint = MaterialTheme.kyobiTheme.colors.bg.stone500
+                tint = MaterialTheme.kyobiTheme.colors.onBackground
             )
             SmSpaceX()
             Text(

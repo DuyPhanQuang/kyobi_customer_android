@@ -224,12 +224,12 @@ fun HomeTab(
                     .zIndex(1f)
                     .fillMaxWidth()
                     .height(MaterialTheme.kyobiTheme.height.dp88)
+                    .align(Alignment.TopStart)
                     .padding(
                         start = MaterialTheme.kyobiTheme.spacing.dp12,
                         end = MaterialTheme.kyobiTheme.spacing.dp12,
                         bottom = MaterialTheme.kyobiTheme.spacing.dp8,
-                    )
-                    .align(Alignment.TopStart),
+                    ),
                 onSearchClick = {
                 },
                 onFavouritesClick = {
