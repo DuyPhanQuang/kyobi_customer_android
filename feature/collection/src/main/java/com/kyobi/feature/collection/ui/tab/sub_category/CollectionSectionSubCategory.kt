@@ -1,5 +1,6 @@
 package com.kyobi.feature.collection.ui.tab.sub_category
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -14,28 +15,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import com.kyobi.domain.model.SubcategoryMenu
 import com.kyobi.theme.Colors
 import com.kyobi.theme.kyobiTheme
-import com.kyobi.theme.paragraphXs
+import com.kyobi.theme.smallTitle
 
 @Composable
 fun CollectionSectionSubCategory(
     modifier: Modifier = Modifier,
     lazyListState: LazyListState,
-    subCategories: List<String> = List(30) { "Sub $it" },
     selectedIndex: Int = 0,
     onItemClick: (Int) -> Unit = {},
-    bottomPadding: Dp
+    bottomPadding: Dp,
+    subCategories: List<SubcategoryMenu>
 ) {
     LazyColumn(
         state = lazyListState,
         modifier = modifier
             .background(MaterialTheme.kyobiTheme.colors.bg.stone100),
-        contentPadding = PaddingValues(
-            bottom = bottomPadding
-        )
+        contentPadding = PaddingValues(bottom = bottomPadding)
     ) {
         items(subCategories.size) { index ->
             val isSelected = index == selectedIndex
@@ -50,7 +51,7 @@ fun CollectionSectionSubCategory(
                     .clickable { onItemClick(index) }
             ) {
                 if (isSelected) {
-                    androidx.compose.foundation.Canvas(
+                    Canvas(
                         modifier = Modifier.matchParentSize()
                     ) {
                         drawRect(
@@ -65,10 +66,11 @@ fun CollectionSectionSubCategory(
                         .fillMaxWidth()
                         .padding(
                             vertical = MaterialTheme.kyobiTheme.spacing.dp20,
-                            horizontal = MaterialTheme.kyobiTheme.spacing.dp12),
-                    text = subCategories[index],
-                    style = MaterialTheme.kyobiTheme.typography.paragraphXs,
+                            horizontal = MaterialTheme.kyobiTheme.spacing.dp8),
+                    text = subCategories[index].title,
+                    style = MaterialTheme.kyobiTheme.typography.smallTitle,
                     color = MaterialTheme.kyobiTheme.colors.onBackground,
+                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                     textAlign = TextAlign.Center
                 )
             }

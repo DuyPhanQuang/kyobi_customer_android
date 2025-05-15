@@ -38,8 +38,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.kyobi.domain.model.DomainNetworkResult
-import com.kyobi.domain.model.TopCatalog
-import com.kyobi.domain.model.TopCatalogStatus
+import com.kyobi.domain.model.SubcategoryMenu
 import com.kyobi.feature.collection.ui.tab.category.CollectionSectionCategory
 import com.kyobi.feature.collection.ui.tab.header.CollectionSectionHeader
 import com.kyobi.feature.collection.ui.tab.products.CollectionSectionProductsGridView
@@ -77,6 +76,10 @@ fun CollectionTab(
         is DomainNetworkResult.Loading -> emptyList()
         is DomainNetworkResult.Error -> emptyList()
     }
+
+    val subCategoryMenus: List<SubcategoryMenu> = categoryMenus
+        .flatMap { category -> category.groups ?: emptyList() }
+        .flatMap { group -> group.subcategories ?: emptyList() }
 
     // Track scroll direction
     LaunchedEffect(currentVisibleItemIndex) {
@@ -184,6 +187,7 @@ fun CollectionTab(
                             .fillMaxHeight(),
                         lazyListState = subCategoryLazyListState,
                         bottomPadding = bottomPadding,
+                        subCategories = subCategoryMenus
                     )
                     CollectionSectionProductsGridView(
                         modifier = Modifier
