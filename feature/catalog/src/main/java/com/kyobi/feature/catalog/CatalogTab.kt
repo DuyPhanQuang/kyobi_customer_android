@@ -135,7 +135,39 @@ fun CatalogTab(
             title = "New",
             image = null,
             status = TopCatalogStatus.ACTIVE,
-        )
+        ),
+        TopCatalog(
+            link = "",
+            order = 0,
+            tag = "",
+            title = "New",
+            image = null,
+            status = TopCatalogStatus.ACTIVE,
+        ),
+        TopCatalog(
+            link = "",
+            order = 0,
+            tag = "",
+            title = "New",
+            image = null,
+            status = TopCatalogStatus.ACTIVE,
+        ),
+        TopCatalog(
+            link = "",
+            order = 0,
+            tag = "",
+            title = "New",
+            image = null,
+            status = TopCatalogStatus.ACTIVE,
+        ),
+        TopCatalog(
+            link = "",
+            order = 0,
+            tag = "",
+            title = "New",
+            image = null,
+            status = TopCatalogStatus.ACTIVE,
+        ),
     )
 
     Scaffold(

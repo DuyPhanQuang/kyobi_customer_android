@@ -30,20 +30,23 @@ fun CategoryTile(
     imageLoader: ImageLoader,
     onItemClick: () -> Unit,
 ) {
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val width = MaterialTheme.kyobiTheme.width
     val imageData = catalog.image?.image
+
     Column(
         modifier = modifier
             .clickable { onItemClick() },
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top,
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
         AppImage(
             imageUrl = imageData?.url,
             modifier = Modifier
-                .size(MaterialTheme.kyobiTheme.width.dp48)
+                .size(width.dp48)
                 .clip(CircleShape)
                 .border(
-                    width = MaterialTheme.kyobiTheme.width.dp1,
+                    width = width.dp1,
                     color = MaterialTheme.kyobiTheme.colors.bg.stone100,
                     shape = CircleShape
                 )
@@ -57,7 +60,8 @@ fun CategoryTile(
             imageLoader = imageLoader
         )
         Text(
-            modifier = Modifier.padding(top = MaterialTheme.kyobiTheme.spacing.dp4),
+            modifier = Modifier
+                .padding(top = spacing.dp4),
             text = catalog.title,
             style = MaterialTheme.kyobiTheme.typography.paragraphXs,
             color = if (catalog.title == "New Arrivals")
