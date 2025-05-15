@@ -59,7 +59,7 @@ fun CollectionSectionProductsGridView(
         }
         when (productsResult) {
             is DomainNetworkResult.Loading -> {
-                item {
+                items(6) {
                     SkeletonProductGridView(
                         modifier = Modifier.fillMaxWidth()
                     )
