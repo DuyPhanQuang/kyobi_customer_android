@@ -57,4 +57,9 @@ interface ShopifyApiService {
     suspend fun getFlashSaleInfosByMetaobjectIds(
         metaobjectIds: List<String>
     ): List<FlashSaleInfo>
+
+    suspend fun getCollectionsLarge(
+        handle: String,
+        identifiers: List<MetafieldIdentifierRequest>?
+    ): ShopifyCollection
 }

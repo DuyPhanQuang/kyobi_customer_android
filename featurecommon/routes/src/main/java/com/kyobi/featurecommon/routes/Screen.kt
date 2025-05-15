@@ -24,13 +24,13 @@ sealed class Screen(
         )
     }
 
-    data object Home : Screen(
+    data object HomeTab : Screen(
         routeScheme = "home",
         arguments = emptyList(),
     )
 
-    data object Catalog : Screen(
-        routeScheme = "catalog",
+    data object CollectionTab : Screen(
+        routeScheme = "collection",
         arguments = emptyList(),
     )
 
@@ -55,12 +55,12 @@ sealed class Screen(
         ),
     )
 
-    data object Trend : Screen(
+    data object TrendTab : Screen(
         routeScheme = "trend",
         arguments = emptyList(),
     )
 
-    data object Profile : Screen(
+    data object ProfileTab : Screen(
         routeScheme = "profile",
         arguments = emptyList(),
     )

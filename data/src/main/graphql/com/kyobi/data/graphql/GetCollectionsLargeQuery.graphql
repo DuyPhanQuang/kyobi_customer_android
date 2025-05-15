@@ -1,0 +1,33 @@
+query GetCollectionsLarge(
+    $handle: String!,
+    $identifiers: [HasMetafieldsIdentifier!]!
+) {
+    collection(handle: $handle) {
+        handle
+        title
+        description
+        seo {
+            description
+            title
+        }
+        updatedAt
+        metafields(identifiers: $identifiers) {
+            id
+            type
+            key
+            value
+            references(first: 250) {
+                nodes {
+                    ... on Metaobject {
+                        id
+                        handle
+                        fields {
+                            key
+                            value
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

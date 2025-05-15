@@ -28,7 +28,7 @@ import com.kyobi.createreel.editor_video.EditorVideoScreen
 import com.kyobi.createreel.editor_video.EditorVideoViewModel
 import com.kyobi.createreel.editor_video.SelectMediaType
 import com.kyobi.customer.extension.composable
-import com.kyobi.feature.catalog.CatalogTab
+import com.kyobi.feature.collection.CollectionTab
 import com.kyobi.featurecommon.routes.Screen
 import com.kyobi.featurecommon.routes.getDecodedByKey
 import com.kyobi.featurecommon.routes.getDecodedUserId
@@ -58,7 +58,7 @@ fun RootApp(
             try {
                 when (deepLinkUri.path) {
                     "/" -> {
-                        navController.navigate(Screen.Home.routeScheme) {
+                        navController.navigate(Screen.HomeTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
@@ -66,15 +66,15 @@ fun RootApp(
                         }
                     }
                     "/home" -> {
-                        navController.navigate(Screen.Home.routeScheme) {
+                        navController.navigate(Screen.HomeTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
                             launchSingleTop = true
                         }
                     }
-                    "/catalog" -> {
-                        navController.navigate(Screen.Catalog.routeScheme) {
+                    "/collection" -> {
+                        navController.navigate(Screen.CollectionTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
@@ -82,7 +82,7 @@ fun RootApp(
                         }
                     }
                     "/trend" -> {
-                        navController.navigate(Screen.Trend.routeScheme) {
+                        navController.navigate(Screen.TrendTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
@@ -90,7 +90,7 @@ fun RootApp(
                         }
                     }
                     "/profile" -> {
-                        navController.navigate(Screen.Profile.routeScheme) {
+                        navController.navigate(Screen.ProfileTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
@@ -99,7 +99,7 @@ fun RootApp(
                     }
                     else -> {
                         Timber.tag(tag).w("Unknown deeplink path: ${deepLinkUri.path}, falling back to Home")
-                        navController.navigate(Screen.Home.routeScheme) {
+                        navController.navigate(Screen.HomeTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
@@ -128,28 +128,28 @@ fun RootApp(
                 navController = navController,
                 startDestination = "home",
             ) {
-                composable(screen = Screen.Home) {
+                composable(screen = Screen.HomeTab) {
                     HomeTab(
                         navController = navController,
                         topPadding = innerPadding.calculateTopPadding(),
                         bottomPadding = innerPadding.calculateBottomPadding()
                     )
                 }
-                composable(screen = Screen.Catalog) {
-                    CatalogTab(
+                composable(screen = Screen.CollectionTab) {
+                    CollectionTab(
                         navController = navController,
                         topPadding = innerPadding.calculateTopPadding(),
                         bottomPadding = innerPadding.calculateBottomPadding()
                     )
                 }
-                composable(screen = Screen.Trend) {
+                composable(screen = Screen.TrendTab) {
                     TrendTab(
                         navController = navController,
                         topPadding = innerPadding.calculateTopPadding(),
                         bottomPadding = innerPadding.calculateBottomPadding()
                     )
                 }
-                composable(screen = Screen.Profile) {
+                composable(screen = Screen.ProfileTab) {
                     ProfileTab(navController = navController)
                 }
                 // EditorVideoScreen

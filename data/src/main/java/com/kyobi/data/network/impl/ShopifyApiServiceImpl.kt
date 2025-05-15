@@ -7,6 +7,7 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.kyobi.core.exceptions.ShopifyApiException
 import com.kyobi.core.exceptions.ShopifyErrorHandler
 import com.kyobi.data.graphql.GetCollectionProductsQuery
+import com.kyobi.data.graphql.GetCollectionsLargeQuery
 import com.kyobi.data.graphql.GetHomepageKeyDataQuery
 import com.kyobi.data.graphql.GetMediaImagesByIdsQuery
 import com.kyobi.data.graphql.GetMetaobjectsByIdsForFlashsaleQuery
@@ -22,6 +23,7 @@ import com.kyobi.data.utils.mapper.mapFlashSaleInfos
 import com.kyobi.data.utils.mapper.mapTopCatalogs
 import com.kyobi.data.utils.mapper.mapTrendingResearchs
 import com.kyobi.data.utils.mapper.removeEdgesAndNodes
+import com.kyobi.data.utils.mapper.reshapeCollection
 import com.kyobi.data.utils.mapper.reshapeProduct
 import com.kyobi.domain.model.Banner
 import com.kyobi.domain.model.FlashSaleInfo
@@ -290,6 +292,45 @@ class ShopifyApiServiceImpl @Inject constructor(
             }
             val nodes = response.data?.nodes ?: return emptyList()
             return mapFlashSaleInfos(nodes)
+        } catch (e: ApolloException) {
+            throw errorHandler.handleError(e)
+        } catch (e: Exception) {
+            throw errorHandler.handleError(e)
+        }
+    }
+
+    override suspend fun getCollectionsLarge(
+        handle: String,
+        identifiers: List<MetafieldIdentifierRequest>?
+    ): ShopifyCollection {
+        try {
+            val includeMetafields = !identifiers.isNullOrEmpty()
+            val metafieldIdentifiers = if (includeMetafields) {
+                identifiers!!.map {
+                    HasMetafieldsIdentifier(
+                        namespace = Optional.present(it.namespace),
+                        key = it.key
+                    )
+                }
+            } else {
+                emptyList()
+            }
+            val response: ApolloResponse<GetCollectionsLargeQuery.Data> = apolloClient
+                .query(
+                    GetCollectionsLargeQuery(
+                        handle = handle,
+                        identifiers = metafieldIdentifiers))
+                .execute()
+            if (response.hasErrors()) {
+                throw ShopifyApiException(
+                    message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
+                    errorCode = null)
+            }
+            return response.data?.collection?.let { collection ->
+                reshapeCollection(collection)
+            } ?: throw ShopifyApiException(
+                message = "Collection not found for handle: $handle",
+                errorCode = null)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {

@@ -195,7 +195,7 @@ fun DependencyHandler.moduleDependencies() {
     FEATURE_AUTHENTICATION
     FEATURE_TREND
     FEATURE_CREATEREEL
-    FEATURE_CATALOG
+    FEATURE_COLLECTION
 }
 
 val DependencyHandler.CORE
@@ -240,5 +240,5 @@ val DependencyHandler.FEATURE_CREATEREEL
 val DependencyHandler.FEATURE_AUTHENTICATION
     get() = implementation(project(mapOf("path" to ":feature:authentication")))
 
-val DependencyHandler.FEATURE_CATALOG
-    get() = implementation(project(mapOf("path" to ":feature:catalog")))
+val DependencyHandler.FEATURE_COLLECTION
+    get() = implementation(project(mapOf("path" to ":feature:collection")))
