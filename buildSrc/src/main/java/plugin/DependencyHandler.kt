@@ -47,6 +47,7 @@ fun DependencyHandler.composeDependencies() {
     implementation(Libraries.Compose.composeRuntime)
     implementation(Libraries.Compose.composeMaterial3)
     implementation(Libraries.Compose.composeMaterial)
+    implementation(Libraries.Compose.composeAnimation)
     //navigation
     implementation(Libraries.Navigation.navigationCompose)
 

@@ -21,7 +21,6 @@ import coil.ImageLoader
 import com.kyobi.composable.image.AppImage
 import com.kyobi.domain.model.TopCatalog
 import com.kyobi.theme.kyobiTheme
-import com.kyobi.theme.labelSmallXs
 import com.kyobi.theme.paragraphXs
 
 @Composable
@@ -33,13 +32,10 @@ fun CategoryTile(
 ) {
     val imageData = catalog.image?.image
     Column(
+        modifier = modifier
+            .clickable { onItemClick() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
-        modifier = modifier
-            .padding(
-                top = MaterialTheme.kyobiTheme.spacing.dp8
-            )
-            .clickable { onItemClick() }
     ) {
         AppImage(
             imageUrl = imageData?.url,

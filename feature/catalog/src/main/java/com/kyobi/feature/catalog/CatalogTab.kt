@@ -37,7 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kyobi.domain.model.TopCatalog
 import com.kyobi.domain.model.TopCatalogStatus
-import com.kyobi.feature.catalog.ui.tab.CatalogSectionCategory
+import com.kyobi.feature.catalog.ui.tab.category.CatalogSectionCategory
 import com.kyobi.feature.catalog.ui.tab.CatalogSectionHeader
 import com.kyobi.feature.catalog.ui.tab.CatalogSectionProductsGridView
 import com.kyobi.feature.catalog.ui.tab.CatalogSectionSubCategory
@@ -63,6 +63,7 @@ fun CatalogTab(
     var showCategorySection by remember { mutableStateOf(true) }
     var lastVisibleItemIndex by remember { mutableIntStateOf(0) }
     val currentVisibleItemIndex by remember { derivedStateOf { productLazyListState.firstVisibleItemIndex } }
+    var showAllCategories by remember { mutableStateOf(false) }
 
     // Track scroll direction
     LaunchedEffect(currentVisibleItemIndex) {
@@ -73,6 +74,7 @@ fun CatalogTab(
         // scroll up
         if (currentVisibleItemIndex < lastVisibleItemIndex || currentVisibleItemIndex == 0) {
             showCategorySection = true
+            showAllCategories = false
         }
         lastVisibleItemIndex = currentVisibleItemIndex
     }
@@ -192,6 +194,9 @@ fun CatalogTab(
                     CatalogSectionCategory(
                         categories = mockCategory,
                         imageLoader = imageLoader,
+                        expanded = showAllCategories,
+                        onAllClick = { showAllCategories = true },
+                        onCollapseClick = { showAllCategories = false }
                     )
                 }
             }

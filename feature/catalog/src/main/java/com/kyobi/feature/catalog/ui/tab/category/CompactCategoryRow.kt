@@ -1,4 +1,4 @@
-package com.kyobi.feature.catalog.ui.tab
+package com.kyobi.feature.catalog.ui.tab.category
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,74 +30,79 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import coil.ImageLoader
 import com.kyobi.composable.R
 import com.kyobi.domain.model.TopCatalog
-import com.kyobi.feature.catalog.ui.tab.category.CategoryTile
+import com.kyobi.theme.Colors
+import com.kyobi.theme.Dimension
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
 
 @Composable
-fun CatalogSectionCategory(
-    modifier: Modifier = Modifier,
+fun CompactCategoryRow(
+    modifier: Modifier,
     categories: List<TopCatalog>,
     imageLoader: ImageLoader,
+    onAllClick: () -> Unit
 ) {
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val iconSize = MaterialTheme.kyobiTheme.icon.lg
+    val allContainerWidth = spacing.dp48
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(MaterialTheme.kyobiTheme.height.dp84)
             .background(MaterialTheme.kyobiTheme.colors.background)
             .drawBehind {
-                val strokeWidth = 1.dp.toPx()
-                val topY = 0f
-                val bottomY = size.height - strokeWidth
-                val borderColor = Color(0xFFF5F5F4)
-                // Top border
+                val strokeWidth = Dimension.dp1.toPx()
+                val borderColor = Colors().stone100
                 drawLine(
                     color = borderColor,
-                    start = Offset(0f, topY),
-                    end = Offset(size.width, topY),
+                    start = Offset(0f, 0f),
+                    end = Offset(size.width, 0f),
                     strokeWidth = strokeWidth
                 )
-                // Bottom border
                 drawLine(
                     color = borderColor,
-                    start = Offset(0f, bottomY),
-                    end = Offset(size.width, bottomY),
+                    start = Offset(0f, size.height - strokeWidth),
+                    end = Offset(size.width, size.height - strokeWidth),
                     strokeWidth = strokeWidth
                 )
             },
         contentAlignment = Alignment.Center
     ) {
-        val allContainerWidth = MaterialTheme.kyobiTheme.spacing.dp48
         LazyRow(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp16),
+            modifier = Modifier.fillMaxSize(),
+            horizontalArrangement = Arrangement.spacedBy(spacing.dp16),
             contentPadding = PaddingValues(
-                start = MaterialTheme.kyobiTheme.spacing.dp12,
-                end = MaterialTheme.kyobiTheme.spacing.dp12 + allContainerWidth)
+                start = spacing.dp12,
+                end = spacing.dp12 + allContainerWidth
+            )
         ) {
             items(categories) { category ->
                 CategoryTile(
+                    modifier = Modifier.padding(
+                        top = spacing.dp8
+                    ),
                     catalog = category,
                     imageLoader = imageLoader,
-                    onItemClick = {  }
+                    onItemClick = { }
                 )
             }
         }
+
         Box(
             modifier = Modifier
                 .width(allContainerWidth)
                 .fillMaxHeight()
-                .padding(vertical = MaterialTheme.kyobiTheme.spacing.dp1)
+                .padding(vertical = spacing.dp1)
                 .align(Alignment.TopEnd)
+                .clickable { onAllClick() }
                 .drawBehind {
                     val paint = Paint().asFrameworkPaint().apply {
                         isAntiAlias = true
-                        setShadowLayer(4f, -2f, 0f, android.graphics.Color.argb(25, 0, 0, 0)) // blur 4px, offset -2px
+                        setShadowLayer(4f, -2f, 0f, android.graphics.Color.argb(25, 0, 0, 0))
                     }
                     drawContext.canvas.nativeCanvas.apply {
                         save()
@@ -110,24 +115,26 @@ fun CatalogSectionCategory(
                     shape = RectangleShape
                     clip = false
                 }
-                .background(MaterialTheme.kyobiTheme.colors.background)
+                .background(MaterialTheme.kyobiTheme.colors.background),
+            contentAlignment = Alignment.Center
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        horizontal = MaterialTheme.kyobiTheme.spacing.dp12)
-                    .clickable {  },
+                modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            ){
                 Icon(
-                    modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg),
+                    modifier = Modifier
+                        .size(iconSize)
+                        .padding(top = spacing.dp8),
                     painter = painterResource(id = R.drawable.ic_category),
                     contentDescription = "All Category Icon",
                     tint = Color.Unspecified
                 )
                 Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = spacing.dp12),
                     text = "All",
                     style = MaterialTheme.kyobiTheme.typography.labelSmallXs,
                     color = MaterialTheme.kyobiTheme.colors.onBackground,

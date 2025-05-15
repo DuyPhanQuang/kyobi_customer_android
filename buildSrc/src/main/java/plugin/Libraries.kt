@@ -75,6 +75,7 @@ object Libraries {
         const val composeUiUtil = "androidx.compose.ui:ui-util:${Version.AndroidXCompose}"
         const val constraintLayoutCompose =
             "androidx.constraintlayout:constraintlayout-compose:${Version.ConstraintLayoutCompose}"
+        const val composeAnimation = "androidx.compose.animation:animation:${Version.AndroidXCompose}"
     }
 
     object Google {
