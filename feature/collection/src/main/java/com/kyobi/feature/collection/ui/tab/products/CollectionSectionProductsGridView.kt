@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
-import com.kyobi.composable.skeleton.SkeletonProductGridView
+import com.kyobi.composable.skeleton.SkeletonProductCard
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.feature.collection.CollectionTabProductListViewModel
 import com.kyobi.feature.collection.ui.tab.sort_filter.CollectionSectionSortFilter
@@ -59,9 +59,11 @@ fun CollectionSectionProductsGridView(
         }
         when (productsResult) {
             is DomainNetworkResult.Loading -> {
-                items(6) {
-                    SkeletonProductGridView(
-                        modifier = Modifier.fillMaxWidth()
+                items(4) {
+                    SkeletonProductCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = spacing.dp12)
                     )
                 }
             }

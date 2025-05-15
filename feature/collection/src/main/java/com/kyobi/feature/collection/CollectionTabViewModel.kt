@@ -45,6 +45,7 @@ class CollectionTabViewModel @Inject constructor(
     }
 
     fun updateCategorySelected(category: CategoryMenu) {
+        if (category.id == _uiState.value.selectedCategoryId) return
         _uiState.value = _uiState.value.copy(selectedCategoryId = category.id)
         viewModelScope.launchOnIO {
             collectionEventBus.emitCollectionTabEvent(CollectionTabEvent.CategorySelected(category.filterHandle))
@@ -53,6 +54,7 @@ class CollectionTabViewModel @Inject constructor(
     }
 
     fun updateSubCategorySelected(subCategory: SubcategoryMenu) {
+        if (subCategory.id == _uiState.value.selectedSubCategoryId) return
         _uiState.value = _uiState.value.copy(selectedSubCategoryId = subCategory.id)
         viewModelScope.launchOnIO {
             collectionEventBus.emitCollectionTabEvent(CollectionTabEvent.SubCategorySelected(subCategory.filterHandle))

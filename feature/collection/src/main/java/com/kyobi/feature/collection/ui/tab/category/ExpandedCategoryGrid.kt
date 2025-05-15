@@ -82,11 +82,12 @@ fun ExpandedCategoryGrid(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = spacing.dp12)
                 .clickable { onCollapseClick() },
         ) {
             Row(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = spacing.dp12),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
