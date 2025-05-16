@@ -56,9 +56,6 @@ fun ReelList(
                     onSingleTap = { exoPlayer ->
                         exoPlayer.playWhenReady = !exoPlayer.isPlaying
                     },
-                    onFetchMore = {
-                        viewModel.fetchMoreReels()
-                    }
                 )
             }
         }

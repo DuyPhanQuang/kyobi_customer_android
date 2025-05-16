@@ -42,7 +42,6 @@ fun VideoPlayer(
     pageIndex: Int,
     viewModel: ReelPlaybackViewModel,
     onSingleTap: (ExoPlayer) -> Unit,
-    onFetchMore: () -> Unit
 ) {
     val tag = "ReelVideoPlayer"
     val context = LocalContext.current
