@@ -12,19 +12,14 @@ import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.util.UnstableApi
-import com.kyobi.trend.model.Reel
 
 @OptIn(UnstableApi::class)
 @Composable
 fun ReelList(
-    initReels: List<Reel>,
-    moreReels: List<Reel>,
     topSystemBarHeight: Dp = 0.dp,
     bottomNavBarHeight: Dp = 0.dp,
     viewModel: ReelPlaybackViewModel
@@ -40,6 +35,7 @@ fun ReelList(
         ),
         snapPositionalThreshold = 0.35f
     )
+    val reels = viewModel.reels.value
 
     Surface(
         modifier = Modifier
@@ -53,7 +49,7 @@ fun ReelList(
         ) { page ->
             Box(modifier = Modifier.fillMaxSize()) {
                 VideoPlayer(
-                    reel = initReels[page],
+                    reel = reels[page],
                     pagerState = pagerState,
                     pageIndex = page,
                     viewModel = viewModel,

@@ -70,7 +70,7 @@ fun VideoPlayer(
     // Lấy ExoPlayer từ ViewModel
     val player = viewModel.getPlayer()
 
-    // Collect firstFrameRendered để cập nhật showThumbnail và đo thời gian
+    // Collect firstFrameRendered để update showThumbnail và đo time render first frame
     LaunchedEffect(pageIndex, viewModel.firstFrameRendered) {
         viewModel.firstFrameRendered.collect { renderedPage ->
             if (renderedPage == pageIndex) {

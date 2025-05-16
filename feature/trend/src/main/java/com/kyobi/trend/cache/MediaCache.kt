@@ -80,7 +80,9 @@ class MediaCache @Inject constructor(
             .setCache(mediaCache)
             .setUpstreamDataSourceFactory(upstreamFactory)
             .setCacheReadDataSourceFactory(upstreamFactory)
-            .setCacheWriteDataSinkFactory(CacheDataSink.Factory().setCache(mediaCache))
+            .setCacheWriteDataSinkFactory(CacheDataSink.Factory()
+                .setCache(mediaCache)
+                .setBufferSize(32 * 1024)) //32KB Buffer
             .setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE or CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
             .setCacheKeyFactory { mediaItem ->
                 val uri = mediaItem.uri.toString()
