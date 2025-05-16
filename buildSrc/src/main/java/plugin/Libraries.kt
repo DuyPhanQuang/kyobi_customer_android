@@ -30,7 +30,7 @@ object Version {
     const val KotlinxCoroutines = "1.10.1"
     const val KotlinReflect = "2.1.10"
     const val Lottie = "6.5.0"
-    const val Room = "2.6.1"
+    const val Room = "2.7.1"
     const val Apollo = "4.0.0-beta.7"
     const val Moshi = "1.15.1"
     const val ConverterMoshi = "2.11.0"
@@ -40,6 +40,7 @@ object Version {
     const val MediaPlayer = "1.6.1"
     const val Glide = "4.16.0"
     const val Semver = "5.6.0"
+    const val WorkManager = "2.10.1"
 }
 
 object Libraries {
@@ -55,7 +56,7 @@ object Libraries {
         const val viewModelKtx =
             "androidx.lifecycle:lifecycle-viewmodel-ktx:${Version.AndroidXLifeCycle}"
         const val liveData = "androidx.compose.runtime:runtime-livedata:${Version.AndroidXLiveData}"
-        const val workManager = "androidx.work:work-runtime-ktx:2.8.1"
+        const val workManager = "androidx.work:work-runtime-ktx:${Version.WorkManager}"
         const val splashScreen = "androidx.core:core-splashscreen:${Version.SplashScreenApi}"
         const val multiDex = "androidx.multidex:multidex:2.0.1"
         const val security = "androidx.security:security-crypto:1.1.0-alpha06"
@@ -194,14 +195,15 @@ object Libraries {
     }
 
     object Hilt {
-        // dagger hilt
+        //google
         const val hiltAndroid = "com.google.dagger:hilt-android:${Version.HiltAndroid}"
         const val daggerCompiler = "com.google.dagger:dagger-compiler:${Version.HiltAndroid}"
         const val hiltCompiler = "com.google.dagger:hilt-compiler:${Version.HiltAndroid}"
 
-        //hilt
-        const val hiltWork = "androidx.hilt:hilt-work:${Version.HiltNavigationCompose}"
-        const val hiltNavigationCompose =
+        //androidX
+        const val hiltAndroidXWork = "androidx.hilt:hilt-work:${Version.HiltNavigationCompose}"
+        const val hiltAndroidXCompiler = "androidx.hilt:hilt-compiler:${Version.HiltNavigationCompose}"
+        const val hiltAndroidXNavigationCompose =
             "androidx.hilt:hilt-navigation-compose:${Version.HiltNavigationCompose}"
     }
 }

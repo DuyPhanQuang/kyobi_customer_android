@@ -55,9 +55,6 @@ fun DependencyHandler.composeDependencies() {
     implementation(Libraries.Coil.coilCompose)
     implementation(Libraries.Coil.coilGif)
 
-    //hilt navigation
-    implementation(Libraries.Hilt.hiltNavigationCompose)
-
     //accompanist
     accompanistDependencies()
 
@@ -122,9 +119,11 @@ fun DependencyHandler.baseDependencies() {
 
     implementation(Libraries.Google.gson)
 
-    // Dagger - Hilt
+    // Dagger - Hilt of Google/AndroidX
     implementation(Libraries.Hilt.hiltAndroid)
-    implementation(Libraries.Hilt.hiltWork)
+    implementation(Libraries.Hilt.hiltAndroidXWork)
+    implementation(Libraries.Hilt.hiltAndroidXNavigationCompose)
+    annotationProcessor(Libraries.Hilt.hiltAndroidXCompiler)
     ksp(Libraries.Hilt.daggerCompiler)
     ksp(Libraries.Hilt.hiltCompiler)
 

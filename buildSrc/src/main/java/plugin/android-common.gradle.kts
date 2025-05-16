@@ -30,8 +30,12 @@ android {
 
     buildTypes {
         testBuildType = "debug"
-        debug {}
-        release {}
+        debug {
+            manifestPlaceholders["crashlyticsEnabled"] = false
+        }
+        release {
+            manifestPlaceholders["crashlyticsEnabled"] = true
+        }
 
         create("profile") {
             initWith(getByName("debug"))

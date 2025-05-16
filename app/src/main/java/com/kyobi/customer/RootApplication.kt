@@ -2,9 +2,15 @@ package com.kyobi.customer
 
 import android.app.Application
 import android.os.StrictMode
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.kyobi.customer.global.crashlytics.CrashReporter
 import com.kyobi.featurecommon.monitor.network.NetworkMonitor
+import com.kyobi.trend.worker.WorkManagerSetup
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 import ly.img.engine.Engine
@@ -17,6 +23,12 @@ class RootApplication : Application() {
 
     @Inject
     lateinit var networkMonitor: NetworkMonitor
+
+    @Inject
+    lateinit var firebaseAnalytics: FirebaseAnalytics
+
+    @Inject
+    lateinit var workManagerSetup: WorkManagerSetup
 
     override fun onCreate() {
         super.onCreate()
@@ -42,12 +54,23 @@ class RootApplication : Application() {
             )
         }
 
+        // Tắt auto session tracking runtime
+        firebaseAnalytics.setAnalyticsCollectionEnabled(false)
         // Global Crash Handler
-        CrashReporter.initGlobalHandler()
+        CoroutineScope(Dispatchers.IO).launch {
+            CrashReporter.initGlobalHandler()
+        }
         Timber.tag(tag).d("Initiated global crash handler")
 
-        // Init Imgly Engine
-        Engine.init(this)
+        // Init Imgly Engine after 5s
+        CoroutineScope(Dispatchers.Default).launch {
+            delay(5000)
+            Engine.init(this@RootApplication)
+            Timber.tag(tag).d("Initialized Imgly Engine")
+        }
+
+        // Schedule cleanup
+        workManagerSetup.scheduleCleanupWork()
     }
 
     override fun onTerminate() {

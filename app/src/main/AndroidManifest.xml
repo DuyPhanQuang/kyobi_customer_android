@@ -30,10 +30,8 @@
             android:name=".MainActivity"
             android:launchMode="singleTop"
             android:exported="true"
-            android:screenOrientation="sensorPortrait"
             android:theme="@style/Theme.KyobiCustomer"
-            android:windowSoftInputMode="adjustResize"
-            tools:ignore="LockedOrientationActivity">
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -67,6 +65,14 @@
                     android:pathPrefix="/" />
             </intent-filter>
         </activity>
+
+        <meta-data
+            android:name="firebase_analytics_collection_deactivated"
+            android:value="true" />
+
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="${crashlyticsEnabled}" />
 
         <service
             android:name=".global.notification.MyFirebaseMessagingService"

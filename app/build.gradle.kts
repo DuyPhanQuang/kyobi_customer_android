@@ -69,6 +69,7 @@ android {
             isDebuggable = true
             isMinifyEnabled = false
             isShrinkResources = false
+            manifestPlaceholders["crashlyticsEnabled"] = false
             initWith(getByName("debug"))
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -85,6 +86,7 @@ android {
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
+            manifestPlaceholders["crashlyticsEnabled"] = true
             initWith(getByName("release"))
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

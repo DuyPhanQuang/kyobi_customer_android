@@ -25,12 +25,15 @@ fun ReelList(
     viewModel: ReelPlaybackViewModel
 ) {
     val tag = "ReelList"
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { viewModel.reels.value.size })
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { viewModel.reels.value.size }
+    )
     val fling = PagerDefaults.flingBehavior(
         state = pagerState,
         pagerSnapDistance = PagerSnapDistance.atMost(1),
         snapAnimationSpec = tween(
-            durationMillis = 250,
+            durationMillis = 300,
             easing = FastOutSlowInEasing
         ),
         snapPositionalThreshold = 0.35f
@@ -48,7 +51,7 @@ fun ReelList(
             key = { it }
         ) { page ->
             Box(modifier = Modifier.fillMaxSize()) {
-                VideoPlayer(
+                ReelVideoPlayer(
                     reel = reels[page],
                     pagerState = pagerState,
                     pageIndex = page,

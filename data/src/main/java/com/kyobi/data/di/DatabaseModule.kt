@@ -2,8 +2,8 @@ package com.kyobi.data.di
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.room.Room
 import com.kyobi.data.database.AppDatabase
+import com.kyobi.data.database.dao.PreloadedMediaDao
 import com.kyobi.data.database.dao.TokenDao
 import dagger.Module
 import dagger.Provides
@@ -21,17 +21,19 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
-        return Room.databaseBuilder(
-            context,
-            AppDatabase::class.java,
-            databaseName
-        ).build()
+        return AppDatabase.getDatabase(context)
     }
 
     @Provides
     @Singleton
     fun provideTokenDao(database: AppDatabase): TokenDao {
         return database.tokenDao()
+    }
+
+    @Provides
+    @Singleton
+    fun providePreloadedMediaDao(database: AppDatabase): PreloadedMediaDao {
+        return database.preloadedMediaDao()
     }
 
     @Provides

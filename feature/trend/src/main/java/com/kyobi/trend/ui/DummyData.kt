@@ -5,19 +5,6 @@ import com.kyobi.trend.model.Reel
 val mockData = listOf(
     Reel(
         id = "reel_1",
-        videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1744549928872.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NDU0OTkyODg3Mi5tcDQiLCJpYXQiOjE3NDYwMTkxNDEsImV4cCI6MTc0ODYxMTE0MX0.j_cW8FqxXWFFCGbJA4yBumOCuEdpummpunChJ5pjfKM",
-        shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1746372731253.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NjM3MjczMTI1My5tcDQiLCJpYXQiOjE3NDYzNzI3NjksImV4cCI6MTc0ODk2NDc2OX0.1UJ_omCYHCd5aFby4KCt0gvsZBqcbyGMmcGRmV6sNlY",
-        status = "PUBLISHED",
-        likeCount = 1200,
-        commentCount = 150,
-        shareCount = 50,
-        viewCount = 5000,
-        createdAt = "2025-04-20T10:00:00Z",
-        thumbnailUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/thumbnails/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746444377793-thumbnail.webp?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0aHVtYm5haWxzLzQ2OGI0ZDM2LTRkNDMtNDhmMy04ZjMyLTBkNzk2ZTJiMmVjZC9yZWVsLTE3NDY0NDQzNzc3OTMtdGh1bWJuYWlsLndlYnAiLCJpYXQiOjE3NDY0NDQzNzksImV4cCI6MTc3Nzk4MDM3OX0.OBtARv4roCRe02jgq2Vc2krZ5NBpnNMwd5pqyEgIsdU",
-        tags = listOf("fashion", "trend")
-    ),
-    Reel(
-        id = "reel_1_-1",
         videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746523286632/full/full.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NTIzMjg2NjMyL2Z1bGwvZnVsbC5tM3U4IiwiaWF0IjoxNzQ2NTIzMzIxLCJleHAiOjE3NzgwNTkzMjF9.KaS-YLFEmCs0RC3HPRTtq3ENpQ62xhcvtuhBBFkBupA",
         shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746523286632/shorten/shorten.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NTIzMjg2NjMyL3Nob3J0ZW4vc2hvcnRlbi5tM3U4IiwiaWF0IjoxNzQ2NTIzMzIxLCJleHAiOjE3NzgwNTkzMjF9.0CBRkGfBSX-TBkZlppuLwwR_yL63jL0uskwPbturg2M",
         status = "PUBLISHED",
@@ -30,7 +17,7 @@ val mockData = listOf(
         tags = listOf("fashion", "trend")
     ),
     Reel(
-        id = "reel_1_0_hls",
+        id = "reel_2",
         videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746462876876/full/full.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDYyODc2ODc2L2Z1bGwvZnVsbC5tM3U4IiwiaWF0IjoxNzQ2NDYyOTAxLCJleHAiOjE3Nzc5OTg5MDF9.5Cx_la0TwUfIH-XagoeIZX9T3JQM3wrmyDHSsyi8cgc",
         shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746462876876/shorten/shorten.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDYyODc2ODc2L3Nob3J0ZW4vc2hvcnRlbi5tM3U4IiwiaWF0IjoxNzQ2NDYyOTAxLCJleHAiOjE3Nzc5OTg5MDF9.TEZIE47UO6ETinbUUXP8g69_RiLUJaDUJI4uC8mFE7w",
         status = "PUBLISHED",
@@ -43,7 +30,7 @@ val mockData = listOf(
         tags = listOf("fashion", "trend")
     ),
     Reel(
-        id = "reel_1_1_hls",
+        id = "reel_3",
         videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746444377793/full/full.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDQ0Mzc3NzkzL2Z1bGwvZnVsbC5tM3U4IiwiaWF0IjoxNzQ2NDQ0Mzk3LCJleHAiOjE3Nzc5ODAzOTd9.QGT0ceFcYim7vnY2iUOM0X-xKoiYxBtHkzSFFdGBxKM",
         shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746444377793/shorten/shorten.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDQ0Mzc3NzkzL3Nob3J0ZW4vc2hvcnRlbi5tM3U4IiwiaWF0IjoxNzQ2NDQ0Mzk3LCJleHAiOjE3Nzc5ODAzOTd9.czfpkVJT-8BkLdauW0B7h8kAy6vEx5hNSM9gZrIDbtg",
         status = "PUBLISHED",
@@ -56,7 +43,7 @@ val mockData = listOf(
         tags = listOf("fashion", "trend")
     ),
     Reel(
-        id = "reel_1_2_hls",
+        id = "reel_4",
         videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746449182211/full/full.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDQ5MTgyMjExL2Z1bGwvZnVsbC5tM3U4IiwiaWF0IjoxNzQ2NDQ5MTg3LCJleHAiOjE3Nzc5ODUxODd9.-RWzsW4dzlnOJLF2GWl3AT_yTFuQBYSgXvBXcy-jC50",
         shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746449182211/shorten/shorten.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDQ5MTgyMjExL3Nob3J0ZW4vc2hvcnRlbi5tM3U4IiwiaWF0IjoxNzQ2NDQ5MTg3LCJleHAiOjE3Nzc5ODUxODd9.GyM7DXgfp0BkpC15ou6eOqV_xP3W90QIcSUc9waJCnk",
         status = "PUBLISHED",
@@ -69,7 +56,7 @@ val mockData = listOf(
         tags = listOf("fashion", "trend")
     ),
     Reel(
-        id = "reel_1_3_hls",
+        id = "reel_5",
         videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746449369113/full/full.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDQ5MzY5MTEzL2Z1bGwvZnVsbC5tM3U4IiwiaWF0IjoxNzQ2NDQ5Mzk5LCJleHAiOjE3Nzc5ODUzOTl9.T1k6wHtcTZnwN6h6qQV0yDGBH3wwQs77ddWwn9_yvAs",
         shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746449369113/shorten/shorten.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDQ5MzY5MTEzL3Nob3J0ZW4vc2hvcnRlbi5tM3U4IiwiaWF0IjoxNzQ2NDQ5Mzk5LCJleHAiOjE3Nzc5ODUzOTl9.xBNYrUOoH5SGFfIqXxmsTXzNuP8XRjDN-gilSp8Ec-g",
         status = "PUBLISHED",
@@ -82,7 +69,7 @@ val mockData = listOf(
         tags = listOf("fashion", "trend")
     ),
     Reel(
-        id = "reel_1_4_hls",
+        id = "reel_6",
         videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746449295660/full/full.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDQ5Mjk1NjYwL2Z1bGwvZnVsbC5tM3U4IiwiaWF0IjoxNzQ2NDQ5MzAzLCJleHAiOjE3Nzc5ODUzMDN9.ydpwnd8hMNKPd_JzazvhyR8-LN0y8zWfiTg5HR9c2lk",
         shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746449295660/shorten/shorten.m3u8?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvcmVlbC0xNzQ2NDQ5Mjk1NjYwL3Nob3J0ZW4vc2hvcnRlbi5tM3U4IiwiaWF0IjoxNzQ2NDQ5MzAzLCJleHAiOjE3Nzc5ODUzMDN9.WGtzf2JD0E79B72OLv7zkffAmEeOh5QcvfVc4c20ZqY",
         status = "PUBLISHED",
@@ -93,44 +80,5 @@ val mockData = listOf(
         createdAt = "2025-04-20T10:00:00Z",
         thumbnailUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/thumbnails/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/reel-1746449295660-thumbnail.webp?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0aHVtYm5haWxzLzQ2OGI0ZDM2LTRkNDMtNDhmMy04ZjMyLTBkNzk2ZTJiMmVjZC9yZWVsLTE3NDY0NDkyOTU2NjAtdGh1bWJuYWlsLndlYnAiLCJpYXQiOjE3NDY0NDkyOTYsImV4cCI6MTc3Nzk4NTI5Nn0.TOVBk-xaxV067RRodXtKS7jeGzEEqeW9Ahii4QLbIaY",
         tags = listOf("fashion", "trend")
-    ),
-    Reel(
-        id = "reel_2",
-        videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1746194918762.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NjE5NDkxODc2Mi5tcDQiLCJpYXQiOjE3NDYxOTUzODAsImV4cCI6MTc0ODc4NzM4MH0.YiKTG3sFBpv9zWqKJ4wyFVpGmCUs7xJdEpoRlfR36wg",
-        shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1746372752350.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NjM3Mjc1MjM1MC5tcDQiLCJpYXQiOjE3NDYzNzI3ODgsImV4cCI6MTc0ODk2NDc4OH0.C5LfkfqFYAk1PLQXdm8HKlTRc1dK91NsUd2VdPb93-g",
-        status = "PUBLISHED",
-        likeCount = 800,
-        commentCount = 90,
-        shareCount = 30,
-        viewCount = 3200,
-        createdAt = "2025-04-19T15:30:00Z",
-        thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
-        tags = listOf("style", "kyobi")
-    ),
-    Reel(
-        id = "reel_2_1",
-        videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1744549928872.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NDU0OTkyODg3Mi5tcDQiLCJpYXQiOjE3NDYzNDA0MDcsImV4cCI6MTc0ODkzMjQwN30.uJl1iedItiAdWgaEpHrEK8hUDhWPq55Hf0YH3SIqfKM",
-        shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1746372731253.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NjM3MjczMTI1My5tcDQiLCJpYXQiOjE3NDYzNzI3NjksImV4cCI6MTc0ODk2NDc2OX0.1UJ_omCYHCd5aFby4KCt0gvsZBqcbyGMmcGRmV6sNlY",
-        status = "PUBLISHED",
-        likeCount = 800,
-        commentCount = 90,
-        shareCount = 30,
-        viewCount = 3200,
-        createdAt = "2025-04-19T15:30:00Z",
-        thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
-        tags = listOf("style", "kyobi")
-    ),
-    Reel(
-        id = "reel_2_2",
-        videoUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1746194998454.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NjE5NDk5ODQ1NC5tcDQiLCJpYXQiOjE3NDYxOTU0MjUsImV4cCI6MTc0ODc4NzQyNX0.JjdfjCGqwg0ZHO3sMmjyZAmFx4gzgs47S0_hEL2iJMA",
-        shortenUrl = "https://ilwzwgxiwwejqncfvysv.supabase.co/storage/v1/object/sign/reels/468b4d36-4d43-48f3-8f32-0d796e2b2ecd/video-1746372752350.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJyZWVscy80NjhiNGQzNi00ZDQzLTQ4ZjMtOGYzMi0wZDc5NmUyYjJlY2QvdmlkZW8tMTc0NjM3Mjc1MjM1MC5tcDQiLCJpYXQiOjE3NDYzNzI3ODgsImV4cCI6MTc0ODk2NDc4OH0.C5LfkfqFYAk1PLQXdm8HKlTRc1dK91NsUd2VdPb93-g",
-        status = "PUBLISHED",
-        likeCount = 800,
-        commentCount = 90,
-        shareCount = 30,
-        viewCount = 3200,
-        createdAt = "2025-04-19T15:30:00Z",
-        thumbnailUrl = "https://media1.tenor.com/m/Gi3YSm0uDK0AAAAd/random-lol.gif",
-        tags = listOf("style", "kyobi")
     ),
 )

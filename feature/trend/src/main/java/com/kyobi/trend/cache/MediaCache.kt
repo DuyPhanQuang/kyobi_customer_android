@@ -9,7 +9,6 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.multidex.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import java.io.File
@@ -21,10 +20,11 @@ import javax.inject.Singleton
 class MediaCache @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    private val tag = "MediaCache"
     private var cache: SimpleCache? = null
     private val cacheDir = File(context.cacheDir, "media_cache")
-    private val cacheSizeMb = 500
-    private var isCacheInUse = false // theo dõi trạng thái sử dụng cache
+    private val cacheSizeMb = 500 // 500MB
+    private var isCacheInUse = false
 
     init {
         clearCacheIfOld()
@@ -33,7 +33,7 @@ class MediaCache @Inject constructor(
             LeastRecentlyUsedCacheEvictor(cacheSizeMb * 1024 * 1024L),
             StandaloneDatabaseProvider(context)
         )
-        Timber.tag("MediaCache").d("Initialized cache with size ${cacheSizeMb}MB")
+        Timber.tag(tag).d("Initialized cache at $cacheDir, contents: ${cacheDir.listFiles()?.joinToString()}")
     }
 
     fun getCache(): SimpleCache {
@@ -43,22 +43,28 @@ class MediaCache @Inject constructor(
                 LeastRecentlyUsedCacheEvictor(cacheSizeMb * 1024 * 1024L),
                 StandaloneDatabaseProvider(context)
             )
-            Timber.tag("MediaCache").d("Reinitialized cache with size ${cacheSizeMb}MB")
+            Timber.tag(tag).d("Reinitialized cache with size ${cacheSizeMb}MB")
         }
         isCacheInUse = true
         return cache!!
     }
 
+    fun isCached(key: String, position: Long, length: Long): Boolean {
+        val isCached = cache?.isCached(key, position, length) ?: false
+        Timber.tag(tag).d("Checked cache for key=$key, position=$position, length=$length, isCached=$isCached, cache contents: ${cacheDir.listFiles()?.joinToString()}")
+        return isCached
+    }
+
     private fun clearCache() {
         if (isCacheInUse) {
-            Timber.tag("MediaCache").d("Cache is in use, skipping clear")
+            Timber.tag(tag).d("Cache is in use, skipping clear")
             return
         }
         cache?.release()
         cache = null
         if (cacheDir.exists()) {
             cacheDir.deleteRecursively()
-            Timber.tag("MediaCache").d("Cleared cache directory: ${cacheDir.path}")
+            Timber.tag(tag).d("Cleared cache directory: ${cacheDir.path}")
         }
     }
 
@@ -69,7 +75,7 @@ class MediaCache @Inject constructor(
             val ageInDays = (currentTime - lastModified) / (1000 * 60 * 60 * 24)
             if (ageInDays > maxAgeDays) {
                 clearCache()
-                Timber.tag("MediaCache").d("Cleared old cache (age: $ageInDays days)")
+                Timber.tag(tag).d("Cleared old cache (age: $ageInDays days)")
             }
         }
     }
@@ -87,12 +93,12 @@ class MediaCache @Inject constructor(
             .setCacheKeyFactory { mediaItem ->
                 val uri = mediaItem.uri.toString()
                 val fileName = uri.substringAfterLast("/").substringBefore("?")
+                val hash = uri.hashCode()
                 val token = uri.substringAfter("?token=").takeIf { it.isNotEmpty() } ?: "notoken"
-                "$fileName-${uri.hashCode()}-${token.hashCode()}" // Key duy nhất dựa trên file name, uri hash và token hash
+                "$fileName-$hash-${token.hashCode()}" // Key duy nhất dựa trên file name, uri hash và token hash
             }
     }
 
-    // DataSource.Factory không cache
     fun createNonCachedDataSourceFactory(context: Context): DefaultDataSource.Factory {
         return DefaultDataSource.Factory(context)
     }
@@ -109,13 +115,7 @@ class MediaCache @Inject constructor(
     fun release() {
         cache?.release()
         cache = null
-        isCacheInUse = false // Đặt lại trạng thái khi release
-        if (BuildConfig.DEBUG) {
-            if (cacheDir.exists()) {
-                cacheDir.deleteRecursively()
-                Timber.tag("MediaCache").d("Cleared cache directory: ${cacheDir.path}")
-            }
-        }
-        Timber.tag("MediaCache").d("Released cache")
+        isCacheInUse = false
+        Timber.tag(tag).d("Released cache, contents: ${cacheDir.listFiles()?.joinToString()}")
     }
 }

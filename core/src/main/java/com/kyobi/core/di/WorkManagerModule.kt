@@ -1,9 +1,7 @@
-package com.kyobi.trend.di
+package com.kyobi.core.di
 
 import android.content.Context
-import androidx.annotation.OptIn
-import androidx.media3.common.util.UnstableApi
-import com.kyobi.trend.cache.MediaCache
+import androidx.work.WorkManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,11 +11,10 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object TrendModule {
-    @OptIn(UnstableApi::class)
+object WorkManagerModule {
     @Provides
     @Singleton
-    fun provideMediaCache(@ApplicationContext context: Context): MediaCache {
-        return MediaCache(context)
+    fun provideWorkManager(@ApplicationContext context: Context): WorkManager {
+        return WorkManager.getInstance(context)
     }
 }

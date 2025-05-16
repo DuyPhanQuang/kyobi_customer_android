@@ -36,7 +36,7 @@ import timber.log.Timber
 
 @OptIn(UnstableApi::class)
 @Composable
-fun VideoPlayer(
+fun ReelVideoPlayer(
     reel: Reel,
     pagerState: PagerState,
     pageIndex: Int,

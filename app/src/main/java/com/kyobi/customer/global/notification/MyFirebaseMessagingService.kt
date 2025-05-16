@@ -30,7 +30,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MyFirebaseMessagingService : FirebaseMessagingService() {
-
     companion object {
         private const val CHANNEL_ID = "kyobi_notifications"
         private const val CHANNEL_NAME = "Kyobi Notifications"
@@ -45,7 +44,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     lateinit var sessionEventBus: SessionEventBus
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
     private var currentSession: Session? = null
     private var hasStartedSessionCollection = false
 
@@ -58,7 +56,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
                 currentSession = session
             }
         }
-
         // Kiểm tra quyền thông báo ban đầu
         val isPermissionGrantedInitially = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
@@ -68,7 +65,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         } else {
             true
         }
-
         // Kết hợp sessionEvents và notificationPermissionGranted để kiểm tra điều kiện
         serviceScope.launch {
             sessionEventBus.sessionEvents
@@ -145,32 +141,24 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         Timber.tag(tag).d("onNewToken: $token")
-        Timber.tag(tag).d("New token: $token")
-
         val isPermissionGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            true
-        }
-
+        } else { true }
         if (currentSession == null) {
             Timber.tag(tag).d("No session yet, skipping token update")
             return
         }
-
         if (!isPermissionGranted) {
             Timber.tag(tag).d("Session available ($currentSession), but notification permission not granted, skipping token update")
             return
         }
-
         if (hasStartedSessionCollection) {
             Timber.tag(tag).d("Token update already handled in onCreate, skipping in onNewToken")
             return
         }
-
         Timber.tag(tag).d("Both conditions met: session ($currentSession) and notification permission granted, handling token update")
         handleTokenUpdate()
     }
@@ -208,7 +196,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 
     private fun showNotification(title: String, body: String, data: Map<String, String>) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
         // Tạo Notification Channel
         val channel = NotificationChannel(
             CHANNEL_ID,
@@ -222,7 +209,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             vibrationPattern = longArrayOf(0, 500, 200, 500)
         }
         notificationManager.createNotificationChannel(channel)
-
         // Tạo PendingIntent để mở MainActivity khi người dùng click vào thông báo
         val intent = Intent(this, MainActivity::class.java).apply {
             putExtra("notification_type", data["type"])
@@ -230,14 +216,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             putExtra("message", data["message"])
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
-
         val pendingIntent = PendingIntent.getActivity(
             this,
             0,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
         // Tạo thông báo
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
@@ -249,7 +233,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setVibrate(longArrayOf(0, 500, 200, 500))
             .build()
-
         // Hiển thị thông báo
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
