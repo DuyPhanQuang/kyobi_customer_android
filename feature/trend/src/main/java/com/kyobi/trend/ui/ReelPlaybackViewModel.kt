@@ -72,12 +72,12 @@ constructor(
     @OptIn(UnstableApi::class)
     fun initializeMainPlayer() {
         val renderersFactory = DefaultRenderersFactory(context)
-            .setEnableDecoderFallback(false)
+            .setEnableDecoderFallback(true)
             .forceDisableMediaCodecAsynchronousQueueing()
         val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(10000, 30000, 2000, 2000)
-            .setTargetBufferBytes(-1)
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .setBufferDurationsMs(20000, 20000, 1000, 1000)
             .build()
         mainExoPlayer = ExoPlayer.Builder(context)
             .setRenderersFactory(renderersFactory)
@@ -91,17 +91,23 @@ constructor(
             }
     }
 
-    /** Không cần config renderersFactorySupplier và mediaSourceFactorySupplier
-     * */
+    /** setUseLazyPreparation to `FALSE` -> very important -> reduce timing prepare sources and pre-warm renderer
+     */
     @OptIn(UnstableApi::class)
     fun initializeBackgroundPlayer() {
+        val renderersFactory = DefaultRenderersFactory(context)
+            .setEnableDecoderFallback(true)
+            .forceDisableMediaCodecAsynchronousQueueing()
+        val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(10000, 30000, 2000, 2000)
-            .setTargetBufferBytes(-1)
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .setBufferDurationsMs(5000, 5000, 500, 500)
             .build()
         backgroundExoPlayer = ExoPlayer.Builder(context)
+            .setRenderersFactory(renderersFactory)
             .setLoadControl(loadControl)
-            .setUseLazyPreparation(false) // important
+            .setMediaSourceFactory(cacheDataSourceFactory)
+            .setUseLazyPreparation(false)
             .build().apply {
                 volume = 0f
             }

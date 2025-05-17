@@ -23,7 +23,7 @@ class ReelMediaCache @Inject constructor(
 ) {
     private val tag = "ReelMediaCache"
     private var cache: SimpleCache? = null
-    private val cacheDir = File(context.cacheDir, "reel_media_cache")
+    private val cacheDir = File(context.cacheDir, "reel_video_cache_folder")
     private val cacheSizeMb = 500 // 500MB
     private var isCacheInUse = false
 

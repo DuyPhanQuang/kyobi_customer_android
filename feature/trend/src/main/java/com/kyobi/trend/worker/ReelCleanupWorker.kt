@@ -17,9 +17,11 @@ class ReelCleanupWorker(
     context: Context,
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
+    private val tag = "ReelCleanupWorker"
+
     @OptIn(UnstableApi::class)
     override suspend fun doWork(): Result {
-        Timber.d("Running cleanup worker")
+        Timber.tag(tag).d("Running reel cleanup worker")
         return try {
             val timeTaken = measureTimeMillis {
                 val database = AppDatabase.getDatabase(applicationContext)
@@ -34,10 +36,10 @@ class ReelCleanupWorker(
                 )
                 preloadManager.cleanupOldRecords(maxAgeDays = 1)
             }
-            Timber.d("Cleanup worker completed in $timeTaken ms")
+            Timber.tag(tag).d("Reel cleanup worker completed in $timeTaken ms")
             Result.success()
         } catch (e: Exception) {
-            Timber.e(e, "Cleanup worker failed")
+            Timber.tag(tag).e(e, "Reel cleanup worker failed")
             Result.retry()
         }
     }
