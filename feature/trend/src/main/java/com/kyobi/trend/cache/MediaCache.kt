@@ -9,6 +9,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import com.kyobi.core.extensions.toUniqueReelCacheKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import java.io.File
@@ -81,15 +82,11 @@ class MediaCache @Inject constructor(
             .setUpstreamDataSourceFactory(upstreamFactory)
             .setCacheReadDataSourceFactory(upstreamFactory)
             .setCacheWriteDataSinkFactory(CacheDataSink.Factory()
-                .setCache(mediaCache)
-                .setBufferSize(32 * 1024)) //32KB Buffer
+                .setCache(mediaCache))
             .setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE or CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
             .setCacheKeyFactory { mediaItem ->
-                val uri = mediaItem.uri.toString()
-                val fileName = uri.substringAfterLast("/").substringBefore("?")
-                val hash = uri.hashCode()
-                val token = uri.substringAfter("?token=").takeIf { it.isNotEmpty() } ?: "notoken"
-                "$fileName-$hash-${token.hashCode()}" // Key duy nhất dựa trên file name, uri hash và token hash
+                val uriStr = mediaItem.uri.toString()
+                uriStr.toUniqueReelCacheKey()
             }
     }
 

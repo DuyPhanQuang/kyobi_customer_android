@@ -2,6 +2,7 @@ package com.kyobi.trend.cache
 
 import android.content.Context
 import androidx.media3.common.util.UnstableApi
+import com.kyobi.core.extensions.toUniqueReelCacheKey
 import com.kyobi.data.database.dao.PreloadedMediaDao
 import com.kyobi.data.database.entity.PreloadedMediaEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -43,9 +44,9 @@ class ReelPreloadManager @Inject constructor(
 
     suspend fun savePreloadedMedia(url: String) = withContext(Dispatchers.IO) {
         try {
-            val cacheKey = generateCacheKey(url)
+            val cacheKey = url.toUniqueReelCacheKey()
             val tsUrls = fetchTsUrls(url)
-            val tsCacheKeys = tsUrls.map { generateCacheKey(it) }
+            val tsCacheKeys = tsUrls.map { it.toUniqueReelCacheKey() }
             val entity = PreloadedMediaEntity(
                 url = url,
                 cacheKey = cacheKey,
@@ -127,12 +128,5 @@ class ReelPreloadManager @Inject constructor(
                     "isTsCached=$isTsCached"
         )
         return@withContext isTsCached
-    }
-
-    fun generateCacheKey(url: String): String {
-        val fileName = url.substringAfterLast("/").substringBefore("?")
-        val hash = url.hashCode()
-        val token = url.substringAfter("?token=").takeIf { it.isNotEmpty() } ?: "notoken"
-        return "$fileName-$hash-${token.hashCode()}" // same key with MediaCache
     }
 }

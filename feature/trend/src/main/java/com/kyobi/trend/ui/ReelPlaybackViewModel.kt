@@ -1,8 +1,6 @@
 package com.kyobi.trend.ui
 
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import androidx.annotation.OptIn
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -216,12 +214,16 @@ constructor(
 
     fun getMainPlayer(): ExoPlayer? = mainExoPlayer
 
+    /** Step1: Update reels data
+     * Step2: preload all sources (shorten & full)
+     * Step3: start processing background player
+     * Step 4: after processed background player -> switch to start processing main player
+     * */
     @OptIn(UnstableApi::class)
     fun setReelsAndPreloadAllSourcesThenProcessPlayer(newReels: List<Reel>) {
         Timber.tag(tag).d("Setting reels, size: ${newReels.size}")
         _reels.value = newReels
         viewModelScope.launch {
-            // Preload tất cả media sources và kiểm tra lỗi
             val preloadResult = preloadMediaSourceForRange(0, newReels.size)
             if (preloadResult.isSuccess) {
                 val shortenSources = mutableListOf<MediaSource>()
@@ -249,7 +251,6 @@ constructor(
                         return@mapIndexedNotNull null
                     }
                 }
-                // chỉ call processBackgroundPlayer nếu có shortenSources
                 if (shortenSources.isNotEmpty()) {
                     processBackgroundPlayer(shortenSources, mergedSources)
                 } else {
@@ -279,13 +280,10 @@ constructor(
         }
     }
 
-    // sử dụng setCustomCacheKey cho case the link is expired, it can still be played.
     @OptIn(UnstableApi::class)
     private fun createMediaItem(url: String): MediaItem {
-        val cacheKey = reelPreloadManager.generateCacheKey(url)
         val mediaItem = MediaItem.fromUri(url).buildUpon()
             .setMediaId(url)
-            .setCustomCacheKey(cacheKey)
             .build()
         return mediaItem
     }
@@ -354,9 +352,7 @@ constructor(
                     .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(3))
                     .createMediaSource(mediaItem)
             } else {
-                ProgressiveMediaSource.Factory(dataSourceFactory)
-                    .setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(3))
-                    .createMediaSource(mediaItem)
+                throw Exception()
             }
         } catch (e: Exception) {
             Timber.tag(tag).e(e, "Failed to create mediaSource")
@@ -412,7 +408,6 @@ constructor(
         }
         backgroundExoPlayer = null
         _backgroundMediaSources.clear()
-        Handler(Looper.getMainLooper()).removeCallbacksAndMessages(null)
     }
 
     @OptIn(UnstableApi::class)
