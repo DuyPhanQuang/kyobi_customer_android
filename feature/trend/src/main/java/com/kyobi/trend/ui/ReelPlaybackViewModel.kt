@@ -59,7 +59,6 @@ constructor(
     private val _firstFrameRendered = MutableStateFlow(-1) // -1: chưa render
     val firstFrameRendered = _firstFrameRendered.asStateFlow()
     private val mainPlayerTracker = VideoPerformanceTracker()
-    private val backgroundPlayerTracker = VideoPerformanceTracker()
 
     /** initiate main & background ExoPlayer instance
      *
@@ -82,7 +81,7 @@ constructor(
     fun initializeMainPlayer() {
         val renderersFactory = DefaultRenderersFactory(context)
             .setEnableDecoderFallback(true)
-            .forceDisableMediaCodecAsynchronousQueueing()
+            .forceEnableMediaCodecAsynchronousQueueing()
         val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
             .setPrioritizeTimeOverSizeThresholds(true)
@@ -157,7 +156,8 @@ constructor(
     fun initializeBackgroundPlayer() {
         val renderersFactory = DefaultRenderersFactory(context)
             .setEnableDecoderFallback(true)
-            .forceDisableMediaCodecAsynchronousQueueing()
+            .forceEnableMediaCodecAsynchronousQueueing()
+            .experimentalSetEnableMediaCodecVideoRendererPrewarming(true)
         val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
             .setPrioritizeTimeOverSizeThresholds(true)
@@ -170,7 +170,6 @@ constructor(
             .setUseLazyPreparation(false)
             .build().apply {
                 volume = 0f
-                addPerformanceTracker(backgroundPlayerTracker)
             }
     }
 
@@ -192,18 +191,14 @@ constructor(
     @OptIn(UnstableApi::class)
     private fun firstTimeProcessBackgroundPlayer(shortenSources: List<MediaSource>, mergedSources: List<MediaSource>) {
         if (backgroundExoPlayer == null) return
-        backgroundPlayerTracker.invalidateSession()
         val backgroundPlayer = backgroundExoPlayer!!
         backgroundPlayer.setMediaSources(shortenSources)
         backgroundPlayer.volume = 0f
+        val startPreloadTimestamp = System.currentTimeMillis()
         fun preloadPage(page: Int) {
             if (page >= shortenSources.size) {
-                Timber.tag(tag).d("Background preload completed, processing main player")
-                val result = backgroundPlayerTracker.getResult()
-                Timber.tag(tag).d("Background player performance: total_load_duration=${result.videoPerformanceData.loadTime.networkOrCacheVideoLoadingDurationMs}ms, " +
-                        "video_decoder=${result.videoPerformanceData.decoders.videoDecoderName}, " +
-                        "video_decoder_init=${result.videoPerformanceData.decoders.videoDecoderInitialisationDurationMs}ms")
-                backgroundPlayerTracker.invalidateSession()
+                val preloadDurationMs = System.currentTimeMillis() - startPreloadTimestamp
+                Timber.tag(tag).d("Background preload completed in ${preloadDurationMs}ms, processing main player")
                 firstTimeProcessMainPlayer(mergedSources)
                 return
             }
@@ -214,11 +209,12 @@ constructor(
                     if (!isPreloaded) {
                         backgroundPlayer.seekTo(page, SEEK_TO_DEFAULT_VALUE)
                         backgroundPlayer.prepare()
-                        backgroundPlayer.playWhenReady = true
-                        Timber.tag(tag).d("Background play for page $page, shortenUrl=$shortenUrl")
+                        backgroundPlayer.playWhenReady = false
+                        Timber.tag(tag).d("Background page $page is preparing, shortenUrl=$shortenUrl")
                         backgroundPlayer.addListener(object : Player.Listener {
                             override fun onPlaybackStateChanged(state: Int) {
                                 if (state == Player.STATE_READY) {
+                                    Timber.tag(tag).d("Background page $page playback STATE_READY")
                                     viewModelScope.launch {
                                         reelPreloadManager.savePreloadedMedia(shortenUrl)
                                     }
@@ -232,9 +228,6 @@ constructor(
                                 backgroundPlayer.playWhenReady = false
                                 backgroundPlayer.removeListener(this)
                                 preloadPage(page + 1)
-                            }
-                            override fun onIsLoadingChanged(isLoading: Boolean) {
-                                Timber.tag(tag).d("Loading state for page $page, shortenUrl=$shortenUrl, isLoading=$isLoading")
                             }
                         })
                     } else {
