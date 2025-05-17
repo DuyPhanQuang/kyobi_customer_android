@@ -5,7 +5,9 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.kyobi.core.di.NetworkModule
 import com.kyobi.data.database.AppDatabase
+import com.kyobi.data.storage.TokenStorageImpl
 import com.kyobi.trend.cache.MediaCache
 import com.kyobi.trend.cache.ReelPreloadManager
 import kotlin.system.measureTimeMillis
@@ -22,7 +24,14 @@ class CleanupWorker(
             val timeTaken = measureTimeMillis {
                 val database = AppDatabase.getDatabase(applicationContext)
                 val mediaCache = MediaCache(applicationContext)
-                val preloadManager = ReelPreloadManager(mediaCache, database.preloadedMediaDao())
+                val tokenStorage = TokenStorageImpl(applicationContext)
+                val okHttpClient = NetworkModule.provideKyobiOkHttpClient(tokenStorage)
+                val preloadManager = ReelPreloadManager(
+                    context = applicationContext,
+                    mediaCache,
+                    preloadedMediaDao = database.preloadedMediaDao(),
+                    okHttpClient
+                )
                 preloadManager.cleanupOldRecords(maxAgeDays = 1)
             }
             Timber.d("Cleanup worker completed in $timeTaken ms")

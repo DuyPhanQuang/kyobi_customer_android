@@ -11,6 +11,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -20,10 +22,16 @@ object ReelCacheModule {
     @Provides
     @Singleton
     fun provideReelPreloadManager(
+        @ApplicationContext context: Context,
         mediaCache: MediaCache,
-        preloadedMediaDao: PreloadedMediaDao
+        preloadedMediaDao: PreloadedMediaDao,
+        @Named("KyobiOkHttpClient") okHttpClient: OkHttpClient
     ): ReelPreloadManager {
-        return ReelPreloadManager(mediaCache, preloadedMediaDao)
+        return ReelPreloadManager(
+            context,
+            mediaCache,
+            preloadedMediaDao,
+            okHttpClient)
     }
 
     @OptIn(UnstableApi::class)

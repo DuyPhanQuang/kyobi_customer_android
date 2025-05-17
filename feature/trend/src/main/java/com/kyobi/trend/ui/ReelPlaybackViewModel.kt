@@ -38,8 +38,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class ReelPlaybackViewModel @OptIn(UnstableApi::class)
-@Inject constructor(
+class ReelPlaybackViewModel
+@OptIn(UnstableApi::class)
+@Inject
+constructor(
     @ApplicationContext private val context: Context,
     private val mediaCache: MediaCache,
     private val reelPreloadManager: ReelPreloadManager
@@ -166,26 +168,58 @@ class ReelPlaybackViewModel @OptIn(UnstableApi::class)
         }
         backgroundExoPlayer!!.setMediaSources(shortenSources)
         backgroundExoPlayer!!.volume = 0f
-        val handler = Handler(Looper.getMainLooper())
         fun preloadPage(page: Int) {
             if (page >= shortenSources.size) {
-                Timber.tag(tag).d("Background preload completed, processing main player")
+                Timber.tag("ProcessBackground").d("Background preload completed, processing main player")
                 processMainPlayer(mergedSources)
                 return
             }
             val url = _reels.value[page].shortenUrl
-            backgroundExoPlayer!!.seekTo(page, 0)
-            backgroundExoPlayer!!.prepare()
-            backgroundExoPlayer!!.playWhenReady = true
-            Timber.tag(tag).d("Background play for page $page, url=$url")
-            handler.postDelayed({
-                backgroundExoPlayer!!.playWhenReady = false
-                Timber.tag(tag).d("Background pause for page $page, url=$url")
-                viewModelScope.launch {
-                    reelPreloadManager.savePreloadedMedia(url)
+            val localTag = "ProcessBackground"
+            viewModelScope.launch {
+                try {
+                    val isPreloaded = reelPreloadManager.isPreloadedAndCached(url)
+                    if (!isPreloaded) {
+                        val cacheKey = reelPreloadManager.generateCacheKey(url)
+                        backgroundExoPlayer!!.seekTo(page, 0)
+                        backgroundExoPlayer!!.prepare()
+                        backgroundExoPlayer!!.playWhenReady = true
+                        Timber.tag(localTag).d("Background play for page $page, url=$url")
+                        backgroundExoPlayer!!.addListener(object : Player.Listener {
+                            override fun onPlaybackStateChanged(state: Int) {
+                                if (state == Player.STATE_READY) {
+                                    viewModelScope.launch {
+                                        reelPreloadManager.savePreloadedMedia(url)
+                                    }
+                                    val cachedLength = mediaCache.getCache().getCachedLength(cacheKey, 0L, Long.MAX_VALUE)
+                                    val cacheKeys = mediaCache.getCache().keys
+                                    Timber.tag(localTag).d(
+                                        "Preloaded HLS for page $page, url=$url, cacheKey=$cacheKey, " +
+                                                "cachedLength=$cachedLength bytes, cacheKeys=${cacheKeys.joinToString()}")
+                                    backgroundExoPlayer!!.playWhenReady = false
+                                    backgroundExoPlayer!!.removeListener(this)
+                                    preloadPage(page + 1)
+                                }
+                            }
+                            override fun onPlayerError(error: PlaybackException) {
+                                Timber.tag(localTag).e(error, "Background preload error for page $page, url=$url")
+                                backgroundExoPlayer!!.playWhenReady = false
+                                backgroundExoPlayer!!.removeListener(this)
+                                preloadPage(page + 1)
+                            }
+                            override fun onIsLoadingChanged(isLoading: Boolean) {
+                                Timber.tag(localTag).d("Loading state for page $page, url=$url, isLoading=$isLoading")
+                            }
+                        })
+                    } else {
+                        Timber.tag(localTag).d("URL already preloaded for page $page, url=$url")
+                        preloadPage(page + 1)
+                    }
+                } catch (e: Exception) {
+                    Timber.tag(localTag).e(e, "Failed to preload HLS for page $page, url=$url")
+                    preloadPage(page + 1)
                 }
-                preloadPage(page + 1)
-            }, 2000)
+            }
         }
         preloadPage(0)
     }

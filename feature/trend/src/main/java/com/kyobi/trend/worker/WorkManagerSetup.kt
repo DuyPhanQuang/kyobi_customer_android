@@ -24,7 +24,7 @@ class WorkManagerSetup @Inject constructor(
             flexTimeInterval = 1,
             flexTimeIntervalUnit = TimeUnit.HOURS)
             .setConstraints(constraints)
-            .setInitialDelay(1, TimeUnit.HOURS) // Trì hoãn 24h lần đầu
+            .setInitialDelay(1, TimeUnit.HOURS) // Trì hoãn 1h lần đầu
             .build()
         workManager.enqueueUniquePeriodicWork(
             "cleanup_preloaded_media",

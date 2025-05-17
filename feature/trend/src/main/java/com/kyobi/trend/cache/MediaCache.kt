@@ -49,12 +49,6 @@ class MediaCache @Inject constructor(
         return cache!!
     }
 
-    fun isCached(key: String, position: Long, length: Long): Boolean {
-        val isCached = cache?.isCached(key, position, length) ?: false
-        Timber.tag(tag).d("Checked cache for key=$key, position=$position, length=$length, isCached=$isCached, cache contents: ${cacheDir.listFiles()?.joinToString()}")
-        return isCached
-    }
-
     private fun clearCache() {
         if (isCacheInUse) {
             Timber.tag(tag).d("Cache is in use, skipping clear")
