@@ -30,9 +30,14 @@ import androidx.media3.exoplayer.hls.DefaultHlsExtractorFactory
 import androidx.media3.exoplayer.source.ConcatenatingMediaSource2
 import androidx.media3.ui.PlayerView
 import com.kyobi.trend.cache.ReelPreloadManager
+import com.kyobi.trend.extensions.addPerformanceTracker
+import com.kyobi.trend.performance_metrics.DEFAULT_VALUE
+import com.kyobi.trend.performance_metrics.VideoPerformanceTracker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+const val SEEK_TO_DEFAULT_VALUE = 0L
 
 @HiltViewModel
 class ReelPlaybackViewModel
@@ -53,10 +58,14 @@ constructor(
     private var currentSettledPage = 0
     private val _firstFrameRendered = MutableStateFlow(-1) // -1: chưa render
     val firstFrameRendered = _firstFrameRendered.asStateFlow()
+    private val mainPlayerTracker = VideoPerformanceTracker()
+    private val backgroundPlayerTracker = VideoPerformanceTracker()
 
     /** initiate main & background ExoPlayer instance
      *
      * update reels data and set media sources
+     *
+     * Only for first time case:
      *
      * set reels data -> preload all sources -> process background player -> process main player
      * */
@@ -88,6 +97,57 @@ constructor(
                 repeatMode = Player.REPEAT_MODE_ONE
                 videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                 volume = 1f
+                addPerformanceTracker(mainPlayerTracker)
+                addListener(object : Player.Listener {
+                    override fun onRenderedFirstFrame() {
+                        Timber.tag(tag).d("First frame rendered for page $currentSettledPage")
+                        val result = mainPlayerTracker.getResult()
+                        val firstFrameDurationMs = if (result.videoPerformanceData.loadTime.videoFirstFrameRenderedTimestamp != DEFAULT_VALUE &&
+                            result.videoPerformanceData.loadTime.networkOrCacheVideoLoadingStartedTimestamp != DEFAULT_VALUE) {
+                            result.videoPerformanceData.loadTime.videoFirstFrameRenderedTimestamp -
+                                    result.videoPerformanceData.loadTime.networkOrCacheVideoLoadingStartedTimestamp
+                        } else { 0L }
+                        Timber.tag(tag).d("Main player performance: load_duration=${result.videoPerformanceData.loadTime.networkOrCacheVideoLoadingDurationMs}ms, " +
+                                "first_frame=${firstFrameDurationMs}ms, " +
+                                "video_decoder=${result.videoPerformanceData.decoders.videoDecoderName}, " +
+                                "video_decoder_init=${result.videoPerformanceData.decoders.videoDecoderInitialisationDurationMs}ms")
+                        mainPlayerTracker.invalidateSession()
+                        _firstFrameRendered.value = currentSettledPage
+                    }
+                    override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+                        if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+                            Timber.tag(tag).d("Auto transition detected at page $currentSettledPage, periodIndex: ${newPosition.periodIndex}")
+                            val fullPeriodIndex = 2 * currentSettledPage + 1
+                            if (newPosition.periodIndex > fullPeriodIndex) {
+                                Timber.tag(tag).d("Looping back to page $currentSettledPage")
+                            }
+                        }
+                    }
+                    override fun onPlayerError(error: PlaybackException) {
+                        Timber.tag(tag).e(error, "Player error for page $currentSettledPage")
+                    }
+                    override fun onVideoSizeChanged(videoSize: VideoSize) {
+                        Timber.tag(tag).d("Video size changed for page $currentSettledPage: ${videoSize.width}x${videoSize.height}")
+                    }
+                    override fun onPlaybackStateChanged(state: Int) {
+                        Timber.tag(tag).d("Playback state changed for page $currentSettledPage: $state")
+                    }
+                    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                        Timber.tag(tag).d("Media item transition to mediaId ${mediaItem?.mediaId} for page $currentSettledPage")
+                    }
+                    override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) {
+                        Timber.tag(tag).d("Audio attributes changed for page $currentSettledPage: contentType=${audioAttributes.contentType}, usage=${audioAttributes.usage}, flags=${audioAttributes.flags}")
+                    }
+                    override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                        Timber.tag(tag).d("Audio session ID changed for page $currentSettledPage: audioSessionId=$audioSessionId")
+                    }
+                    override fun onVolumeChanged(volume: Float) {
+                        Timber.tag(tag).d("Volume changed for page $currentSettledPage: volume=$volume")
+                    }
+                    override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
+                        Timber.tag(tag).d("Device volume changed for page $currentSettledPage: volume=$volume, muted=$muted")
+                    }
+                })
             }
     }
 
@@ -110,68 +170,41 @@ constructor(
             .setUseLazyPreparation(false)
             .build().apply {
                 volume = 0f
+                addPerformanceTracker(backgroundPlayerTracker)
             }
     }
 
+    /** Only call at first time fetch reel data (api fetch reel page 1)
+     * */
     @OptIn(UnstableApi::class)
-    fun processMainPlayer(mediaSources: List<MediaSource>) {
+    fun firstTimeProcessMainPlayer(mediaSources: List<MediaSource>) {
         if (mainExoPlayer == null) return
+        mainPlayerTracker.invalidateSession()
         val mainPlayer = mainExoPlayer!!
-        mainPlayer.setMediaSources(mediaSources, 0, 0)
-        mainPlayer.seekTo(0, 0)
+        mainPlayer.setMediaSources(mediaSources, 0, SEEK_TO_DEFAULT_VALUE)
+        mainPlayer.seekTo(0, SEEK_TO_DEFAULT_VALUE)
         mainPlayer.prepare()
         mainPlayer.playWhenReady = true
-        mainPlayer.addListener(object : Player.Listener {
-            override fun onRenderedFirstFrame() {
-                Timber.tag(tag).d("First frame rendered for page $currentSettledPage")
-                _firstFrameRendered.value = currentSettledPage
-            }
-            override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
-                if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
-                    Timber.tag(tag).d("Auto transition detected at page $currentSettledPage, periodIndex: ${newPosition.periodIndex}")
-                    val fullPeriodIndex = 2 * currentSettledPage + 1
-                    if (newPosition.periodIndex > fullPeriodIndex) {
-                        Timber.tag(tag).d("Looping back to page $currentSettledPage")
-                    }
-                }
-            }
-            override fun onPlayerError(error: PlaybackException) {
-                Timber.tag(tag).e(error, "Player error for page $currentSettledPage")
-            }
-            override fun onVideoSizeChanged(videoSize: VideoSize) {
-                Timber.tag(tag).d("Video size changed for page $currentSettledPage: ${videoSize.width}x${videoSize.height}")
-            }
-            override fun onPlaybackStateChanged(state: Int) {
-                Timber.tag(tag).d("Playback state changed for page $currentSettledPage: $state")
-            }
-            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                Timber.tag(tag).d("Media item transition to mediaId ${mediaItem?.mediaId} for page $currentSettledPage")
-            }
-            override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) {
-                Timber.tag(tag).d("Audio attributes changed for page $currentSettledPage: contentType=${audioAttributes.contentType}, usage=${audioAttributes.usage}, flags=${audioAttributes.flags}")
-            }
-            override fun onAudioSessionIdChanged(audioSessionId: Int) {
-                Timber.tag(tag).d("Audio session ID changed for page $currentSettledPage: audioSessionId=$audioSessionId")
-            }
-            override fun onVolumeChanged(volume: Float) {
-                Timber.tag(tag).d("Volume changed for page $currentSettledPage: volume=$volume")
-            }
-            override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
-                Timber.tag(tag).d("Device volume changed for page $currentSettledPage: volume=$volume, muted=$muted")
-            }
-        })
     }
 
+    /** Only call at first time fetch reel data (api fetch reel page 1)
+     * */
     @OptIn(UnstableApi::class)
-    private fun processBackgroundPlayer(shortenSources: List<MediaSource>, mergedSources: List<MediaSource>) {
+    private fun firstTimeProcessBackgroundPlayer(shortenSources: List<MediaSource>, mergedSources: List<MediaSource>) {
         if (backgroundExoPlayer == null) return
+        backgroundPlayerTracker.invalidateSession()
         val backgroundPlayer = backgroundExoPlayer!!
         backgroundPlayer.setMediaSources(shortenSources)
         backgroundPlayer.volume = 0f
         fun preloadPage(page: Int) {
             if (page >= shortenSources.size) {
                 Timber.tag(tag).d("Background preload completed, processing main player")
-                processMainPlayer(mergedSources)
+                val result = backgroundPlayerTracker.getResult()
+                Timber.tag(tag).d("Background player performance: total_load_duration=${result.videoPerformanceData.loadTime.networkOrCacheVideoLoadingDurationMs}ms, " +
+                        "video_decoder=${result.videoPerformanceData.decoders.videoDecoderName}, " +
+                        "video_decoder_init=${result.videoPerformanceData.decoders.videoDecoderInitialisationDurationMs}ms")
+                backgroundPlayerTracker.invalidateSession()
+                firstTimeProcessMainPlayer(mergedSources)
                 return
             }
             val shortenUrl = _reels.value[page].shortenUrl
@@ -225,7 +258,7 @@ constructor(
      *
      * Step3: start processing background player
      *
-     * Step 4: after processed background player -> switch to start processing main player
+     * Step 4: start processing main player
      * */
     @OptIn(UnstableApi::class)
     fun setReelsAndPreloadAllSourcesThenProcessPlayer(newReels: List<Reel>) {
@@ -260,9 +293,9 @@ constructor(
                     }
                 }
                 if (shortenSources.isNotEmpty()) {
-                    processBackgroundPlayer(shortenSources, mergedSources)
+                    firstTimeProcessBackgroundPlayer(shortenSources, mergedSources)
                 } else {
-                    processMainPlayer(mergedSources)
+                    firstTimeProcessMainPlayer(mergedSources)
                 }
                 Timber.tag(tag).d("Preloaded and set ${newReels.size} media sources")
             }
@@ -272,6 +305,7 @@ constructor(
     @OptIn(UnstableApi::class)
     fun updateSettledPage(page: Int, playerView: PlayerView) {
         currentSettledPage = page
+        mainPlayerTracker.invalidateSession()
         playerView.player = mainExoPlayer
     }
 
@@ -379,7 +413,7 @@ constructor(
         mainExoPlayer?.let { player ->
             Timber.tag(tag).w("startPlay called for page $page, mediaItemCount: ${player.mediaItemCount}, playbackState: ${player.playbackState}")
             if (player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE) {
-                player.seekTo(page, 0)
+                player.seekTo(page, SEEK_TO_DEFAULT_VALUE)
                 player.playWhenReady = true
             }
             playerView.player = player
@@ -396,7 +430,7 @@ constructor(
 
     private fun startMainRelease() {
         _mediaSources.clear()
-        mainExoPlayer!!.seekTo(0)
+        mainExoPlayer!!.seekTo(SEEK_TO_DEFAULT_VALUE)
         mainExoPlayer!!.playWhenReady = false
         mainExoPlayer!!.stop()
         mainExoPlayer!!.clearMediaItems()

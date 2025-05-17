@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -46,7 +45,6 @@ fun ReelVideoPlayer(
     val tag = "ReelVideoPlayer"
     val context = LocalContext.current
     var showThumbnail by remember(pageIndex) { mutableStateOf(true) }
-    val startTimes = remember { mutableStateMapOf<Int, Long>() }
     val lifecycleOwner by rememberUpdatedState(LocalLifecycleOwner.current)
 
     val playerView = remember(pageIndex) {
@@ -73,12 +71,6 @@ fun ReelVideoPlayer(
         viewModel.firstFrameRendered.collect { renderedPage ->
             if (renderedPage == pageIndex) {
                 showThumbnail = false
-                val startTime = startTimes[pageIndex]
-                if (startTime != null) {
-                    val duration = System.currentTimeMillis() - startTime
-                    Timber.tag(tag).d("Time to render first frame for page $pageIndex: $duration ms")
-                    startTimes.remove(pageIndex)
-                }
                 Timber.tag(tag).d("Hiding thumbnail for page $pageIndex")
             }
         }
@@ -99,8 +91,6 @@ fun ReelVideoPlayer(
                     Timber.tag(tag).d("Preparing ExoPlayer for page $settledPage, reelData: $reelData")
                     viewModel.updateSettledPage(settledPage, playerView)
                     showThumbnail = true
-                    startTimes[settledPage] = System.currentTimeMillis()
-                    Timber.tag(tag).d("Initialized ExoPlayer for current page $settledPage")
                 }
                 if (isCurrentPage && player != null) {
                     viewModel.startPlay(settledPage, playerView)
