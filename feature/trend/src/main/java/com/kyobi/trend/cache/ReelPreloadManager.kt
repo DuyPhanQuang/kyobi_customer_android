@@ -20,7 +20,7 @@ import javax.inject.Singleton
 @Singleton
 class ReelPreloadManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val mediaCache: MediaCache,
+    private val mediaCache: ReelMediaCache,
     private val preloadedMediaDao: PreloadedMediaDao,
     private val okHttpClient: OkHttpClient
 ) {

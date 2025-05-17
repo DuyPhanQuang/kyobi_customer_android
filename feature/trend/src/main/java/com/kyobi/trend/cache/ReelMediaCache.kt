@@ -18,12 +18,12 @@ import javax.inject.Singleton
 
 @UnstableApi
 @Singleton
-class MediaCache @Inject constructor(
+class ReelMediaCache @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private val tag = "MediaCache"
+    private val tag = "ReelMediaCache"
     private var cache: SimpleCache? = null
-    private val cacheDir = File(context.cacheDir, "media_cache")
+    private val cacheDir = File(context.cacheDir, "reel_media_cache")
     private val cacheSizeMb = 500 // 500MB
     private var isCacheInUse = false
 
@@ -55,7 +55,7 @@ class MediaCache @Inject constructor(
             Timber.tag(tag).d("Cache is in use, skipping clear")
             return
         }
-        cache?.release()
+        cache!!.release()
         cache = null
         if (cacheDir.exists()) {
             cacheDir.deleteRecursively()
@@ -104,7 +104,7 @@ class MediaCache @Inject constructor(
     }
 
     fun release() {
-        cache?.release()
+        cache!!.release()
         cache = null
         isCacheInUse = false
         Timber.tag(tag).d("Released cache, contents: ${cacheDir.listFiles()?.joinToString()}")

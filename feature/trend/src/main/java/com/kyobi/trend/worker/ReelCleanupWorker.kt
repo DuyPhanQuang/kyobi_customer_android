@@ -8,12 +8,12 @@ import androidx.work.WorkerParameters
 import com.kyobi.core.di.NetworkModule
 import com.kyobi.data.database.AppDatabase
 import com.kyobi.data.storage.TokenStorageImpl
-import com.kyobi.trend.cache.MediaCache
+import com.kyobi.trend.cache.ReelMediaCache
 import com.kyobi.trend.cache.ReelPreloadManager
 import kotlin.system.measureTimeMillis
 import timber.log.Timber
 
-class CleanupWorker(
+class ReelCleanupWorker(
     context: Context,
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
@@ -23,7 +23,7 @@ class CleanupWorker(
         return try {
             val timeTaken = measureTimeMillis {
                 val database = AppDatabase.getDatabase(applicationContext)
-                val mediaCache = MediaCache(applicationContext)
+                val mediaCache = ReelMediaCache(applicationContext)
                 val tokenStorage = TokenStorageImpl(applicationContext)
                 val okHttpClient = NetworkModule.provideKyobiOkHttpClient(tokenStorage)
                 val preloadManager = ReelPreloadManager(

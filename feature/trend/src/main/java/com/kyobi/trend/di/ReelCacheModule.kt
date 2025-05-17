@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import com.kyobi.data.database.dao.PreloadedMediaDao
-import com.kyobi.trend.cache.MediaCache
+import com.kyobi.trend.cache.ReelMediaCache
 import com.kyobi.trend.cache.ReelPreloadManager
 import dagger.Module
 import dagger.Provides
@@ -23,7 +23,7 @@ object ReelCacheModule {
     @Singleton
     fun provideReelPreloadManager(
         @ApplicationContext context: Context,
-        mediaCache: MediaCache,
+        mediaCache: ReelMediaCache,
         preloadedMediaDao: PreloadedMediaDao,
         @Named("KyobiOkHttpClient") okHttpClient: OkHttpClient
     ): ReelPreloadManager {
@@ -39,7 +39,7 @@ object ReelCacheModule {
     @Singleton
     fun provideMediaCache(
         @ApplicationContext context: Context
-    ): MediaCache {
-        return MediaCache(context)
+    ): ReelMediaCache {
+        return ReelMediaCache(context)
     }
 }

@@ -5,7 +5,7 @@ import android.os.StrictMode
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.kyobi.customer.global.crashlytics.CrashReporter
 import com.kyobi.featurecommon.monitor.network.NetworkMonitor
-import com.kyobi.trend.worker.WorkManagerSetup
+import com.kyobi.customer.global.worker.WorkManagerSetup
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

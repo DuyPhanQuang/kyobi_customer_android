@@ -30,7 +30,7 @@ class ReelConfigViewModel @Inject constructor(
     private val ioScope = CoroutineScope(Dispatchers.IO)
 
     init {
-        // Trì hoãn gọi updateConfigBasedOnDeviceInfo, chạy trên background thread
+        // run on background thread
         ioScope.launch {
             updateConfigBasedOnDeviceInfo()
         }
@@ -41,7 +41,7 @@ class ReelConfigViewModel @Inject constructor(
         viewModelScope.launch {
             networkMonitor.isConnected.collectLatest { isConnected ->
                 if (isConnected) {
-                    // Chạy updateConfigBasedOnDeviceInfo trên background thread
+                    // run on background thread
                     ioScope.launch {
                         updateConfigBasedOnDeviceInfo()
                     }
@@ -58,27 +58,14 @@ class ReelConfigViewModel @Inject constructor(
 
     private suspend fun getStorageInfo(): String {
         return withContext(Dispatchers.IO) {
-            val cacheDir = context.cacheDir // Chạy trên Dispatchers.IO, không gây DiskReadViolation
-            val statFs = StatFs(cacheDir.path) // Chạy trên Dispatchers.IO, không gây DiskReadViolation
+            val cacheDir = context.cacheDir // avoid DiskReadViolation
+            val statFs = StatFs(cacheDir.path) // avoid DiskReadViolation
             val availableBytes = statFs.availableBytes
             "Available storage: $availableBytes bytes"
         }
     }
 
     private fun calculateConfig(ramMb: Long, storageMb: Long, cpuCores: Int, networkType: NetworkType): ReelConfig {
-        val downloadSizeMb = when (networkType) {
-            NetworkType.WIFI -> 8
-            NetworkType.FIVE_G -> 6
-            NetworkType.FOUR_G -> 4
-            else -> 2
-        }
-
-        val positionsToKeepRange = when {
-            ramMb > 2000 && storageMb > 500 -> 4
-            ramMb > 1000 && storageMb > 200 -> 3
-            else -> 2
-        }
-
         val (bufferMinMs, bufferMaxMs, bufferPlaybackMs, bufferRebufferMs) = when (networkType) {
             NetworkType.WIFI -> listOf(2000, 6000, 2000, 2000)
             NetworkType.FIVE_G -> listOf(2000, 6000, 2000, 2000)
@@ -86,20 +73,11 @@ class ReelConfigViewModel @Inject constructor(
             else -> listOf(1000, 3000, 1000, 1000)
         }
 
-        val cacheSizeMb = when {
-            storageMb > 1000 -> 200
-            storageMb > 500 -> 100
-            else -> 30
-        }
-
         return ReelConfig(
-            downloadSizeMb = downloadSizeMb,
-            positionsToKeepRange = positionsToKeepRange,
             bufferMinMs = bufferMinMs,
             bufferMaxMs = bufferMaxMs,
             bufferPlaybackMs = bufferPlaybackMs,
             bufferRebufferMs = bufferRebufferMs,
-            cacheSizeMb = cacheSizeMb
         )
     }
 

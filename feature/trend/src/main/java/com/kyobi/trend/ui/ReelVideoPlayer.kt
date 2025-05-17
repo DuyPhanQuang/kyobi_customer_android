@@ -68,7 +68,7 @@ fun ReelVideoPlayer(
 
     val player = viewModel.getMainPlayer()
 
-    // Collect firstFrameRendered để update showThumbnail và đo time render first frame
+    // update showThumbnail và đo time render first frame
     LaunchedEffect(pageIndex, viewModel.firstFrameRendered) {
         viewModel.firstFrameRendered.collect { renderedPage ->
             if (renderedPage == pageIndex) {
@@ -114,7 +114,7 @@ fun ReelVideoPlayer(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_STOP -> {
-                    viewModel.startPause(pageIndex, playerView)
+                    viewModel.startPause(playerView)
                 }
                 else -> {}
             }

@@ -10,7 +10,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
-import com.kyobi.trend.cache.MediaCache
+import com.kyobi.trend.cache.ReelMediaCache
 import com.kyobi.trend.model.Reel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,7 +40,7 @@ class ReelPlaybackViewModel
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val mediaCache: MediaCache,
+    private val mediaCache: ReelMediaCache,
     private val reelPreloadManager: ReelPreloadManager
 ) : ViewModel() {
     private val tag = "ReelPlaybackViewModel"
@@ -54,11 +54,15 @@ constructor(
     private val _firstFrameRendered = MutableStateFlow(-1) // -1: chưa render
     val firstFrameRendered = _firstFrameRendered.asStateFlow()
 
+    /** initiate main & background ExoPlayer instance
+     *
+     * update reels data and set media sources
+     *
+     * set reels data -> preload all sources -> process background player -> process main player
+     * */
     init {
-        // initiate mainExoPlayer & backgroundExoPlayer instance
         initializeMainPlayer()
         initializeBackgroundPlayer()
-        // update reels data and set media sources
         viewModelScope.launch {
             reelPreloadManager.loadPreloadedUrls() // run on IO, nhưng trả về main thread
             setReelsAndPreloadAllSourcesThenProcessPlayer(mockData) // run on main thread
@@ -79,6 +83,7 @@ constructor(
             .setRenderersFactory(renderersFactory)
             .setLoadControl(loadControl)
             .setMediaSourceFactory(cacheDataSourceFactory)
+            .setUseLazyPreparation(false)
             .build().apply {
                 repeatMode = Player.REPEAT_MODE_ONE
                 videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
@@ -86,20 +91,17 @@ constructor(
             }
     }
 
+    /** Không cần config renderersFactorySupplier và mediaSourceFactorySupplier
+     * */
     @OptIn(UnstableApi::class)
     fun initializeBackgroundPlayer() {
-        val renderersFactory = DefaultRenderersFactory(context)
-            .setEnableDecoderFallback(false)
-            .forceDisableMediaCodecAsynchronousQueueing()
-        val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(10000, 30000, 2000, 2000)
             .setTargetBufferBytes(-1)
             .build()
         backgroundExoPlayer = ExoPlayer.Builder(context)
-            .setRenderersFactory(renderersFactory)
             .setLoadControl(loadControl)
-            .setMediaSourceFactory(cacheDataSourceFactory)
+            .setUseLazyPreparation(false) // important
             .build().apply {
                 volume = 0f
             }
@@ -107,103 +109,101 @@ constructor(
 
     @OptIn(UnstableApi::class)
     fun processMainPlayer(mediaSources: List<MediaSource>) {
-        mainExoPlayer?.let { player ->
-            if (mediaSources.isNotEmpty()) {
-                player.setMediaSources(mediaSources, 0, 0)
-                player.seekTo(0, 0)
-                player.prepare()
-                player.playWhenReady = true
+        if (mainExoPlayer == null) return
+        val mainPlayer = mainExoPlayer!!
+        mainPlayer.setMediaSources(mediaSources, 0, 0)
+        mainPlayer.seekTo(0, 0)
+        mainPlayer.prepare()
+        mainPlayer.playWhenReady = true
+        mainPlayer.addListener(object : Player.Listener {
+            override fun onRenderedFirstFrame() {
+                Timber.tag(tag).d("First frame rendered for page $currentSettledPage")
+                _firstFrameRendered.value = currentSettledPage
             }
-            player.addListener(object : Player.Listener {
-                override fun onRenderedFirstFrame() {
-                    Timber.tag(tag).d("First frame rendered for page $currentSettledPage")
-                    _firstFrameRendered.value = currentSettledPage
-                }
-                override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
-                    if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
-                        Timber.tag(tag).d("Auto transition detected at page $currentSettledPage, periodIndex: ${newPosition.periodIndex}")
-                        val fullPeriodIndex = 2 * currentSettledPage + 1
-                        if (newPosition.periodIndex > fullPeriodIndex) {
-                            Timber.tag(tag).d("Looping back to page $currentSettledPage")
-                        }
+            override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+                if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+                    Timber.tag(tag).d("Auto transition detected at page $currentSettledPage, periodIndex: ${newPosition.periodIndex}")
+                    val fullPeriodIndex = 2 * currentSettledPage + 1
+                    if (newPosition.periodIndex > fullPeriodIndex) {
+                        Timber.tag(tag).d("Looping back to page $currentSettledPage")
                     }
                 }
-                override fun onPlayerError(error: PlaybackException) {
-                    Timber.tag(tag).e(error, "Player error for page $currentSettledPage")
-                }
-                override fun onVideoSizeChanged(videoSize: VideoSize) {
-                    Timber.tag(tag).d("Video size changed for page $currentSettledPage: ${videoSize.width}x${videoSize.height}")
-                }
-                override fun onPlaybackStateChanged(state: Int) {
-                    Timber.tag(tag).d("Playback state changed for page $currentSettledPage: $state")
-                }
-                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                    Timber.tag(tag).d("Media item transition to mediaId ${mediaItem?.mediaId} for page $currentSettledPage")
-                }
-                override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) {
-                    Timber.tag(tag).d("Audio attributes changed for page $currentSettledPage: contentType=${audioAttributes.contentType}, usage=${audioAttributes.usage}, flags=${audioAttributes.flags}")
-                }
-                override fun onAudioSessionIdChanged(audioSessionId: Int) {
-                    Timber.tag(tag).d("Audio session ID changed for page $currentSettledPage: audioSessionId=$audioSessionId")
-                }
-                override fun onVolumeChanged(volume: Float) {
-                    Timber.tag(tag).d("Volume changed for page $currentSettledPage: volume=$volume")
-                }
-                override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
-                    Timber.tag(tag).d("Device volume changed for page $currentSettledPage: volume=$volume, muted=$muted")
-                }
-            })
-            Timber.tag(tag).d("Set media sources for main ExoPlayer")
-        } ?: Timber.tag(tag).e("Main ExoPlayer is null")
+            }
+            override fun onPlayerError(error: PlaybackException) {
+                Timber.tag(tag).e(error, "Player error for page $currentSettledPage")
+            }
+            override fun onVideoSizeChanged(videoSize: VideoSize) {
+                Timber.tag(tag).d("Video size changed for page $currentSettledPage: ${videoSize.width}x${videoSize.height}")
+            }
+            override fun onPlaybackStateChanged(state: Int) {
+                Timber.tag(tag).d("Playback state changed for page $currentSettledPage: $state")
+            }
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                Timber.tag(tag).d("Media item transition to mediaId ${mediaItem?.mediaId} for page $currentSettledPage")
+            }
+            override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) {
+                Timber.tag(tag).d("Audio attributes changed for page $currentSettledPage: contentType=${audioAttributes.contentType}, usage=${audioAttributes.usage}, flags=${audioAttributes.flags}")
+            }
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                Timber.tag(tag).d("Audio session ID changed for page $currentSettledPage: audioSessionId=$audioSessionId")
+            }
+            override fun onVolumeChanged(volume: Float) {
+                Timber.tag(tag).d("Volume changed for page $currentSettledPage: volume=$volume")
+            }
+            override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
+                Timber.tag(tag).d("Device volume changed for page $currentSettledPage: volume=$volume, muted=$muted")
+            }
+        })
     }
 
     @OptIn(UnstableApi::class)
     private fun processBackgroundPlayer(shortenSources: List<MediaSource>, mergedSources: List<MediaSource>) {
         if (backgroundExoPlayer == null) return
-        backgroundExoPlayer!!.setMediaSources(shortenSources)
-        backgroundExoPlayer!!.volume = 0f
+        val backgroundPlayer = backgroundExoPlayer!!
+        backgroundPlayer.setMediaSources(shortenSources)
+        backgroundPlayer.volume = 0f
         fun preloadPage(page: Int) {
             if (page >= shortenSources.size) {
                 Timber.tag(tag).d("Background preload completed, processing main player")
                 processMainPlayer(mergedSources)
                 return
             }
-            val url = _reels.value[page].shortenUrl
+            val shortenUrl = _reels.value[page].shortenUrl
             viewModelScope.launch {
                 try {
-                    val isPreloaded = reelPreloadManager.isPreloadedAndCached(url)
+                    val isPreloaded = reelPreloadManager.isPreloadedAndCached(shortenUrl)
                     if (!isPreloaded) {
-                        backgroundExoPlayer!!.seekTo(page, 0)
-                        backgroundExoPlayer!!.prepare()
-                        backgroundExoPlayer!!.playWhenReady = true
-                        Timber.tag(tag).d("Background play for page $page, url=$url")
-                        backgroundExoPlayer!!.addListener(object : Player.Listener {
+                        backgroundPlayer.seekTo(page, 0)
+                        backgroundPlayer.prepare()
+                        backgroundPlayer.playWhenReady = true
+                        Timber.tag(tag).d("Background play for page $page, shortenUrl=$shortenUrl")
+                        backgroundPlayer.addListener(object : Player.Listener {
                             override fun onPlaybackStateChanged(state: Int) {
                                 if (state == Player.STATE_READY) {
                                     viewModelScope.launch {
-                                        reelPreloadManager.savePreloadedMedia(url)
+                                        reelPreloadManager.savePreloadedMedia(shortenUrl)
                                     }
-                                    backgroundExoPlayer!!.playWhenReady = false
-                                    backgroundExoPlayer!!.removeListener(this)
+                                    backgroundPlayer.playWhenReady = false
+                                    backgroundPlayer.removeListener(this)
                                     preloadPage(page + 1)
                                 }
                             }
                             override fun onPlayerError(error: PlaybackException) {
-                                Timber.tag(tag).e(error, "Background preload error for page $page, url=$url")
-                                backgroundExoPlayer!!.playWhenReady = false
-                                backgroundExoPlayer!!.removeListener(this)
+                                Timber.tag(tag).e(error, "Background preload error for page $page, shortenUrl=$shortenUrl")
+                                backgroundPlayer.playWhenReady = false
+                                backgroundPlayer.removeListener(this)
                                 preloadPage(page + 1)
                             }
                             override fun onIsLoadingChanged(isLoading: Boolean) {
-                                Timber.tag(tag).d("Loading state for page $page, url=$url, isLoading=$isLoading")
+                                Timber.tag(tag).d("Loading state for page $page, shortenUrl=$shortenUrl, isLoading=$isLoading")
                             }
                         })
                     } else {
-                        Timber.tag(tag).d("URL already preloaded for page $page, url=$url")
+                        Timber.tag(tag).d("URL already preloaded for page $page, shortenUrl=$shortenUrl")
                         preloadPage(page + 1)
                     }
                 } catch (e: Exception) {
-                    Timber.tag(tag).e(e, "Failed to preload HLS for page $page, url=$url")
+                    Timber.tag(tag).e(e, "Failed to preload HLS for page $page, shortenUrl=$shortenUrl")
                     preloadPage(page + 1)
                 }
             }
@@ -381,7 +381,7 @@ constructor(
     }
 
     @OptIn(UnstableApi::class)
-    fun startPause(page: Int, playerView: PlayerView) {
+    fun startPause(playerView: PlayerView) {
         mainExoPlayer?.let { player ->
             player.playWhenReady = false
             playerView.player = player
@@ -390,25 +390,19 @@ constructor(
 
     private fun startMainRelease() {
         _mediaSources.clear()
-        mainExoPlayer?.let { player ->
-            player.seekTo(0)
-            player.playWhenReady = false
-            player.stop()
-            player.clearMediaItems()
-            player.release()
-            Timber.tag(tag).d("Releasing Main ExoPlayer")
-        }
+        mainExoPlayer!!.seekTo(0)
+        mainExoPlayer!!.playWhenReady = false
+        mainExoPlayer!!.stop()
+        mainExoPlayer!!.clearMediaItems()
+        mainExoPlayer!!.release()
         mainExoPlayer = null
     }
 
     private fun startBackgroundRelease() {
         _backgroundMediaSources.clear()
-        backgroundExoPlayer?.let { player ->
-            player.stop()
-            player.clearMediaItems()
-            player.release()
-            Timber.tag(tag).d("Releasing Background ExoPlayer")
-        }
+        backgroundExoPlayer!!.stop()
+        backgroundExoPlayer!!.clearMediaItems()
+        backgroundExoPlayer!!.release()
         backgroundExoPlayer = null
     }
 

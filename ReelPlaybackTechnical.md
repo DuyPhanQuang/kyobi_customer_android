@@ -19,8 +19,8 @@ Managed ExoPlayer lifecycle: pause/stop/release players for non-visible pages.
 Disposed ExoPlayer instances for pages outside a range of ±2 from the current page with a 500ms debounce.
 Used setPriority to prioritize playback for the current page (C.PRIORITY_PLAYBACK) and preloading for others (C.PRIORITY_PLAYBACK_PRELOAD).
 
-Caching with MediaCache
-File: MediaCache.kt
+Caching with ReelMediaCache
+File: ReelMediaCache.kt
 Implemented a SimpleCache with a 500MB limit using LeastRecentlyUsedCacheEvictor.
 Added cache clearing logic based on age (1 day) and usage state.
 Configured CacheDataSource with flags FLAG_BLOCK_ON_CACHE and FLAG_IGNORE_CACHE_ON_ERROR for better cache performance.
