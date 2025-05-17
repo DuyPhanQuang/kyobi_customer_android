@@ -267,23 +267,22 @@ constructor(
         viewModelScope.launch {
             val preloadResult = preloadMediaSourceForRange(0, newReels.size)
             if (preloadResult.isSuccess) {
-                val shortenSources = mutableListOf<MediaSource>()
-                val mergedSources = newReels.mapIndexedNotNull { index, reel ->
-                    val shortenMediaSource = _mediaSources[reel.shortenUrl]
-                    val fullMediaSource = _mediaSources[reel.videoUrl]
+                val shortenSources = newReels.mapIndexedNotNull { _, reel ->
+                    val backgroundSource = _backgroundMediaSources[reel.shortenUrl]!!
                     val isCached = reelPreloadManager.isPreloadedAndCached(reel.shortenUrl)
                     if (!isCached) {
-                        val backgroundSource = _backgroundMediaSources[reel.shortenUrl]
-                        if (backgroundSource == null) {
-                            Timber.tag(tag).e("Background source missing for ${reel.shortenUrl} at page $index")
-                            return@mapIndexedNotNull null
-                        }
-                        shortenSources.add(backgroundSource)
+                        backgroundSource
+                    } else {
+                        return@mapIndexedNotNull null
                     }
+                }
+                val mergedSources = newReels.mapIndexedNotNull { index, reel ->
+                    val shortenMediaSource = _mediaSources[reel.shortenUrl]!!
+                    val fullMediaSource = _mediaSources[reel.videoUrl]!!
                     try {
                         ConcatenatingMediaSource2.Builder()
-                            .add(shortenMediaSource!!, 10_000L)
-                            .add(fullMediaSource!!, 180_000L)
+                            .add(shortenMediaSource, 10_000L)
+                            .add(fullMediaSource, 180_000L)
                             .build().also {
                                 Timber.tag(tag).d("ConcatenatingMediaSource2 created for page $index")
                             }
@@ -297,7 +296,6 @@ constructor(
                 } else {
                     firstTimeProcessMainPlayer(mergedSources)
                 }
-                Timber.tag(tag).d("Preloaded and set ${newReels.size} media sources")
             }
         }
     }
