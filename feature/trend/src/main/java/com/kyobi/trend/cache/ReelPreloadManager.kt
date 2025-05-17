@@ -118,7 +118,7 @@ class ReelPreloadManager @Inject constructor(
             return@withContext false
         }
         val minCachedLength = 100_000L // 100KB cho .ts
-        val isTsCached = tsCacheKeys.any { tsCacheKey ->
+        val isTsCached = tsCacheKeys.all { tsCacheKey ->
             val cachedLength = mediaCache.getCache().getCachedLength(tsCacheKey, 0L, Long.MAX_VALUE)
             cachedLength >= minCachedLength
         }

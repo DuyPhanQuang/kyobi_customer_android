@@ -58,7 +58,7 @@ constructor(
     val firstFrameRendered = _firstFrameRendered.asStateFlow()
 
     init {
-        // init instance mainExoPlayer & backgroundExoPlayer
+        // initiate mainExoPlayer & backgroundExoPlayer instance
         initializeMainPlayer()
         initializeBackgroundPlayer()
         // update reels data and set media sources
@@ -175,7 +175,6 @@ constructor(
                 return
             }
             val url = _reels.value[page].shortenUrl
-            val localTag = "ProcessBackground"
             viewModelScope.launch {
                 try {
                     val isPreloaded = reelPreloadManager.isPreloadedAndCached(url)
@@ -184,7 +183,7 @@ constructor(
                         backgroundExoPlayer!!.seekTo(page, 0)
                         backgroundExoPlayer!!.prepare()
                         backgroundExoPlayer!!.playWhenReady = true
-                        Timber.tag(localTag).d("Background play for page $page, url=$url")
+                        Timber.tag(tag).d("Background play for page $page, url=$url")
                         backgroundExoPlayer!!.addListener(object : Player.Listener {
                             override fun onPlaybackStateChanged(state: Int) {
                                 if (state == Player.STATE_READY) {
@@ -193,30 +192,28 @@ constructor(
                                     }
                                     val cachedLength = mediaCache.getCache().getCachedLength(cacheKey, 0L, Long.MAX_VALUE)
                                     val cacheKeys = mediaCache.getCache().keys
-                                    Timber.tag(localTag).d(
-                                        "Preloaded HLS for page $page, url=$url, cacheKey=$cacheKey, " +
-                                                "cachedLength=$cachedLength bytes, cacheKeys=${cacheKeys.joinToString()}")
+                                    Timber.tag(tag).d("Preloaded HLS for page $page, url=$url, cacheKey=$cacheKey, " + "cachedLength=$cachedLength bytes, cacheKeys=${cacheKeys.joinToString()}")
                                     backgroundExoPlayer!!.playWhenReady = false
                                     backgroundExoPlayer!!.removeListener(this)
                                     preloadPage(page + 1)
                                 }
                             }
                             override fun onPlayerError(error: PlaybackException) {
-                                Timber.tag(localTag).e(error, "Background preload error for page $page, url=$url")
+                                Timber.tag(tag).e(error, "Background preload error for page $page, url=$url")
                                 backgroundExoPlayer!!.playWhenReady = false
                                 backgroundExoPlayer!!.removeListener(this)
                                 preloadPage(page + 1)
                             }
                             override fun onIsLoadingChanged(isLoading: Boolean) {
-                                Timber.tag(localTag).d("Loading state for page $page, url=$url, isLoading=$isLoading")
+                                Timber.tag(tag).d("Loading state for page $page, url=$url, isLoading=$isLoading")
                             }
                         })
                     } else {
-                        Timber.tag(localTag).d("URL already preloaded for page $page, url=$url")
+                        Timber.tag(tag).d("URL already preloaded for page $page, url=$url")
                         preloadPage(page + 1)
                     }
                 } catch (e: Exception) {
-                    Timber.tag(localTag).e(e, "Failed to preload HLS for page $page, url=$url")
+                    Timber.tag(tag).e(e, "Failed to preload HLS for page $page, url=$url")
                     preloadPage(page + 1)
                 }
             }
@@ -224,7 +221,7 @@ constructor(
         preloadPage(0)
     }
 
-    fun getPlayer(): ExoPlayer? = mainExoPlayer
+    fun getMainPlayer(): ExoPlayer? = mainExoPlayer
 
     @OptIn(UnstableApi::class)
     fun setReels(newReels: List<Reel>) {
@@ -234,11 +231,6 @@ constructor(
         viewModelScope.launch {
             val shortenSources = mutableListOf<MediaSource>()
             val mergedSources = newReels.mapIndexedNotNull { index, reel ->
-                // Fallback nếu media source không tồn tại
-                if (!_mediaSources.containsKey(reel.shortenUrl) || !_mediaSources.containsKey(reel.videoUrl)) {
-                    Timber.tag(tag).w("Media sources missing for ${reel.shortenUrl} or ${reel.videoUrl}, preloading")
-                    preloadMediaSourceForRange(index, index + 1)
-                }
                 val shortenMediaSource = _mediaSources[reel.shortenUrl]
                 val fullMediaSource = _mediaSources[reel.videoUrl]
                 if (shortenMediaSource == null || fullMediaSource == null) {
@@ -309,9 +301,15 @@ constructor(
         if (reel.shortenUrl.isNotEmpty()) {
             try {
                 val mediaItem = createMediaItem(reel.shortenUrl)
-                val mainSource = startCreateMediaSource(mediaItem, shouldCache = true)
+                val mainSource = startCreateMediaSource(
+                    uri = reel.shortenUrl,
+                    mediaItem,
+                    shouldCache = true)
                 _mediaSources[reel.shortenUrl] = mainSource
-                val backgroundSource = startCreateMediaSource(mediaItem, shouldCache = true)
+                val backgroundSource = startCreateMediaSource(
+                    uri = reel.shortenUrl,
+                    mediaItem,
+                    shouldCache = true)
                 _backgroundMediaSources[reel.shortenUrl] = backgroundSource
                 Timber.tag(tag).d("Preloaded shortenUrl MediaSource for page $page")
             } catch (e: Exception) {
@@ -322,7 +320,10 @@ constructor(
         if (reel.videoUrl.isNotEmpty()) {
             try {
                 val mediaItem = createMediaItem(reel.videoUrl)
-                val source = startCreateMediaSource(mediaItem, shouldCache = false)
+                val source = startCreateMediaSource(
+                    uri = reel.videoUrl,
+                    mediaItem,
+                    shouldCache = false)
                 _mediaSources[reel.videoUrl] = source
                 Timber.tag(tag).d("Preloaded videoUrl MediaSource for page $page")
             } catch (e: Exception) {
@@ -332,16 +333,15 @@ constructor(
     }
 
     @OptIn(UnstableApi::class)
-    fun startCreateMediaSource(mediaItem: MediaItem, shouldCache: Boolean = true): MediaSource {
+    fun startCreateMediaSource(uri: String, mediaItem: MediaItem, shouldCache: Boolean = true): MediaSource {
         try {
-            val uri = mediaItem.localConfiguration?.uri.toString()
             // Chọn DataSource.Factory dựa trên shouldCache
             val dataSourceFactory = if (shouldCache) {
                 mediaCache.createSharedCacheDataSourceFactory(context, mediaCache.getCache())
             } else {
                 mediaCache.createNonCachedDataSourceFactory(context)
             }
-            val path = uri.toUri().path ?: ""
+            val path = uri.toUri().path!!
             return if (path.endsWith(".m3u8")) {
                 // Tạo DefaultHlsExtractorFactory và cấu hình
                 val customExtractorFactory = DefaultHlsExtractorFactory().apply {
