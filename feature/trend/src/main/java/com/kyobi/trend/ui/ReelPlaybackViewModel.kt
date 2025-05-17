@@ -212,7 +212,7 @@ constructor(
                 try {
                     val isPreloaded = reelPreloadManager.isPreloadedAndCached(shortenUrl)
                     if (!isPreloaded) {
-                        backgroundPlayer.seekTo(page, 0)
+                        backgroundPlayer.seekTo(page, SEEK_TO_DEFAULT_VALUE)
                         backgroundPlayer.prepare()
                         backgroundPlayer.playWhenReady = true
                         Timber.tag(tag).d("Background play for page $page, shortenUrl=$shortenUrl")
