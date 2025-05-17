@@ -52,7 +52,7 @@ fun ReelVideoPlayer(
     val playerView = remember(pageIndex) {
         PlayerView(context).apply {
             useController = false
-            setKeepContentOnPlayerReset(true)
+            setKeepContentOnPlayerReset(false)
             setEnableComposeSurfaceSyncWorkaround(true)
             keepScreenOn = true
             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
@@ -66,7 +66,6 @@ fun ReelVideoPlayer(
         }
     }
 
-    // Lấy ExoPlayer từ ViewModel
     val player = viewModel.getMainPlayer()
 
     // Collect firstFrameRendered để update showThumbnail và đo time render first frame
@@ -85,7 +84,6 @@ fun ReelVideoPlayer(
         }
     }
 
-    // Thiết lập ExoPlayer khi page hiện tại
     LaunchedEffect(
         pageIndex,
         pagerState,
