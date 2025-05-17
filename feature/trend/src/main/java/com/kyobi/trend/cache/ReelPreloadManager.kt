@@ -44,24 +44,25 @@ class ReelPreloadManager @Inject constructor(
 
     suspend fun savePreloadedMedia(url: String) = withContext(Dispatchers.IO) {
         try {
-            val cacheKey = url.toUniqueReelCacheKey()
+            val m3u8CacheKey = url.toUniqueReelCacheKey()
             val tsUrls = fetchTsUrls(url)
             val tsCacheKeys = tsUrls.map { it.toUniqueReelCacheKey() }
             val entity = PreloadedMediaEntity(
                 url = url,
-                cacheKey = cacheKey,
+                cacheKey = m3u8CacheKey,
                 tsCacheKeys = tsCacheKeys,
                 timestamp = System.currentTimeMillis()
             )
             preloadedMediaDao.insert(entity)
-            preloadedUrls[url] = cacheKey
-            val cachedLength = mediaCache.getCache().getCachedLength(cacheKey, 0L, Long.MAX_VALUE)
-            val tsCachedLengths = tsCacheKeys.map {
+            preloadedUrls[url] = m3u8CacheKey
+            val cachedLength = mediaCache.getCache().getCachedLength(m3u8CacheKey, 0L, Long.MAX_VALUE)
+            val firstTsCacheKey = tsCacheKeys.firstOrNull()
+            val firstTsCachedLength = firstTsCacheKey?.let {
                 mediaCache.getCache().getCachedLength(it, 0L, Long.MAX_VALUE)
-            }
+            } ?: Long.MIN_VALUE
             Timber.tag(tag).d(
-                "Saved preloaded media: url=$url, cacheKey=$cacheKey, cachedLength=$cachedLength bytes, " +
-                        "tsCacheKeys=${tsCacheKeys.joinToString()}, tsCachedLengths=${tsCachedLengths.joinToString()} bytes"
+                "Saved preloaded media: url=$url, cacheKey=$m3u8CacheKey, cachedLength=$cachedLength bytes, " +
+                        "firstTsCacheKey=$firstTsCacheKey, firstTsCachedLength=$firstTsCachedLength bytes"
             )
         } catch (e: Exception) {
             Timber.tag(tag).e(e, "Failed to save preloaded media for url=$url")
@@ -112,21 +113,18 @@ class ReelPreloadManager @Inject constructor(
             Timber.tag(tag).w("No entity found for url=$url")
             return@withContext false
         }
-        val cacheKey = entity.cacheKey
+        val m3u8CacheKey = entity.cacheKey
         val tsCacheKeys = entity.tsCacheKeys
         if (tsCacheKeys.isEmpty()) {
             Timber.tag(tag).w("No tsCacheKeys found for url=$url")
             return@withContext false
         }
-        val minCachedLength = 100_000L // 100KB cho .ts
-        val isTsCached = tsCacheKeys.all { tsCacheKey ->
-            val cachedLength = mediaCache.getCache().getCachedLength(tsCacheKey, 0L, Long.MAX_VALUE)
-            cachedLength >= minCachedLength
-        }
-        Timber.tag(tag).d(
-            "Checked cache for url=$url, cacheKey=$cacheKey, tsCacheKeys=${tsCacheKeys.joinToString()}, " +
-                    "isTsCached=$isTsCached"
-        )
-        return@withContext isTsCached
+        val minCachedLength = 500_000L // min 500KB cho 1 segment 10s
+        val firstTsCacheKey = tsCacheKeys.first()
+        val cachedLength = mediaCache.getCache().getCachedLength(firstTsCacheKey, 0L, Long.MAX_VALUE)
+        Timber.tag(tag).d("Checked cache for first tsCacheKey=$firstTsCacheKey, cachedLength=$cachedLength bytes")
+        val isTsCached = cachedLength >= minCachedLength
+        Timber.tag(tag).d("Checked cache for url=$url, cacheKey=$m3u8CacheKey, firstTsCacheKey=$firstTsCacheKey, isTsCached=$isTsCached")
+        isTsCached
     }
 }

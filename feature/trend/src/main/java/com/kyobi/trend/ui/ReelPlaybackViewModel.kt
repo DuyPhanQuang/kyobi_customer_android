@@ -31,6 +31,7 @@ import androidx.media3.exoplayer.source.ConcatenatingMediaSource2
 import androidx.media3.ui.PlayerView
 import com.kyobi.trend.cache.ReelPreloadManager
 import com.kyobi.trend.extensions.addPerformanceTracker
+import com.kyobi.trend.performance_metrics.AudioFocusManager
 import com.kyobi.trend.performance_metrics.DEFAULT_VALUE
 import com.kyobi.trend.performance_metrics.VideoPerformanceTracker
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -93,13 +94,15 @@ constructor(
             .setMediaSourceFactory(cacheDataSourceFactory)
             .setUseLazyPreparation(false)
             .build().apply {
+                setPriority(C.PRIORITY_PLAYBACK)
                 repeatMode = Player.REPEAT_MODE_ONE
                 videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                 volume = 1f
                 addPerformanceTracker(mainPlayerTracker)
+                val audioFocusManager = AudioFocusManager(context)
+                audioFocusManager.requestAudioFocus()
                 addListener(object : Player.Listener {
                     override fun onRenderedFirstFrame() {
-                        Timber.tag(tag).d("First frame rendered for page $currentSettledPage")
                         val result = mainPlayerTracker.getResult()
                         val firstFrameDurationMs = if (result.videoPerformanceData.loadTime.videoFirstFrameRenderedTimestamp != DEFAULT_VALUE &&
                             result.videoPerformanceData.loadTime.networkOrCacheVideoLoadingStartedTimestamp != DEFAULT_VALUE) {
@@ -135,7 +138,7 @@ constructor(
                         Timber.tag(tag).d("Media item transition to mediaId ${mediaItem?.mediaId} for page $currentSettledPage")
                     }
                     override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) {
-                        Timber.tag(tag).d("Audio attributes changed for page $currentSettledPage: contentType=${audioAttributes.contentType}, usage=${audioAttributes.usage}, flags=${audioAttributes.flags}")
+                        Timber.tag(tag).d("Audio attributes changed for page $currentSettledPage: contentType=${audioAttributes.contentType}, usage=${audioAttributes.usage}, flags=${audioAttributes.flags}, hasAudioTrack=${audioAttributes.contentType != C.AUDIO_CONTENT_TYPE_UNKNOWN}")
                     }
                     override fun onAudioSessionIdChanged(audioSessionId: Int) {
                         Timber.tag(tag).d("Audio session ID changed for page $currentSettledPage: audioSessionId=$audioSessionId")
@@ -151,6 +154,8 @@ constructor(
     }
 
     /** setUseLazyPreparation to `FALSE` -> very important -> reduce timing prepare sources and pre-warm renderer
+     * experimentalSetEnableMediaCodecVideoRendererPrewarming -> enable pre-warm renderer
+     * EXTENSION_RENDERER_MODE_OFF -> disabled audio renderer
      */
     @OptIn(UnstableApi::class)
     fun initializeBackgroundPlayer() {
@@ -158,10 +163,11 @@ constructor(
             .setEnableDecoderFallback(true)
             .forceEnableMediaCodecAsynchronousQueueing()
             .experimentalSetEnableMediaCodecVideoRendererPrewarming(true)
+            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF)
         val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
             .setPrioritizeTimeOverSizeThresholds(true)
-            .setBufferDurationsMs(5000, 5000, 500, 500)
+            .setBufferDurationsMs(20000, 20000, 1000, 1000)
             .build()
         backgroundExoPlayer = ExoPlayer.Builder(context)
             .setRenderersFactory(renderersFactory)
@@ -169,6 +175,7 @@ constructor(
             .setMediaSourceFactory(cacheDataSourceFactory)
             .setUseLazyPreparation(false)
             .build().apply {
+                setPriority(C.PRIORITY_PLAYBACK_PRELOAD)
                 volume = 0f
             }
     }
@@ -284,6 +291,7 @@ constructor(
                         return@mapIndexedNotNull null
                     }
                 }
+                Timber.tag(tag).d("Check shortenSources $shortenSources")
                 if (shortenSources.isNotEmpty()) {
                     firstTimeProcessBackgroundPlayer(shortenSources, mergedSources)
                 } else {
@@ -421,6 +429,7 @@ constructor(
 
     private fun startMainRelease() {
         _mediaSources.clear()
+        AudioFocusManager(context).abandonAudioFocus()
         mainExoPlayer!!.seekTo(SEEK_TO_DEFAULT_VALUE)
         mainExoPlayer!!.playWhenReady = false
         mainExoPlayer!!.stop()
