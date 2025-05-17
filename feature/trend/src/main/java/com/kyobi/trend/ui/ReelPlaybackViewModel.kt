@@ -9,7 +9,6 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.hls.HlsMediaSource
 import androidx.media3.exoplayer.source.MediaSource
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import com.kyobi.trend.cache.MediaCache
 import com.kyobi.trend.model.Reel
@@ -215,8 +214,11 @@ constructor(
     fun getMainPlayer(): ExoPlayer? = mainExoPlayer
 
     /** Step1: Update reels data
+     *
      * Step2: preload all sources (shorten & full)
+     *
      * Step3: start processing background player
+     *
      * Step 4: after processed background player -> switch to start processing main player
      * */
     @OptIn(UnstableApi::class)
@@ -360,33 +362,34 @@ constructor(
         }
     }
 
+    /** check xem player đã set MediaSource và prepared chưa.
+     *
+     * cần có logic check này bởi vì lần đầu render ui video players thì page index 0 rendered nhưng mà processMainPlayer chưa dc call
+     *
+     * important: sử dụng seekTo(page, 0) -> 0: giảm thời gian render first frame
+     * */
     @OptIn(UnstableApi::class)
     fun startPlay(page: Int, playerView: PlayerView) {
         mainExoPlayer?.let { player ->
-            // check xem player đã set MediaSource và prepared chưa.
-            // cần có logic check này bởi vì lần đầu render ui video players thì page index 0 rendered
-            // nhưng mà processMainPlayer chưa dc call
+            Timber.tag(tag).w("startPlay called for page $page, mediaItemCount: ${player.mediaItemCount}, playbackState: ${player.playbackState}")
             if (player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE) {
-                player.seekTo(page, 0) // Giảm thời gian render first frame
+                player.seekTo(page, 0)
                 player.playWhenReady = true
-                Timber.tag(tag).d("Playing ExoPlayer for page $page")
-            } else {
-                Timber.tag(tag).w("startPlay called but player not ready for page $page, mediaItemCount: ${player.mediaItemCount}, playbackState: ${player.playbackState}")
             }
-        } ?: Timber.tag(tag).e("Main ExoPlayer is null")
-        playerView.player = mainExoPlayer
+            playerView.player = player
+        }
     }
 
     @OptIn(UnstableApi::class)
     fun startPause(page: Int, playerView: PlayerView) {
         mainExoPlayer?.let { player ->
             player.playWhenReady = false
-            Timber.tag(tag).d("Paused ExoPlayer for page $page")
+            playerView.player = player
         }
-        playerView.player = mainExoPlayer
     }
 
     private fun startMainRelease() {
+        _mediaSources.clear()
         mainExoPlayer?.let { player ->
             player.seekTo(0)
             player.playWhenReady = false
@@ -396,10 +399,10 @@ constructor(
             Timber.tag(tag).d("Releasing Main ExoPlayer")
         }
         mainExoPlayer = null
-        _mediaSources.clear()
     }
 
     private fun startBackgroundRelease() {
+        _backgroundMediaSources.clear()
         backgroundExoPlayer?.let { player ->
             player.stop()
             player.clearMediaItems()
@@ -407,7 +410,6 @@ constructor(
             Timber.tag(tag).d("Releasing Background ExoPlayer")
         }
         backgroundExoPlayer = null
-        _backgroundMediaSources.clear()
     }
 
     @OptIn(UnstableApi::class)
