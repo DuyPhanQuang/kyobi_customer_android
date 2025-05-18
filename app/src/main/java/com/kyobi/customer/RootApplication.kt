@@ -38,24 +38,26 @@ class RootApplication : Application() {
             Timber.plant(Timber.DebugTree())
         }
 
-        // Bật StrictMode để phát hiện tác vụ nặng trên main thread
-        if (!debug) {
-            StrictMode.setThreadPolicy(
-                StrictMode.ThreadPolicy.Builder()
-                    .detectAll() // Phát hiện tất cả vấn đề (I/O, network, v.v.)
-                    .penaltyLog() // Ghi log vào Logcat
-                    .build()
-            )
-            StrictMode.setVmPolicy(
-                StrictMode.VmPolicy.Builder()
-                    .detectAll() // Phát hiện tất cả vi phạm (leak, v.v.)
-                    .penaltyLog() // Ghi log vào Logcat
-                    .build()
-            )
-        }
+//        // Bật StrictMode để phát hiện tác vụ nặng trên main thread
+//        if (!debug) {
+//            StrictMode.setThreadPolicy(
+//                StrictMode.ThreadPolicy.Builder()
+//                    .detectAll() // Phát hiện tất cả vấn đề (I/O, network, v.v.)
+//                    .penaltyLog() // Ghi log vào Logcat
+//                    .build()
+//            )
+//            StrictMode.setVmPolicy(
+//                StrictMode.VmPolicy.Builder()
+//                    .detectAll() // Phát hiện tất cả vi phạm (leak, v.v.)
+//                    .penaltyLog() // Ghi log vào Logcat
+//                    .build()
+//            )
+//        }
 
         // Tắt auto session tracking runtime
-        firebaseAnalytics.setAnalyticsCollectionEnabled(false)
+        if (debug) {
+            firebaseAnalytics.setAnalyticsCollectionEnabled(false)
+        }
         // Global Crash Handler
         CoroutineScope(Dispatchers.IO).launch {
             CrashReporter.initGlobalHandler()
@@ -63,7 +65,7 @@ class RootApplication : Application() {
         Timber.tag(tag).d("Initiated global crash handler")
 
         // Init Imgly Engine after 5s
-        CoroutineScope(Dispatchers.Default).launch {
+        CoroutineScope(Dispatchers.Main).launch {
             delay(5000)
             Engine.init(this@RootApplication)
             Timber.tag(tag).d("Initialized Imgly Engine")
