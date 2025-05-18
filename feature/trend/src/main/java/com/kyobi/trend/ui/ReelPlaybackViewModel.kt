@@ -98,7 +98,6 @@ constructor(
                 repeatMode = Player.REPEAT_MODE_ONE
                 videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                 volume = 1f
-                playWhenReady = true
                 addPerformanceTracker(mainPlayerTracker)
                 val audioFocusManager = AudioFocusManager(context)
                 audioFocusManager.requestAudioFocus()
@@ -155,7 +154,9 @@ constructor(
     }
 
     /** setUseLazyPreparation to `FALSE` -> very important -> reduce timing prepare sources and pre-warm renderer
+     *
      * experimentalSetEnableMediaCodecVideoRendererPrewarming -> enable pre-warm renderer
+     *
      * EXTENSION_RENDERER_MODE_OFF -> disabled audio renderer
      */
     @OptIn(UnstableApi::class)
@@ -185,10 +186,11 @@ constructor(
     /** Only call at first time fetch reel data (api fetch reel page 1)
      * */
     @OptIn(UnstableApi::class)
-    fun firstTimeProcessMainPlayer() {
+    fun prepareAndStartVideoPage0() {
         mainPlayerTracker.invalidateSession()
-        mainExoPlayer!!.seekTo(0, SEEK_TO_DEFAULT_VALUE)
         mainExoPlayer!!.prepare()
+        mainExoPlayer!!.seekTo(0, SEEK_TO_DEFAULT_VALUE)
+        mainExoPlayer!!.playWhenReady = true
     }
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
@@ -199,8 +201,8 @@ constructor(
         fun preWarmPage(page: Int) {
             if (page >= shortenSources.size) {
                 val preloadDurationMs = System.currentTimeMillis() - startPreloadTimestamp
-                Timber.tag(tag).d("Background pre warm completed in ${preloadDurationMs}ms, processing main player")
-                firstTimeProcessMainPlayer()
+                Timber.tag(tag).d("Background pre warm completed in ${preloadDurationMs}ms, prepare and start video at page 0")
+                prepareAndStartVideoPage0()
                 return
             }
             val shortenUrl = _reels.value[page].shortenUrl
@@ -261,45 +263,42 @@ constructor(
         _reels.value = newReels
         viewModelScope.launch {
             val preloadResult = preloadMediaSourceForRange(0, newReels.size)
-            if (preloadResult.isSuccess) {
-                val shortenSources = newReels.mapIndexedNotNull { _, reel ->
-                    val backgroundSource = _backgroundMediaSources[reel.shortenUrl]!!
-                    val isCached = reelPreloadManager.isPreloadedAndCached(reel.shortenUrl)
-                    if (!isCached) {
-                        backgroundSource
-                    } else {
-                        return@mapIndexedNotNull null
-                    }
+            if (!preloadResult.isSuccess) return@launch
+            val shortenSources = newReels.mapIndexedNotNull { _, reel ->
+                val backgroundSource = _backgroundMediaSources[reel.shortenUrl]!!
+                val isCached = reelPreloadManager.isPreloadedAndCached(reel.shortenUrl)
+                if (!isCached) backgroundSource else return@mapIndexedNotNull null
+            }
+            val mergedSources = newReels.mapIndexedNotNull { index, reel ->
+                val shortenMediaSource = _mediaSources[reel.shortenUrl]!!
+                val fullMediaSource = _mediaSources[reel.videoUrl]!!
+                try {
+                    val shortenDurationMs = 10_000L
+                    val fullDurationMs = 180_000L - shortenDurationMs
+                    ConcatenatingMediaSource2.Builder()
+                        .add(shortenMediaSource, shortenDurationMs)
+                        .add(fullMediaSource, fullDurationMs)
+                        .build().also {
+                            Timber.tag(tag).d("ConcatenatingMediaSource2 created for page $index")
+                        }
+                } catch (e: Exception) {
+                    Timber.tag(tag).e(e, "Failed to create ConcatenatingMediaSource2 for page $index")
+                    return@mapIndexedNotNull null
                 }
-                val mergedSources = newReels.mapIndexedNotNull { index, reel ->
-                    val shortenMediaSource = _mediaSources[reel.shortenUrl]!!
-                    val fullMediaSource = _mediaSources[reel.videoUrl]!!
-                    try {
-                        ConcatenatingMediaSource2.Builder()
-                            .add(shortenMediaSource, 10_000L)
-                            .add(fullMediaSource, 180_000L)
-                            .build().also {
-                                Timber.tag(tag).d("ConcatenatingMediaSource2 created for page $index")
-                            }
-                    } catch (e: Exception) {
-                        Timber.tag(tag).e(e, "Failed to create ConcatenatingMediaSource2 for page $index")
-                        return@mapIndexedNotNull null
-                    }
-                }
-                if (backgroundExoPlayer == null || mainExoPlayer == null) {
-                    return@launch
-                }
-                if (shortenSources.isNotEmpty()) {
-                    backgroundExoPlayer!!.setMediaSources(shortenSources, 0, SEEK_TO_DEFAULT_VALUE)
-                }
-                if (mergedSources.isNotEmpty()) {
-                    mainExoPlayer!!.setMediaSources(mergedSources, 0, SEEK_TO_DEFAULT_VALUE)
-                }
-                if (shortenSources.isNotEmpty()) {
-                    firstTimeProcessBackgroundPlayer(shortenSources)
-                } else if (mergedSources.isNotEmpty()) {
-                    firstTimeProcessMainPlayer()
-                }
+            }
+            if (backgroundExoPlayer == null || mainExoPlayer == null) {
+                return@launch
+            }
+            if (shortenSources.isNotEmpty()) {
+                backgroundExoPlayer!!.setMediaSources(shortenSources, 0, SEEK_TO_DEFAULT_VALUE)
+            }
+            if (mergedSources.isNotEmpty()) {
+                mainExoPlayer!!.setMediaSources(mergedSources, 0, SEEK_TO_DEFAULT_VALUE)
+            }
+            if (shortenSources.isNotEmpty()) {
+                firstTimeProcessBackgroundPlayer(shortenSources)
+            } else if (mergedSources.isNotEmpty()) {
+                prepareAndStartVideoPage0()
             }
         }
     }
