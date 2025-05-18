@@ -98,6 +98,7 @@ constructor(
                 repeatMode = Player.REPEAT_MODE_ONE
                 videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT
                 volume = 1f
+                playWhenReady = true
                 addPerformanceTracker(mainPlayerTracker)
                 val audioFocusManager = AudioFocusManager(context)
                 audioFocusManager.requestAudioFocus()
@@ -188,7 +189,6 @@ constructor(
         mainPlayerTracker.invalidateSession()
         mainExoPlayer!!.seekTo(0, SEEK_TO_DEFAULT_VALUE)
         mainExoPlayer!!.prepare()
-        mainExoPlayer!!.playWhenReady = true
     }
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
@@ -196,10 +196,10 @@ constructor(
     @OptIn(UnstableApi::class)
     private fun firstTimeProcessBackgroundPlayer(shortenSources: List<MediaSource>) {
         val startPreloadTimestamp = System.currentTimeMillis()
-        fun preloadPage(page: Int) {
+        fun preWarmPage(page: Int) {
             if (page >= shortenSources.size) {
                 val preloadDurationMs = System.currentTimeMillis() - startPreloadTimestamp
-                Timber.tag(tag).d("Background preload completed in ${preloadDurationMs}ms, processing main player")
+                Timber.tag(tag).d("Background pre warm completed in ${preloadDurationMs}ms, processing main player")
                 firstTimeProcessMainPlayer()
                 return
             }
@@ -210,7 +210,7 @@ constructor(
                     if (!isPreloaded) {
                         backgroundExoPlayer!!.seekTo(page, SEEK_TO_DEFAULT_VALUE)
                         backgroundExoPlayer!!.prepare()
-                        Timber.tag(tag).d("Background page $page is preparing")
+                        Timber.tag(tag).d("Background page $page is pre warming")
                         backgroundExoPlayer!!.addListener(object : Player.Listener {
                             override fun onPlaybackStateChanged(state: Int) {
                                 if (state == Player.STATE_READY) {
@@ -219,26 +219,26 @@ constructor(
                                         reelPreloadManager.savePreloadedMedia(shortenUrl)
                                     }
                                     backgroundExoPlayer!!.removeListener(this)
-                                    preloadPage(page + 1)
+                                    preWarmPage(page + 1)
                                 }
                             }
                             override fun onPlayerError(error: PlaybackException) {
                                 Timber.tag(tag).e(error, "Background page $page player error")
                                 backgroundExoPlayer!!.removeListener(this)
-                                preloadPage(page + 1)
+                                preWarmPage(page + 1)
                             }
                         })
                     } else {
                         Timber.tag(tag).d("URL already preloaded for page $page")
-                        preloadPage(page + 1)
+                        preWarmPage(page + 1)
                     }
                 } catch (e: Exception) {
-                    Timber.tag(tag).e(e, "Failed to preload HLS for page $page, shortenUrl=$shortenUrl")
-                    preloadPage(page + 1)
+                    Timber.tag(tag).e(e, "Failed to pre warm HLS for page $page")
+                    preWarmPage(page + 1)
                 }
             }
         }
-        preloadPage(0)
+        preWarmPage(0)
     }
 
     fun getMainPlayer(): ExoPlayer? = mainExoPlayer

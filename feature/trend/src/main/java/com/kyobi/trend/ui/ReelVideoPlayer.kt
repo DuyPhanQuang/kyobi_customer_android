@@ -66,7 +66,7 @@ fun ReelVideoPlayer(
 
     val player = viewModel.getMainPlayer()
 
-    // update showThumbnail và đo time render first frame
+    // update showThumbnail
     LaunchedEffect(pageIndex, viewModel.firstFrameRendered) {
         viewModel.firstFrameRendered.collect { renderedPage ->
             if (renderedPage == pageIndex) {
@@ -87,8 +87,6 @@ fun ReelVideoPlayer(
             .collect { settledPage ->
                 val isCurrentPage = pageIndex == settledPage
                 if (isCurrentPage && viewModel.reels.value.getOrNull(settledPage) != null) {
-                    val reelData = viewModel.reels.value[settledPage]
-                    Timber.tag(tag).d("Preparing ExoPlayer for page $settledPage, reelData: $reelData")
                     viewModel.updateSettledPage(settledPage, playerView)
                     showThumbnail = true
                 }
