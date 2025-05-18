@@ -272,9 +272,11 @@ constructor(
             val mergedSources = newReels.mapIndexedNotNull { index, reel ->
                 val shortenMediaSource = _mediaSources[reel.shortenUrl]!!
                 val fullMediaSource = _mediaSources[reel.videoUrl]!!
+                val shortenDurationConfig = reel.shortenDuration
+                val fullDurationConfig = reel.originalDuration - shortenDurationConfig
                 try {
-                    val shortenDurationMs = 10_000L
-                    val fullDurationMs = 180_000L - shortenDurationMs
+                    val shortenDurationMs = (shortenDurationConfig * 1000).toLong()
+                    val fullDurationMs = (fullDurationConfig * 1000).toLong()
                     ConcatenatingMediaSource2.Builder()
                         .add(shortenMediaSource, shortenDurationMs)
                         .add(fullMediaSource, fullDurationMs)
@@ -313,9 +315,7 @@ constructor(
     private fun preloadMediaSourceForRange(startPage: Int, endPage: Int): Result<Unit> {
         return runCatching {
             for (page in startPage until endPage) {
-                if (page < _reels.value.size) {
-                    preloadShortenAndFullMediaSources(page)
-                }
+                preloadShortenAndFullMediaSources(page)
             }
             Timber.tag(tag).d("Successfully preloaded media sources from page $startPage to ${endPage - 1}")
         }.onFailure { e ->
@@ -415,18 +415,20 @@ constructor(
             Timber.tag(tag).w("startPlay called for page $page, mediaItemCount: ${player.mediaItemCount}, playbackState: ${player.playbackState}")
             if (player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE) {
                 player.seekTo(page, SEEK_TO_DEFAULT_VALUE)
-                player.playWhenReady = true
+                if (!player.isPlaying) {
+                    player.playWhenReady = true
+                }
             }
-            playerView.player = player
         }
+        playerView.player = mainExoPlayer
     }
 
     @OptIn(UnstableApi::class)
     fun startPause(playerView: PlayerView) {
         mainExoPlayer?.let { player ->
             player.playWhenReady = false
-            playerView.player = player
         }
+        playerView.player = mainExoPlayer
     }
 
     private fun startMainRelease() {

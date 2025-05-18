@@ -59,8 +59,7 @@ fun ReelVideoPlayer(
             setBackgroundColor(Color.TRANSPARENT)
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
+                ViewGroup.LayoutParams.MATCH_PARENT)
         }
     }
 
@@ -113,7 +112,7 @@ fun ReelVideoPlayer(
         }
     }
 
-    if (showThumbnail && reel.thumbnailUrl?.isNotEmpty() == true) {
+    if (showThumbnail && reel.thumbnailUrl.isNotEmpty()) {
         AsyncImage(
             model = reel.thumbnailUrl,
             contentDescription = null,
