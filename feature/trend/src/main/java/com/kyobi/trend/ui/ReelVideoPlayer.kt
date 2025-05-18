@@ -90,7 +90,7 @@ fun ReelVideoPlayer(
                     showThumbnail = true
                 }
                 if (isCurrentPage && player != null) {
-                    viewModel.startPlay(settledPage, playerView)
+                    viewModel.seekToPageAndPlayIfNeeded(settledPage, playerView)
                     Timber.tag(tag).d("Playing ExoPlayer for page $settledPage")
                 }
             }

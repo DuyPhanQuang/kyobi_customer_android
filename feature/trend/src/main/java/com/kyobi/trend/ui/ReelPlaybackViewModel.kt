@@ -410,7 +410,7 @@ constructor(
      * important: sử dụng seekTo(page, 0) -> 0: giảm thời gian render first frame
      * */
     @OptIn(UnstableApi::class)
-    fun startPlay(page: Int, playerView: PlayerView) {
+    fun seekToPageAndPlayIfNeeded(page: Int, playerView: PlayerView) {
         mainExoPlayer?.let { player ->
             Timber.tag(tag).w("startPlay called for page $page, mediaItemCount: ${player.mediaItemCount}, playbackState: ${player.playbackState}")
             if (player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE) {
@@ -419,6 +419,13 @@ constructor(
                     player.playWhenReady = true
                 }
             }
+        }
+        playerView.player = mainExoPlayer
+    }
+
+    fun startPlay(playerView: PlayerView) {
+        mainExoPlayer?.let { player ->
+            player.playWhenReady = true
         }
         playerView.player = mainExoPlayer
     }
