@@ -177,36 +177,30 @@ constructor(
             .build().apply {
                 setPriority(C.PRIORITY_PLAYBACK_PRELOAD)
                 volume = 0f
+                playWhenReady = false
             }
     }
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
      * */
     @OptIn(UnstableApi::class)
-    fun firstTimeProcessMainPlayer(mediaSources: List<MediaSource>) {
-        if (mainExoPlayer == null) return
+    fun firstTimeProcessMainPlayer() {
         mainPlayerTracker.invalidateSession()
-        val mainPlayer = mainExoPlayer!!
-        mainPlayer.setMediaSources(mediaSources, 0, SEEK_TO_DEFAULT_VALUE)
-        mainPlayer.seekTo(0, SEEK_TO_DEFAULT_VALUE)
-        mainPlayer.prepare()
-        mainPlayer.playWhenReady = true
+        mainExoPlayer!!.seekTo(0, SEEK_TO_DEFAULT_VALUE)
+        mainExoPlayer!!.prepare()
+        mainExoPlayer!!.playWhenReady = true
     }
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
      * */
     @OptIn(UnstableApi::class)
-    private fun firstTimeProcessBackgroundPlayer(shortenSources: List<MediaSource>, mergedSources: List<MediaSource>) {
-        if (backgroundExoPlayer == null) return
-        val backgroundPlayer = backgroundExoPlayer!!
-        backgroundPlayer.setMediaSources(shortenSources)
-        backgroundPlayer.volume = 0f
+    private fun firstTimeProcessBackgroundPlayer(shortenSources: List<MediaSource>) {
         val startPreloadTimestamp = System.currentTimeMillis()
         fun preloadPage(page: Int) {
             if (page >= shortenSources.size) {
                 val preloadDurationMs = System.currentTimeMillis() - startPreloadTimestamp
                 Timber.tag(tag).d("Background preload completed in ${preloadDurationMs}ms, processing main player")
-                firstTimeProcessMainPlayer(mergedSources)
+                firstTimeProcessMainPlayer()
                 return
             }
             val shortenUrl = _reels.value[page].shortenUrl
@@ -214,31 +208,28 @@ constructor(
                 try {
                     val isPreloaded = reelPreloadManager.isPreloadedAndCached(shortenUrl)
                     if (!isPreloaded) {
-                        backgroundPlayer.seekTo(page, SEEK_TO_DEFAULT_VALUE)
-                        backgroundPlayer.prepare()
-                        backgroundPlayer.playWhenReady = false
-                        Timber.tag(tag).d("Background page $page is preparing, shortenUrl=$shortenUrl")
-                        backgroundPlayer.addListener(object : Player.Listener {
+                        backgroundExoPlayer!!.seekTo(page, SEEK_TO_DEFAULT_VALUE)
+                        backgroundExoPlayer!!.prepare()
+                        Timber.tag(tag).d("Background page $page is preparing")
+                        backgroundExoPlayer!!.addListener(object : Player.Listener {
                             override fun onPlaybackStateChanged(state: Int) {
                                 if (state == Player.STATE_READY) {
-                                    Timber.tag(tag).d("Background page $page playback STATE_READY")
+                                    Timber.tag(tag).d("Background page $page playback state: STATE_READY")
                                     viewModelScope.launch {
                                         reelPreloadManager.savePreloadedMedia(shortenUrl)
                                     }
-                                    backgroundPlayer.playWhenReady = false
-                                    backgroundPlayer.removeListener(this)
+                                    backgroundExoPlayer!!.removeListener(this)
                                     preloadPage(page + 1)
                                 }
                             }
                             override fun onPlayerError(error: PlaybackException) {
-                                Timber.tag(tag).e(error, "Background preload error for page $page, shortenUrl=$shortenUrl")
-                                backgroundPlayer.playWhenReady = false
-                                backgroundPlayer.removeListener(this)
+                                Timber.tag(tag).e(error, "Background page $page player error")
+                                backgroundExoPlayer!!.removeListener(this)
                                 preloadPage(page + 1)
                             }
                         })
                     } else {
-                        Timber.tag(tag).d("URL already preloaded for page $page, shortenUrl=$shortenUrl")
+                        Timber.tag(tag).d("URL already preloaded for page $page")
                         preloadPage(page + 1)
                     }
                 } catch (e: Exception) {
@@ -252,13 +243,17 @@ constructor(
 
     fun getMainPlayer(): ExoPlayer? = mainExoPlayer
 
-    /** Step1: Update reels data
+    /** Only call at first time fetch reel data (api fetch reel page 1)
+     *
+     * Step1: Update reels data
      *
      * Step2: preload all sources (shorten & full)
      *
-     * Step3: start processing background player
+     * Step3: set media sources for background player and main player
      *
-     * Step 4: start processing main player
+     * Step4: start processing background player
+     *
+     * Step 5: start processing main player
      * */
     @OptIn(UnstableApi::class)
     fun setReelsAndPreloadAllSourcesThenProcessPlayer(newReels: List<Reel>) {
@@ -291,11 +286,19 @@ constructor(
                         return@mapIndexedNotNull null
                     }
                 }
-                Timber.tag(tag).d("Check shortenSources $shortenSources")
+                if (backgroundExoPlayer == null || mainExoPlayer == null) {
+                    return@launch
+                }
                 if (shortenSources.isNotEmpty()) {
-                    firstTimeProcessBackgroundPlayer(shortenSources, mergedSources)
-                } else {
-                    firstTimeProcessMainPlayer(mergedSources)
+                    backgroundExoPlayer!!.setMediaSources(shortenSources, 0, SEEK_TO_DEFAULT_VALUE)
+                }
+                if (mergedSources.isNotEmpty()) {
+                    mainExoPlayer!!.setMediaSources(mergedSources, 0, SEEK_TO_DEFAULT_VALUE)
+                }
+                if (shortenSources.isNotEmpty()) {
+                    firstTimeProcessBackgroundPlayer(shortenSources)
+                } else if (mergedSources.isNotEmpty()) {
+                    firstTimeProcessMainPlayer()
                 }
             }
         }

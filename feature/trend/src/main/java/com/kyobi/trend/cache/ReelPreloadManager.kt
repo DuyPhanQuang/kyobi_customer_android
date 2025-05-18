@@ -119,7 +119,7 @@ class ReelPreloadManager @Inject constructor(
             Timber.tag(tag).w("No tsCacheKeys found for url=$url")
             return@withContext false
         }
-        val minCachedLength = 500_000L // min 500KB cho 1 segment 10s
+        val minCachedLength = 100_000L // min 500KB cho 1 segment 10s
         val firstTsCacheKey = tsCacheKeys.first()
         val cachedLength = mediaCache.getCache().getCachedLength(firstTsCacheKey, 0L, Long.MAX_VALUE)
         Timber.tag(tag).d("Checked cache for first tsCacheKey=$firstTsCacheKey, cachedLength=$cachedLength bytes")
