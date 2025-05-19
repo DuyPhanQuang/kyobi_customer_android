@@ -257,13 +257,19 @@ constructor(
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
      *
+     * `case1`: chưa có shorten sources nào trong possible range được preload (tức shortenSources = notEmpty):
+     * set reels data -> preload all sources -> process background player -> process main player
+     *
+     * `case2`: shorten sources nào trong possible range đã preloaded trước đó:
+     * set reels data -> preload all sources -> process main player
+     *
      * Step1: Update reels data
      *
      * Step2: preload all sources (shorten & full)
      *
      * Step3: set media sources for background player and main player
      *
-     * Step4: start processing background player
+     * Step4: start processing background player if needed (xem chú thích ở `case1` and `case2`)
      *
      * Step 5: start processing main player
      * */
