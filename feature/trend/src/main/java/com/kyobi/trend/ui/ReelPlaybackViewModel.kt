@@ -528,9 +528,9 @@ constructor(
      *
      * important: sử dụng seekTo(page, 0) -> 0: giảm thời gian render first frame
      *
-     * important: chờ seek hoàn tất -> update player of playerView and start play
+     * important: chờ `seekTo()` hoàn tất -> update `player` of `playerView` and start `play`
      *
-     * nếu ko chờ seek hoàn tất mà play ngay thì sẽ bị nháy last frame của page trước đó do exoplayer giữ frame cũ và đang processing `seekTo()` nhưng view lại render trước)
+     * nếu ko chờ `seekTo()` mà play ngay thì sẽ bị nháy last frame của page trước đó do `mainExoPlayer` giữ frame cũ và đang processing `seekTo()` nhưng `playerView` lại render trước)
      * */
     @OptIn(UnstableApi::class)
     fun seekToPageAndPlayIfNeeded(page: Int, playerView: PlayerView) {
