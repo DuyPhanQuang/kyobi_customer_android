@@ -69,7 +69,11 @@ constructor(
      *
      * Only for first time case:
      *
+     * case1: chưa có shorten sources nào trong possible range được preload (tức shortenSources = notEmpty):
      * set reels data -> preload all sources -> process background player -> process main player
+     *
+     * case2: shorten sources nào trong possible range đã preloaded trước đó:
+     * set reels data -> preload all sources -> process main player
      * */
     init {
         initializeMainPlayer()
