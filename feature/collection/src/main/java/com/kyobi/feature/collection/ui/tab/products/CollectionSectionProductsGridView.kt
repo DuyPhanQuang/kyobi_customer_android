@@ -69,7 +69,10 @@ fun CollectionSectionProductsGridView(
             }
             is DomainNetworkResult.Success -> {
                 val products = (productsResult as DomainNetworkResult.Success<List<ProductUiState>>).data
-                items(products) { product ->
+                items(
+                    products,
+                    key = { "product_${it.id}" }
+                ) { product ->
                     ProductCard(
                         modifier = Modifier
                             .fillMaxWidth()

@@ -131,7 +131,11 @@ fun HomeSectionDeals(
                         start = MaterialTheme.kyobiTheme.spacing.dp12
                     )
                 ) {
-                    items(flashSaleData.products.take(5)) { product ->
+                    val displayProductDeals = flashSaleData.products.take(5)
+                    items(
+                        displayProductDeals,
+                        key = { "deal_product_${it.id}" }
+                    ) { product ->
                         HomeProductDealCard(
                             product = product,
                             imageLoader = imageLoader

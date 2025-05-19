@@ -63,7 +63,10 @@ fun CompactCategoryRow(
                 end = spacing.dp12 + allContainerWidth
             )
         ) {
-            items(categories) { category ->
+            items(
+                categories,
+                key = { "compact_category_${it.id}_${it.filterHandle}" }
+            ) { category ->
                 CollectionCategoryTile(
                     modifier = Modifier.padding(
                         top = spacing.dp8

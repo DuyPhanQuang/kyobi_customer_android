@@ -66,7 +66,10 @@ fun ExpandedCategoryGrid(
             horizontalArrangement = Arrangement.spacedBy(horizontalSpacing),
             contentPadding = PaddingValues(horizontal = contentPaddingHorizontal)
         ) {
-            items(categories) { category ->
+            items(
+                categories,
+                key = { "expanded_category_${it.id}_${it.filterHandle}" }
+            ) { category ->
                 CollectionCategoryTile(
                     modifier = Modifier
                         .width(tileWidth)

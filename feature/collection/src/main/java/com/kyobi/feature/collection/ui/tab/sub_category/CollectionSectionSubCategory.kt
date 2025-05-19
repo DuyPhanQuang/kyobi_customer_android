@@ -39,7 +39,10 @@ fun CollectionSectionSubCategory(
             .background(MaterialTheme.kyobiTheme.colors.bg.stone100),
         contentPadding = PaddingValues(bottom = bottomPadding)
     ) {
-        items(subCategories) { subCategory ->
+        items(
+            subCategories,
+            key = { "subcategory_${it.id}_${it.filterHandle}" }
+        ) { subCategory ->
             val isSelected = subCategory.id == selectedSubCategoryId
             val backgroundColor = if (isSelected) MaterialTheme.kyobiTheme.colors.background else
                 MaterialTheme.kyobiTheme.colors.bg.stone100
