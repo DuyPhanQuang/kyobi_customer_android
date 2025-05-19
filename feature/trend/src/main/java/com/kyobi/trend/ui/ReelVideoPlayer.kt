@@ -58,7 +58,7 @@ fun ReelVideoPlayer(
         PlayerView(context).apply {
             useController = false
             setKeepContentOnPlayerReset(false)
-            setEnableComposeSurfaceSyncWorkaround(false)
+            setEnableComposeSurfaceSyncWorkaround(true)
             keepScreenOn = true
             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
             setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)

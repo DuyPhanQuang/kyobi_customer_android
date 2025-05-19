@@ -527,17 +527,30 @@ constructor(
      * cần có logic check này bởi vì lần đầu render ui video players thì page index 0 rendered nhưng mà processMainPlayer chưa dc call
      *
      * important: sử dụng seekTo(page, 0) -> 0: giảm thời gian render first frame
+     *
+     * important: chờ seek hoàn tất -> update player of playerView and start play
+     *
+     * nếu ko chờ seek hoàn tất mà play ngay thì sẽ bị nháy last frame của page trước đó do exoplayer giữ frame cũ và đang processing `seekTo()` nhưng view lại render trước)
      * */
     @OptIn(UnstableApi::class)
     fun seekToPageAndPlayIfNeeded(page: Int, playerView: PlayerView) {
         mainExoPlayer?.let { player ->
             Timber.tag(tag).d("seek to page $page and play if needed, mediaItemCount: ${player.mediaItemCount}, playbackState: ${player.playbackState}")
             if (player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE) {
-                player.seekTo(page, SEEK_TO_DEFAULT_VALUE)
-                if (!player.isPlaying) {
-                    player.playWhenReady = true
+                val listener = object : Player.Listener {
+                    override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+                        if (reason == Player.DISCONTINUITY_REASON_SEEK && newPosition.mediaItemIndex == page) {
+                            Timber.tag(tag).d("Seek to page $page completed, attaching playerView and playing")
+                            if (!player.isPlaying) {
+                                player.playWhenReady = true
+                            }
+                            playerView.player = player
+                            player.removeListener(this)
+                        }
+                    }
                 }
-                playerView.player = player
+                player.addListener(listener)
+                player.seekTo(page, SEEK_TO_DEFAULT_VALUE)
             }
         }
     }
