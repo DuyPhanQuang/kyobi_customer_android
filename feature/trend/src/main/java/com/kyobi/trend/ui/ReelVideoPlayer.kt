@@ -85,13 +85,12 @@ fun ReelVideoPlayer(
             .distinctUntilChanged()
             .collect { settledPage ->
                 val isCurrentPage = pageIndex == settledPage
-                if (isCurrentPage && viewModel.reels.value.getOrNull(settledPage) != null) {
+                val reelItem = viewModel.reels.value.getOrNull(settledPage)
+                if (isCurrentPage && reelItem != null && player != null) {
                     viewModel.updateSettledPage(settledPage, playerView)
                     showThumbnail = true
-                }
-                if (isCurrentPage && player != null) {
                     viewModel.seekToPageAndPlayIfNeeded(settledPage, playerView)
-                    Timber.tag(tag).d("Playing ExoPlayer for page $settledPage")
+                    Timber.tag(tag).d("ExoPlayer seek to page $settledPage then start playing if needed")
                 }
             }
     }

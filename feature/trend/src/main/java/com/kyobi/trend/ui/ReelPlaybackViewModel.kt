@@ -37,6 +37,7 @@ import com.kyobi.trend.performance_metrics.VideoPerformanceTracker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.math.min
 
 const val SEEK_TO_DEFAULT_VALUE = 0L
 
@@ -60,6 +61,7 @@ constructor(
     private val _firstFrameRendered = MutableStateFlow(-1) // -1: chưa render
     val firstFrameRendered = _firstFrameRendered.asStateFlow()
     private val mainPlayerTracker = VideoPerformanceTracker()
+    private val preWarmedPages = mutableSetOf<Int>()
 
     /** initiate main & background ExoPlayer instance
      *
@@ -117,8 +119,18 @@ constructor(
                         _firstFrameRendered.value = currentSettledPage
                     }
                     override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
-                        if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
-                            Timber.tag(tag).d("Auto transition detected at page $currentSettledPage, periodIndex: ${newPosition.periodIndex}")
+                        if (reason == Player.DISCONTINUITY_REASON_SEEK) {
+                            val oldPage = oldPosition.mediaItemIndex
+                            val newPage = newPosition.mediaItemIndex
+                            Timber.tag(tag).d("Position discontinuity from page $oldPage to $newPage, reason: $reason")
+                            // chỉ trigger khi tiến tới và page + 2 chưa pre warmed
+                            val possibleNextPage = newPage + 2
+                            if (newPage > oldPage && !preWarmedPages.contains(possibleNextPage)) {
+                                Timber.tag(tag).d("Trigger pre warm for page ${possibleNextPage}, ${possibleNextPage + 1}")
+                                preWarmNextPages(possibleNextPage)
+                            }
+                        } else if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+                            Timber.tag(tag).d("Auto transition at page $currentSettledPage, periodIndex: ${newPosition.periodIndex}")
                             val fullPeriodIndex = 2 * currentSettledPage + 1
                             if (newPosition.periodIndex > fullPeriodIndex) {
                                 Timber.tag(tag).d("Looping back to page $currentSettledPage")
@@ -135,7 +147,8 @@ constructor(
                         Timber.tag(tag).d("Playback state changed for page $currentSettledPage: $state")
                     }
                     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                        Timber.tag(tag).d("Media item transition to mediaId ${mediaItem?.mediaId} for page $currentSettledPage")
+                        val shortenUrl = mediaItem?.localConfiguration?.uri.toString()
+                        Timber.tag(tag).d("Media item transition to mediaId ${mediaItem?.mediaId} shortenUrl: $shortenUrl for page $currentSettledPage")
                     }
                     override fun onAudioAttributesChanged(audioAttributes: AudioAttributes) {
                         Timber.tag(tag).d("Audio attributes changed for page $currentSettledPage: contentType=${audioAttributes.contentType}, usage=${audioAttributes.usage}, flags=${audioAttributes.flags}, hasAudioTrack=${audioAttributes.contentType != C.AUDIO_CONTENT_TYPE_UNKNOWN}")
@@ -183,15 +196,7 @@ constructor(
             }
     }
 
-    /** Only call at first time fetch reel data (api fetch reel page 1)
-     * */
-    @OptIn(UnstableApi::class)
-    fun prepareAndStartVideoPage0() {
-        mainPlayerTracker.invalidateSession()
-        mainExoPlayer!!.prepare()
-        mainExoPlayer!!.seekTo(0, SEEK_TO_DEFAULT_VALUE)
-        mainExoPlayer!!.playWhenReady = true
-    }
+    fun getMainPlayer(): ExoPlayer? = mainExoPlayer
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
      * */
@@ -199,17 +204,19 @@ constructor(
     private fun firstTimeProcessBackgroundPlayer(shortenSources: List<MediaSource>) {
         val startPreloadTimestamp = System.currentTimeMillis()
         fun preWarmPage(page: Int) {
-            if (page >= shortenSources.size) {
+            val isInValidRange = firstTimeIsOutOfRange(page, maxPage = shortenSources.size)
+            if (isInValidRange) {
                 val preloadDurationMs = System.currentTimeMillis() - startPreloadTimestamp
                 Timber.tag(tag).d("Background pre warm completed in ${preloadDurationMs}ms, prepare and start video at page 0")
                 prepareAndStartVideoPage0()
                 return
             }
             val shortenUrl = _reels.value[page].shortenUrl
+            val nextPage = page + 1
             viewModelScope.launch {
                 try {
                     val isPreloaded = reelPreloadManager.isPreloadedAndCached(shortenUrl)
-                    if (!isPreloaded) {
+                    if (!isPreloaded && !preWarmedPages.contains(page)) {
                         backgroundExoPlayer!!.seekTo(page, SEEK_TO_DEFAULT_VALUE)
                         backgroundExoPlayer!!.prepare()
                         Timber.tag(tag).d("Background page $page is pre warming")
@@ -220,30 +227,29 @@ constructor(
                                     viewModelScope.launch {
                                         reelPreloadManager.savePreloadedMedia(shortenUrl)
                                     }
+                                    preWarmedPages.add(page)
                                     backgroundExoPlayer!!.removeListener(this)
-                                    preWarmPage(page + 1)
+                                    preWarmPage(nextPage)
                                 }
                             }
                             override fun onPlayerError(error: PlaybackException) {
                                 Timber.tag(tag).e(error, "Background page $page player error")
                                 backgroundExoPlayer!!.removeListener(this)
-                                preWarmPage(page + 1)
+                                preWarmPage(nextPage)
                             }
                         })
                     } else {
-                        Timber.tag(tag).d("URL already preloaded for page $page")
-                        preWarmPage(page + 1)
+                        Timber.tag(tag).d("URL already preloaded or pre warmed for page $page")
+                        preWarmPage(nextPage)
                     }
                 } catch (e: Exception) {
                     Timber.tag(tag).e(e, "Failed to pre warm HLS for page $page")
-                    preWarmPage(page + 1)
+                    preWarmPage(nextPage)
                 }
             }
         }
-        preWarmPage(0)
+        preWarmPage(1) // Bắt đầu từ page 1
     }
-
-    fun getMainPlayer(): ExoPlayer? = mainExoPlayer
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
      *
@@ -303,6 +309,77 @@ constructor(
                 prepareAndStartVideoPage0()
             }
         }
+    }
+
+    /** Only call at first time fetch reel data (api fetch reel page 1)
+     * */
+    @OptIn(UnstableApi::class)
+    fun prepareAndStartVideoPage0() {
+        mainPlayerTracker.invalidateSession()
+        mainExoPlayer!!.prepare()
+        mainExoPlayer!!.seekTo(0, SEEK_TO_DEFAULT_VALUE)
+        mainExoPlayer!!.playWhenReady = true
+    }
+
+    /** Only call at first time fetch reel data (api fetch reel page 1)
+     *
+     * pre warm next pages: current + 1, current + 2
+     * */
+    private fun firstTimeIsOutOfRange(page: Int, maxPage: Int): Boolean {
+        return page >= min(maxPage, 3)
+    }
+
+    private fun isOutOfRange(page: Int, maxPage: Int): Boolean {
+        return page >= maxPage || page >= _reels.value.size || preWarmedPages.contains(page)
+    }
+
+    @OptIn(UnstableApi::class)
+    private fun preWarmNextPages(startPage: Int) {
+        val maxPagePrepareConfig = 2 // pre warm tối đa 2 page
+        val maxPage = min(startPage + maxPagePrepareConfig, _reels.value.size)
+        fun preWarmPage(page: Int) {
+            if (isOutOfRange(page, maxPage)) {
+                Timber.tag(tag).d("Skip pre warm page $page: out of range or already pre warmed")
+                return
+            }
+            val shortenUrl = _reels.value[page].shortenUrl
+            viewModelScope.launch {
+                try {
+                    val isPreloaded = reelPreloadManager.isPreloadedAndCached(shortenUrl)
+                    if (!isPreloaded) {
+                        backgroundExoPlayer!!.setMediaSources(listOf(_backgroundMediaSources[shortenUrl]!!))
+                        backgroundExoPlayer!!.seekTo(0, SEEK_TO_DEFAULT_VALUE)
+                        backgroundExoPlayer!!.prepare()
+                        Timber.tag(tag).d("Background page $page is pre warming")
+                        backgroundExoPlayer!!.addListener(object : Player.Listener {
+                            override fun onPlaybackStateChanged(state: Int) {
+                                if (state == Player.STATE_READY) {
+                                    Timber.tag(tag).d("Background page $page playback state: STATE_READY")
+                                    viewModelScope.launch {
+                                        reelPreloadManager.savePreloadedMedia(shortenUrl)
+                                    }
+                                    preWarmedPages.add(page)
+                                    backgroundExoPlayer!!.removeListener(this)
+                                    preWarmPage(page + 1)
+                                }
+                            }
+                            override fun onPlayerError(error: PlaybackException) {
+                                Timber.tag(tag).e(error, "Background page $page player error")
+                                backgroundExoPlayer!!.removeListener(this)
+                                preWarmPage(page + 1)
+                            }
+                        })
+                    } else {
+                        Timber.tag(tag).d("URL already preloaded for page $page")
+                        preWarmPage(page + 1)
+                    }
+                } catch (e: Exception) {
+                    Timber.tag(tag).e(e, "Failed to pre warm HLS for page $page")
+                    preWarmPage(page + 1)
+                }
+            }
+        }
+        preWarmPage(startPage)
     }
 
     @OptIn(UnstableApi::class)
