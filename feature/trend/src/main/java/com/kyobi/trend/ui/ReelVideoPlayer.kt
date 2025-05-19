@@ -84,6 +84,7 @@ fun ReelVideoPlayer(
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { settledPage ->
+                Timber.tag(tag).d("scroll update settledPage: $settledPage pageIndex: $pageIndex")
                 val isCurrentPage = pageIndex == settledPage
                 val reelItem = viewModel.reels.value.getOrNull(settledPage)
                 if (isCurrentPage && reelItem != null && player != null) {

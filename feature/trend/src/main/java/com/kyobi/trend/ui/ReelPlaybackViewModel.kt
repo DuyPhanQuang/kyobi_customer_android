@@ -500,7 +500,7 @@ constructor(
     @OptIn(UnstableApi::class)
     fun seekToPageAndPlayIfNeeded(page: Int, playerView: PlayerView) {
         mainExoPlayer?.let { player ->
-            Timber.tag(tag).w("startPlay called for page $page, mediaItemCount: ${player.mediaItemCount}, playbackState: ${player.playbackState}")
+            Timber.tag(tag).w("pause first then play again for page $page, mediaItemCount: ${player.mediaItemCount}, playbackState: ${player.playbackState}")
             if (player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE) {
                 player.seekTo(page, SEEK_TO_DEFAULT_VALUE)
                 if (!player.isPlaying) {
@@ -513,7 +513,9 @@ constructor(
 
     fun startPlay(playerView: PlayerView) {
         mainExoPlayer?.let { player ->
-            player.playWhenReady = true
+            if (!player.isPlaying) {
+                player.playWhenReady = true
+            }
         }
         playerView.player = mainExoPlayer
     }
@@ -521,7 +523,9 @@ constructor(
     @OptIn(UnstableApi::class)
     fun startPause(playerView: PlayerView) {
         mainExoPlayer?.let { player ->
-            player.playWhenReady = false
+            if (player.isPlaying) {
+                player.playWhenReady = false
+            }
         }
         playerView.player = mainExoPlayer
     }
