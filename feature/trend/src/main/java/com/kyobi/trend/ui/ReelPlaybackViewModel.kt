@@ -63,6 +63,7 @@ constructor(
     val firstFrameRendered = _firstFrameRendered.asStateFlow()
     private val mainPlayerTracker = VideoPerformanceTracker()
     private val preWarmedPages = mutableSetOf<Int>()
+    private val fetchSizes = mutableListOf<Int>()
 
     /** initiate main & background ExoPlayer instance
      *
@@ -204,6 +205,8 @@ constructor(
     fun getMainPlayer(): ExoPlayer? = mainExoPlayer
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
+     *
+     * `prepare()` của background player nên called cho mỗi lần pre warm page
      * */
     @OptIn(UnstableApi::class)
     private fun firstTimeProcessBackgroundPlayer(shortenSources: List<MediaSource>) {
@@ -264,7 +267,7 @@ constructor(
      * `case2`: shorten sources nào trong possible range đã preloaded trước đó:
      * set reels data -> preload all sources -> process main player
      *
-     * Step1: Update reels data
+     * Step1: Update reels data và save size của lần fetch đầu tiên
      *
      * Step2: preload all sources (shorten & full)
      *
@@ -278,6 +281,7 @@ constructor(
     fun setReelsAndPreloadAllSourcesThenProcessPlayer(newReels: List<Reel>) {
         Timber.tag(tag).d("Setting reels, size: ${newReels.size}")
         _reels.value = newReels
+        fetchSizes.add(newReels.size)
         viewModelScope.launch {
             val preloadResult = preloadMediaSourceForRange(0, newReels.size)
             if (!preloadResult.isSuccess) return@launch
@@ -323,6 +327,10 @@ constructor(
     }
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
+     *
+     * `prepare()` của main player chỉ nên call ở case sau:
+     *
+     * First time sau khi background player pre-warm cho possible pages done
      * */
     @OptIn(UnstableApi::class)
     fun prepareAndStartVideoPage0() {
@@ -344,6 +352,8 @@ constructor(
         return page >= maxPage || page >= _reels.value.size || preWarmedPages.contains(page)
     }
 
+    /** `prepare()` của background player nên called cho mỗi lần pre warm page
+     * */
     @OptIn(UnstableApi::class)
     private fun preWarmNextPages(startPage: Int) {
         val maxPagePrepareConfig = 2 // pre warm tối đa 2 page
@@ -354,6 +364,7 @@ constructor(
                 return
             }
             val shortenUrl = _reels.value[page].shortenUrl
+            val nextPage = page + 1
             viewModelScope.launch {
                 try {
                     val isPreloaded = reelPreloadManager.isPreloadedAndCached(shortenUrl)
@@ -371,22 +382,22 @@ constructor(
                                     }
                                     preWarmedPages.add(page)
                                     backgroundExoPlayer!!.removeListener(this)
-                                    preWarmPage(page + 1)
+                                    preWarmPage(nextPage)
                                 }
                             }
                             override fun onPlayerError(error: PlaybackException) {
                                 Timber.tag(tag).e(error, "Background page $page player error")
                                 backgroundExoPlayer!!.removeListener(this)
-                                preWarmPage(page + 1)
+                                preWarmPage(nextPage)
                             }
                         })
                     } else {
                         Timber.tag(tag).d("URL already preloaded for page $page")
-                        preWarmPage(page + 1)
+                        preWarmPage(nextPage)
                     }
                 } catch (e: Exception) {
                     Timber.tag(tag).e(e, "Failed to pre warm HLS for page $page")
-                    preWarmPage(page + 1)
+                    preWarmPage(nextPage)
                 }
             }
         }
@@ -398,6 +409,13 @@ constructor(
         currentSettledPage = page
         mainPlayerTracker.invalidateSession()
         playerView.player = mainExoPlayer
+        // Trigger load more tại nửa số item(future reels size / 2) của lần fetch cuối
+        val reelSize = _reels.value.size
+        val lastFetchSize = fetchSizes.lastOrNull() ?: 0
+        if (lastFetchSize > 0 && page == reelSize - lastFetchSize / 2) {
+            Timber.tag(tag).d("Trigger load more at page $page, last fetch size: $lastFetchSize")
+            loadMoreReels()
+        }
     }
 
     private fun preloadMediaSourceForRange(startPage: Int, endPage: Int): Result<Unit> {
@@ -488,6 +506,55 @@ constructor(
         } catch (e: Exception) {
             Timber.tag(tag).e(e, "Failed to create mediaSource")
             throw e
+        }
+    }
+
+    /** cần phải call `prepare()` sau khi addMediaSources.
+     * */
+    @OptIn(UnstableApi::class)
+    fun loadMoreReels() {
+        val newReels = mockMoreData1
+        Timber.tag(tag).d("Load more reels, size: ${newReels.size}")
+        val currentReelSize = _reels.value.size
+        _reels.value += newReels
+        fetchSizes.add(newReels.size)
+        viewModelScope.launch {
+            val preloadResult = preloadMediaSourceForRange(currentReelSize, _reels.value.size)
+            if (!preloadResult.isSuccess) return@launch
+            val shortenSources = newReels.mapIndexedNotNull { _, reel ->
+                val backgroundSource = _backgroundMediaSources[reel.shortenUrl]!!
+                val isCached = reelPreloadManager.isPreloadedAndCached(reel.shortenUrl)
+                if (!isCached) backgroundSource else return@mapIndexedNotNull null
+            }
+            val mergedSources = newReels.mapIndexedNotNull { index, reel ->
+                val shortenMediaSource = _mediaSources[reel.shortenUrl]!!
+                val fullMediaSource = _mediaSources[reel.videoUrl]!!
+                val shortenDurationConfig = reel.shortenDuration
+                val fullDurationConfig = reel.originalDuration - shortenDurationConfig
+                try {
+                    val shortenDurationMs = ceil(shortenDurationConfig * 1000).toLong()
+                    val fullDurationMs = ceil(fullDurationConfig * 1000).toLong()
+                    ConcatenatingMediaSource2.Builder()
+                        .add(shortenMediaSource, shortenDurationMs)
+                        .add(fullMediaSource, fullDurationMs)
+                        .build().also {
+                            Timber.tag(tag).d("ConcatenatingMediaSource2 created for page ${currentReelSize + index}")
+                        }
+                } catch (e: Exception) {
+                    Timber.tag(tag).e(e, "Failed to create ConcatenatingMediaSource2 for page ${currentReelSize + index}")
+                    return@mapIndexedNotNull null
+                }
+            }
+            if (backgroundExoPlayer == null || mainExoPlayer == null) {
+                return@launch
+            }
+            if (shortenSources.isNotEmpty()) {
+                backgroundExoPlayer!!.addMediaSources(shortenSources)
+            }
+            if (mergedSources.isNotEmpty()) {
+                mainExoPlayer!!.addMediaSources(mergedSources)
+                mainExoPlayer!!.prepare()
+            }
         }
     }
 
