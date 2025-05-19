@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
@@ -57,7 +58,7 @@ fun ReelVideoPlayer(
         PlayerView(context).apply {
             useController = false
             setKeepContentOnPlayerReset(false)
-            setEnableComposeSurfaceSyncWorkaround(true)
+            setEnableComposeSurfaceSyncWorkaround(false)
             keepScreenOn = true
             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
             setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
@@ -151,35 +152,37 @@ fun ReelVideoPlayer(
         }
     }
 
-    if (showThumbnail) {
-        AppImage(
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            factory = { playerView },
             modifier = Modifier
                 .fillMaxSize()
-                .zIndex(1f),
-            imageUrl = reelsData[pageIndex].thumbnailUrl,
-            contentDescription = "Reel thumbnail image ${reelsData[pageIndex].thumbnailUrl}",
-            contentScale = ContentScale.Crop,
-            isSkeletonEnabled = false,
-            imageLoader = imageLoader
-        )
-    }
-
-    AndroidView(
-        factory = { playerView },
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onTap = {
-                        player?.let {
-                            it.playWhenReady = !it.isPlaying
-                            Timber.tag(tag)
-                                .d("Tapped page $pageIndex, playWhenReady=${it.playWhenReady}")
+                .zIndex(0f)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = {
+                            player?.let {
+                                it.playWhenReady = !it.isPlaying
+                                Timber.tag(tag)
+                                    .d("Tapped page $pageIndex, playWhenReady=${it.playWhenReady}")
+                            }
                         }
-                    }
-                )
-            }
-    )
+                    )
+                }
+        )
+        if (showThumbnail) {
+            AppImage(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(1f),
+                imageUrl = reelsData[pageIndex].thumbnailUrl,
+                contentDescription = "Reel thumbnail image ${reelsData[pageIndex].thumbnailUrl}",
+                contentScale = ContentScale.Crop,
+                isSkeletonEnabled = false,
+                imageLoader = imageLoader
+            )
+        }
+    }
 
     DisposableEffect(Unit) {
         onDispose {

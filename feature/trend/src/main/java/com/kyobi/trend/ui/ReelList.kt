@@ -1,6 +1,7 @@
 package com.kyobi.trend.ui
 
 import androidx.annotation.OptIn
+import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -50,8 +51,8 @@ fun ReelList(
         state = pagerState,
         pagerSnapDistance = PagerSnapDistance.atMost(1),
         snapAnimationSpec = tween(
-            durationMillis = 300,
-            easing = FastOutSlowInEasing
+            durationMillis = 250,
+            easing = { fraction -> 1f - (1f - fraction) * (1f - fraction) } // EaseOutQuadEasing
         ),
         snapPositionalThreshold = 0.35f
     )
