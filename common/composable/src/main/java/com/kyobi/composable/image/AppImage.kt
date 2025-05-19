@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import coil.ImageLoader
-import coil.annotation.ExperimentalCoilApi
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.SubcomposeAsyncImageContent
 import coil.request.CachePolicy
@@ -31,7 +30,6 @@ import com.kyobi.composable.R
 import com.kyobi.theme.kyobiTheme
 import timber.log.Timber
 
-@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun AppImage(
     imageUrl: String?,
@@ -70,30 +68,28 @@ fun AppImage(
     val finalImageUrl = if (imageUrl.isNullOrEmpty()) defaultImageRes else imageUrl
 
     // Kiểm tra disk cache
-    val isInDiskCache = imageUrl?.let { url ->
-        imageLoader.diskCache?.openSnapshot(url)?.use { true } ?: false
-    } ?: false
+//    val isInDiskCache = imageUrl?.let { url ->
+//        imageLoader.diskCache?.openSnapshot(url)?.use { true } ?: false
+//    } ?: false
 //    Timber.tag(tag).d("Image in disk cache for URL: $finalImageUrl: $isInDiskCache")
 
-    val errorImageRequest = ImageRequest.Builder(context)
-        .data(errorImageRes)
-        .build()
+    val errorImageRequest = ImageRequest.Builder(context).data(errorImageRes).build()
 
     val request = ImageRequest.Builder(context)
         .data(finalImageUrl)
-        .crossfade(true)
+        .crossfade(false)
         .memoryCachePolicy(CachePolicy.ENABLED)
         .diskCachePolicy(CachePolicy.ENABLED)
-        .allowHardware(false)
+        .allowHardware(true)
         .build()
 
     Box(modifier = modifier) {
         SubcomposeAsyncImage(
+            modifier = Modifier.fillMaxSize(),
             model = request,
             imageLoader = imageLoader,
             contentDescription = contentDescription,
             contentScale = contentScale,
-            modifier = Modifier.fillMaxSize(),
             filterQuality = filterQuality,
             loading = { _ ->
                 if (isSkeletonEnabled) {

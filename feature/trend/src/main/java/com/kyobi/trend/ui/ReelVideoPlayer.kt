@@ -28,8 +28,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import coil.compose.AsyncImage
-import com.kyobi.trend.model.Reel
+import coil.ImageLoader
+import com.kyobi.composable.image.AppImage
 import kotlinx.coroutines.flow.distinctUntilChanged
 import timber.log.Timber
 import kotlin.math.abs
@@ -39,10 +39,10 @@ import kotlin.math.min
 @OptIn(UnstableApi::class)
 @Composable
 fun ReelVideoPlayer(
-    reel: Reel,
     pagerState: PagerState,
     pageIndex: Int,
     viewModel: ReelPlaybackViewModel,
+    imageLoader: ImageLoader,
     onSingleTap: (ExoPlayer) -> Unit,
 ) {
     val tag = "ReelVideoPlayer"
@@ -50,7 +50,7 @@ fun ReelVideoPlayer(
     var showThumbnail by remember(pageIndex) { mutableStateOf(true) }
     val lifecycleOwner by rememberUpdatedState(LocalLifecycleOwner.current)
     var isPaused by remember(pageIndex) { mutableStateOf(false) }
-    // Lưu offset trước đó và ngưỡng tối đa/min
+    // Lưu offset trước đó và ngưỡng max/min
     val offsetState = remember(pageIndex) { mutableStateOf(Triple(0f, 0f, 0f)) } // (current, max, min)
 
     val playerView = remember(pageIndex) {
@@ -71,7 +71,9 @@ fun ReelVideoPlayer(
 
     val player = viewModel.getMainPlayer()
 
-    // update showThumbnail
+    val reelsData = viewModel.reels.value
+
+    // hide showThumbnail
     LaunchedEffect(pageIndex, viewModel.firstFrameRendered) {
         viewModel.firstFrameRendered.collect { renderedPage ->
             if (renderedPage == pageIndex) {
@@ -91,7 +93,6 @@ fun ReelVideoPlayer(
                 val reelItem = viewModel.reels.value.getOrNull(settledPage)
                 if (isCurrentPage && reelItem != null && player != null) {
                     viewModel.updateSettledPage(settledPage, playerView)
-                    showThumbnail = true
                     viewModel.seekToPageAndPlayIfNeeded(settledPage, playerView)
                     isPaused = false // Reset trạng thái khi page snapped
                     offsetState.value = Triple(0f, 0f, 0f) // Reset offset khi snapped
@@ -101,7 +102,6 @@ fun ReelVideoPlayer(
     }
 
     /** logic start/stop sắp thành current page/current page sắp cũ (forward/backward)
-     *
      * cover handle trường hợp user chơi chiêu scroll giữ từ từ ko thả tay
      * */
     LaunchedEffect(pageIndex, pagerState, player) {
@@ -151,14 +151,16 @@ fun ReelVideoPlayer(
         }
     }
 
-    if (showThumbnail && reel.thumbnailUrl.isNotEmpty()) {
-        AsyncImage(
-            model = reel.thumbnailUrl,
-            contentDescription = null,
+    if (showThumbnail) {
+        AppImage(
             modifier = Modifier
                 .fillMaxSize()
                 .zIndex(1f),
+            imageUrl = reelsData[pageIndex].thumbnailUrl,
+            contentDescription = "Reel thumbnail image ${reelsData[pageIndex].thumbnailUrl}",
             contentScale = ContentScale.Crop,
+            isSkeletonEnabled = false,
+            imageLoader = imageLoader
         )
     }
 

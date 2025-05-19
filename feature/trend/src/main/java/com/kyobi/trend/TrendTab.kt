@@ -28,11 +28,13 @@ fun TrendTab(
     val authUiState by authViewModel.authUiState.collectAsStateWithLifecycle()
     val uiState = viewModel.trendTabUiState
     val recyclerViewRef = remember { mutableStateOf<RecyclerView?>(null) }
+    val imageLoader = viewModel.getImageLoader()
 
     ReelList(
         topSystemBarHeight = topPadding,
         bottomNavBarHeight = bottomPadding,
         viewModel = reelPlaybackViewModel,
+        imageLoader = imageLoader
     )
 
 }

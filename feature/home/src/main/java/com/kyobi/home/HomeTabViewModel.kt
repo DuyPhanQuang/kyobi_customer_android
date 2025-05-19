@@ -96,7 +96,7 @@ class HomeTabViewModel @Inject constructor(
                             .data(reel.imageUrl)
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .diskCachePolicy(CachePolicy.ENABLED)
-                            .allowHardware(false)
+                            .allowHardware(true)
                             .build()
                         val result = imageLoader.execute(request)
                         Timber.tag(tag).d("Preload reel: ${reel.imageUrl}, success: ${result is coil.request.SuccessResult}")

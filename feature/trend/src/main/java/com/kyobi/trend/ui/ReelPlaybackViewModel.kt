@@ -64,6 +64,8 @@ constructor(
     private val mainPlayerTracker = VideoPerformanceTracker()
     private val preWarmedPages = mutableSetOf<Int>()
     private val fetchSizes = mutableListOf<Int>()
+    private val _isInitialLoading = MutableStateFlow(true)
+    val isInitialLoading = _isInitialLoading.asStateFlow()
 
     /** initiate main & background ExoPlayer instance
      *
@@ -94,7 +96,7 @@ constructor(
         val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
             .setPrioritizeTimeOverSizeThresholds(true)
-            .setBufferDurationsMs(20000, 20000, 1000, 1000)
+            .setBufferDurationsMs(20000, 20000, 2000, 4000)
             .build()
         mainExoPlayer = ExoPlayer.Builder(context)
             .setRenderersFactory(renderersFactory)
@@ -209,11 +211,13 @@ constructor(
     @OptIn(UnstableApi::class)
     private fun firstTimeProcessBackgroundPlayer(shortenSources: List<MediaSource>) {
         val startPreloadTimestamp = System.currentTimeMillis()
+        _isInitialLoading.value = true
         fun preWarmPage(page: Int) {
-            val isInValidRange = firstTimeIsOutOfRange(page, maxPage = shortenSources.size)
-            if (isInValidRange) {
+            val isPreWarmCompleted = firstTimeHasPreWarmCompleted(page, maxPage = shortenSources.size)
+            if (isPreWarmCompleted) {
                 val preloadDurationMs = System.currentTimeMillis() - startPreloadTimestamp
                 Timber.tag(tag).d("Background pre warm completed in ${preloadDurationMs}ms, prepare and start video at page 0")
+                _isInitialLoading.value = false
                 prepareAndStartVideoPage0()
                 return
             }
@@ -289,7 +293,7 @@ constructor(
      *
      * pre warm next pages: current + 1, current + 2
      * */
-    private fun firstTimeIsOutOfRange(page: Int, maxPage: Int): Boolean {
+    private fun firstTimeHasPreWarmCompleted(page: Int, maxPage: Int): Boolean {
         return page >= min(maxPage, 3)
     }
 
