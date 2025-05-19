@@ -32,6 +32,9 @@ import coil.compose.AsyncImage
 import com.kyobi.trend.model.Reel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import timber.log.Timber
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -46,6 +49,9 @@ fun ReelVideoPlayer(
     val context = LocalContext.current
     var showThumbnail by remember(pageIndex) { mutableStateOf(true) }
     val lifecycleOwner by rememberUpdatedState(LocalLifecycleOwner.current)
+    var isPaused by remember(pageIndex) { mutableStateOf(false) }
+    // Lưu offset trước đó và ngưỡng tối đa/min
+    val offsetState = remember(pageIndex) { mutableStateOf(Triple(0f, 0f, 0f)) } // (current, max, min)
 
     val playerView = remember(pageIndex) {
         PlayerView(context).apply {
@@ -75,23 +81,56 @@ fun ReelVideoPlayer(
         }
     }
 
-    LaunchedEffect(
-        pageIndex,
-        pagerState,
-        viewModel.reels.value,
-        player,
-    ) {
+    /** main logic của snapped page
+     * */
+    LaunchedEffect(pageIndex, pagerState, viewModel.reels.value, player) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { settledPage ->
-                Timber.tag(tag).d("scroll update settledPage: $settledPage pageIndex: $pageIndex")
                 val isCurrentPage = pageIndex == settledPage
                 val reelItem = viewModel.reels.value.getOrNull(settledPage)
                 if (isCurrentPage && reelItem != null && player != null) {
                     viewModel.updateSettledPage(settledPage, playerView)
                     showThumbnail = true
                     viewModel.seekToPageAndPlayIfNeeded(settledPage, playerView)
+                    isPaused = false // Reset trạng thái khi page snapped
+                    offsetState.value = Triple(0f, 0f, 0f) // Reset offset khi snapped
                     Timber.tag(tag).d("ExoPlayer seek to page $settledPage then start playing if needed")
+                }
+            }
+    }
+
+    /** logic start/stop sắp thành current page/current page sắp cũ (forward/backward)
+     *
+     * cover handle trường hợp user chơi chiêu scroll giữ từ từ ko thả tay
+     * */
+    LaunchedEffect(pageIndex, pagerState, player) {
+        snapshotFlow { pagerState.currentPageOffsetFraction to pagerState.settledPage }
+            .collect { (offset, settledPage) ->
+                // Chỉ xử lý nếu offset thay đổi đáng kể
+                val (prevOffset, maxOffset, minOffset) = offsetState.value
+                if (abs(offset - prevOffset) < 0.01f && offset != 0f) return@collect // Bỏ qua thay đổi nhỏ
+                // Cập nhật offset tối đa/min
+                offsetState.value = Triple(offset, max(maxOffset, offset), min(minOffset, offset))
+                Timber.tag(tag).d("Offset check: pageIndex=$pageIndex, settledPage=$settledPage, offset=$offset, maxOffset=$maxOffset, minOffset=$minOffset, isPlaying=${player?.isPlaying}, isPaused=$isPaused")
+                // Reset isPaused khi offset rất nhỏ (video hiển thị gần 100%)
+                if (pageIndex == settledPage && isPaused && abs(offset) < 0.05f) {
+                    Timber.tag(tag).d("Reset isPaused and play continue - isPaused: pageIndex=$pageIndex, offset=$offset")
+                    viewModel.startPlay(playerView)
+                    isPaused = false
+                    offsetState.value = Triple(offset, offset, offset) // Reset max/min
+                }
+                // Chỉ pause nếu page này là settledPage và video đang phát
+                val shouldPause = pageIndex == settledPage && player != null && player.isPlaying && !isPaused
+                if (shouldPause) {
+                    // Pause khi next/back video hiển thị >= 35%
+                    if (maxOffset >= 0.35f || minOffset <= -0.35f) {
+                        Timber.tag(tag).d("Start Pause video at page $pageIndex, offset: $offset, maxOffset=$maxOffset, minOffset=$minOffset")
+                        viewModel.startPause(playerView)
+                        isPaused = true
+                    }
+                } else {
+                    Timber.tag(tag).d("Skip pause: pageIndex=$pageIndex, settledPage=$settledPage, isPlaying=${player?.isPlaying}, isPaused=$isPaused")
                 }
             }
     }
