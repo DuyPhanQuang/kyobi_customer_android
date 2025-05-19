@@ -37,6 +37,7 @@ import com.kyobi.trend.performance_metrics.VideoPerformanceTracker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
 import kotlin.math.min
 
 const val SEEK_TO_DEFAULT_VALUE = 0L
@@ -291,8 +292,8 @@ constructor(
                 val shortenDurationConfig = reel.shortenDuration
                 val fullDurationConfig = reel.originalDuration - shortenDurationConfig
                 try {
-                    val shortenDurationMs = (shortenDurationConfig * 1000).toLong()
-                    val fullDurationMs = (fullDurationConfig * 1000).toLong()
+                    val shortenDurationMs = ceil(shortenDurationConfig * 1000).toLong()
+                    val fullDurationMs = ceil(fullDurationConfig * 1000).toLong()
                     ConcatenatingMediaSource2.Builder()
                         .add(shortenMediaSource, shortenDurationMs)
                         .add(fullMediaSource, fullDurationMs)
