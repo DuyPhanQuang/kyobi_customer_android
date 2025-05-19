@@ -573,18 +573,18 @@ constructor(
                 if (!player.isPlaying) {
                     player.playWhenReady = true
                 }
+                playerView.player = player
             }
         }
-        playerView.player = mainExoPlayer
     }
 
     fun startPlay(playerView: PlayerView) {
         mainExoPlayer?.let { player ->
             if (!player.isPlaying) {
                 player.playWhenReady = true
+                playerView.player = player
             }
         }
-        playerView.player = mainExoPlayer
     }
 
     @OptIn(UnstableApi::class)
@@ -592,9 +592,9 @@ constructor(
         mainExoPlayer?.let { player ->
             if (player.isPlaying) {
                 player.playWhenReady = false
+                playerView.player = player
             }
         }
-        playerView.player = mainExoPlayer
     }
 
     private fun startMainRelease() {
