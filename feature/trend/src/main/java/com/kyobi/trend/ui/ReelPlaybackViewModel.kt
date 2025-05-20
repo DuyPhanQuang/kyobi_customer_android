@@ -104,7 +104,7 @@ constructor(
         val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
             .setPrioritizeTimeOverSizeThresholds(true)
-            .setBufferDurationsMs(20000, 20000, 1000, 2000)
+            .setBufferDurationsMs(20000, 20000, 1000, 1000)
             .build()
         mainExoPlayer = ExoPlayer.Builder(context)
             .setRenderersFactory(renderersFactory)
@@ -188,11 +188,12 @@ constructor(
     fun initializeBackgroundPlayer() {
         val renderersFactory = DefaultRenderersFactory(context)
             .setEnableDecoderFallback(true)
+            .experimentalSetEnableMediaCodecVideoRendererPrewarming(true)
             .forceEnableMediaCodecAsynchronousQueueing()
         val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
             .setPrioritizeTimeOverSizeThresholds(true)
-            .setBufferDurationsMs(20000, 20000, 5000, 10000)
+            .setBufferDurationsMs(20000, 20000, 1000, 1000)
             .build()
         backgroundExoPlayer = ExoPlayer.Builder(context)
             .setRenderersFactory(renderersFactory)
@@ -358,11 +359,14 @@ constructor(
     /** xử lý preload và tracking cache if needed */
     @OptIn(UnstableApi::class)
     private suspend fun handlePreloadAndCache(shortenUrl: String): Boolean {
-        try {
-            reelPreloadManager.savePreloadedMedia(shortenUrl)
-            return true
+        return try {
+            reelPreloadManager.enqueueSavePreloadedMedia(shortenUrl)
+            val isCached = reelPreloadManager.isPreloadedAndCached(shortenUrl)
+            Timber.tag(tag).d("Handle preload url=$shortenUrl, isCached=$isCached")
+            isCached
         } catch (e: Exception) {
-            return false
+            Timber.tag(tag).e(e, "Failed to preload url=$shortenUrl")
+            false
         }
     }
 
@@ -391,9 +395,9 @@ constructor(
                                     val preloadedResult = handlePreloadAndCache(shortenUrl)
                                     if (preloadedResult) {
                                         preWarmedPages.add(page)
-                                        listener?.let { backgroundExoPlayer.removeListener(it) }
-                                        onPreWarmCompleted()
                                     }
+                                    listener?.let { backgroundExoPlayer.removeListener(it) }
+                                    onPreWarmCompleted()
                                 }
                             }
                         }

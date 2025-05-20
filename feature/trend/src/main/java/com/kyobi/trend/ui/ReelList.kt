@@ -1,8 +1,6 @@
 package com.kyobi.trend.ui
 
 import androidx.annotation.OptIn
-import androidx.compose.animation.core.Easing
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

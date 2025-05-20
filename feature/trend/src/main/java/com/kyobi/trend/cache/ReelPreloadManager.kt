@@ -6,15 +6,26 @@ import com.kyobi.core.extensions.toUniqueReelCacheKey
 import com.kyobi.data.database.dao.PreloadedMediaDao
 import com.kyobi.data.database.entity.PreloadedMediaEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
+import java.util.concurrent.ConcurrentLinkedQueue
 import javax.inject.Inject
 import javax.inject.Singleton
+
+const val TIMEOUT_VALUE = 5000L // in ms
+const val MIN_FIRST_TS_CACHE_LENGTH_THRESHOLD = 500_000L
 
 @UnstableApi
 @Singleton
@@ -26,6 +37,29 @@ class ReelPreloadManager @Inject constructor(
 ) {
     private val tag = "ReelPreloadManager"
     private val preloadedUrls = mutableMapOf<String, String>() // Cache { url: cacheKey }
+    private val saveMutex = Mutex()
+    private val saveQueue = ConcurrentLinkedQueue<String>()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    init {
+        scope.launch {
+            while (scope.isActive) { // Chỉ chạy khi scope còn sống
+                if (saveQueue.isEmpty()) {
+                    yield() // Nhường CPU, không busy-wait
+                    continue
+                }
+                val url = saveQueue.poll() ?: continue
+                saveMutex.withLock {
+                    try {
+                        savePreloadedMedia(url)
+                        Timber.tag(tag).d("Saved url=$url")
+                    } catch (e: Exception) {
+                        Timber.tag(tag).e(e, "Failed to save url=$url")
+                    }
+                }
+            }
+        }
+    }
 
     suspend fun cleanupOldRecords(maxAgeDays: Long = 1) = withContext(Dispatchers.IO) {
         val threshold = System.currentTimeMillis() - maxAgeDays * 24 * 60 * 60 * 1000
@@ -42,7 +76,16 @@ class ReelPreloadManager @Inject constructor(
         Timber.tag(tag).d("Loaded ${entities.size} preloaded URLs from Room")
     }
 
-    suspend fun savePreloadedMedia(url: String) = withContext(Dispatchers.IO) {
+
+    suspend fun enqueueSavePreloadedMedia(url: String) = withContext(Dispatchers.IO) {
+        if (!saveQueue.contains(url) && !preloadedUrls.containsKey(url)) {
+            Timber.tag(tag).d("Enqueue url=$url")
+            saveQueue.offer(url)
+        }
+    }
+
+    private suspend fun savePreloadedMedia(url: String) = withContext(Dispatchers.IO) {
+        val startTime = System.currentTimeMillis()
         try {
             val m3u8CacheKey = url.toUniqueReelCacheKey()
             val tsUrls = fetchTsUrls(url)
@@ -55,23 +98,28 @@ class ReelPreloadManager @Inject constructor(
             )
             preloadedMediaDao.insert(entity)
             preloadedUrls[url] = m3u8CacheKey
-            val cachedLength = mediaCache.getCache().getCachedLength(m3u8CacheKey, 0L, Long.MAX_VALUE)
-            val firstTsCacheKey = tsCacheKeys.firstOrNull()
-            val firstTsCachedLength = firstTsCacheKey?.let { key ->
-                val spans = mediaCache.getCache().getCachedSpans(key)
-                if (spans.isEmpty() || spans.all { it.length <= 0 }) {
-                    Timber.tag(tag).w("Invalid cache spans for firstTsCacheKey=$key, spans=$spans")
-                    0L
-                } else {
-                    val length = mediaCache.getCache().getCachedLength(key, 0L, Long.MAX_VALUE)
-                    Timber.tag(tag).d("Cache check for firstTsCacheKey=$key, length=$length bytes")
-                    length
+            val firstTsCacheKey = tsCacheKeys.firstOrNull() ?: throw Exception("No tsCacheKeys for url=$url")
+            var firstTsCachedLength = 0L
+            val startPoll = System.currentTimeMillis()
+            while (System.currentTimeMillis() - startPoll < TIMEOUT_VALUE) {
+                val spans = mediaCache.getCache().getCachedSpans(firstTsCacheKey)
+                if (spans.isNotEmpty() && spans.any { it.length > 0 }) {
+                    firstTsCachedLength = mediaCache.getCache().getCachedLength(firstTsCacheKey, 0L, Long.MAX_VALUE)
+                    if (firstTsCachedLength >= MIN_FIRST_TS_CACHE_LENGTH_THRESHOLD) {
+                        Timber.tag(tag).d("Cached firstTsCacheKey=$firstTsCacheKey, length=$firstTsCachedLength")
+                        break
+                    }
                 }
-            } ?: 0L
-            val cachedKeys = mediaCache.getCache().keys.filter { it.contains(".ts") }.joinToString()
-            Timber.tag(tag).d("Saved preloaded media: url=$url, cacheKey=$m3u8CacheKey, cachedLength=$cachedLength bytes, firstTsCacheKey=$firstTsCacheKey, firstTsCachedLength=$firstTsCachedLength bytes, cachedKeys=$cachedKeys")
+                yield() // Không delay, nhường cpu
+            }
+            if (firstTsCachedLength < MIN_FIRST_TS_CACHE_LENGTH_THRESHOLD) {
+                Timber.tag(tag).w("Failed to cache firstTsCacheKey=$firstTsCacheKey, length=$firstTsCachedLength")
+                throw Exception("Cache timeout for $firstTsCacheKey")
+            }
+            val durationMs = System.currentTimeMillis() - startTime
+            Timber.tag(tag).d("Saved url=$url in ${durationMs}ms, firstTsCachedLength=$firstTsCachedLength")
         } catch (e: Exception) {
-            Timber.tag(tag).e(e, "Failed to save preloaded media for url=$url")
+            Timber.tag(tag).e(e, "Failed to save url=$url")
             throw e
         }
     }
@@ -115,27 +163,20 @@ class ReelPreloadManager @Inject constructor(
         }
     }
 
-    suspend fun getEntityByUrl(url: String): PreloadedMediaEntity? {
-        return preloadedMediaDao.getByUrl(url)
-    }
-
     suspend fun isPreloadedAndCached(url: String): Boolean = withContext(Dispatchers.IO) {
-        val entity = preloadedMediaDao.getByUrl(url) ?: run {
-            Timber.tag(tag).w("No entity found for url=$url")
-            return@withContext false
-        }
-        val m3u8CacheKey = entity.cacheKey
+        val entity = preloadedMediaDao.getByUrl(url) ?: return@withContext false
         val tsCacheKeys = entity.tsCacheKeys
-        if (tsCacheKeys.isEmpty()) {
-            Timber.tag(tag).w("No tsCacheKeys found for url=$url")
-            return@withContext false
-        }
-        val minCachedLength = 500_000L // min 500KB cho 1 segment 10s (shorten file)
+        if (tsCacheKeys.isEmpty()) return@withContext false
         val firstTsCacheKey = tsCacheKeys.first()
-        val cachedLength = mediaCache.getCache().getCachedLength(firstTsCacheKey, 0L, Long.MAX_VALUE)
-        Timber.tag(tag).d("Checked cache for first tsCacheKey=$firstTsCacheKey, cachedLength=$cachedLength bytes")
-        val isTsCached = cachedLength >= minCachedLength
-        Timber.tag(tag).d("Checked cache for url=$url, cacheKey=$m3u8CacheKey, firstTsCacheKey=$firstTsCacheKey, isTsCached=$isTsCached")
-        isTsCached
+        var firstTsCachedLength = 0L
+        val startPoll = System.currentTimeMillis()
+        while (System.currentTimeMillis() - startPoll < TIMEOUT_VALUE) {
+            firstTsCachedLength = mediaCache.getCache().getCachedLength(firstTsCacheKey, 0L, Long.MAX_VALUE)
+            if (firstTsCachedLength >= MIN_FIRST_TS_CACHE_LENGTH_THRESHOLD) break
+            yield()
+        }
+        val isCached = firstTsCachedLength >= MIN_FIRST_TS_CACHE_LENGTH_THRESHOLD
+        Timber.tag(tag).d("Checked url=$url, isCached=$isCached, firstTsCachedLength=$firstTsCachedLength")
+        isCached
     }
 }
