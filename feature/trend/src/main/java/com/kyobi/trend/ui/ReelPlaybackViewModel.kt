@@ -68,6 +68,7 @@ constructor(
     private val fetchSizes = mutableListOf<Int>()
     private val _isVideoProcessing = MutableStateFlow(true) // thể hiện show ui loading
     val isVideoProcessing = _isVideoProcessing.asStateFlow() // thể hiện show ui loading
+    private var shouldStartPlayAsap = false // su dung only first time sau khi firstTimeProcessBackgroundPlayer hoan thanh
 
     /** initiate main & background ExoPlayer instance
      *
@@ -220,6 +221,7 @@ constructor(
                 Timber.tag(tag).d("Background pre warm completed in ${preloadDurationMs}ms, prepare and start video at page 0")
                 _isVideoProcessing.value = false
                 _firstTimeInitializeCompleted.value = 0
+                shouldStartPlayAsap = true
                 return
             }
             val shortenUrl = _reels.value[page].shortenUrl
@@ -233,10 +235,13 @@ constructor(
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
      *
-     * `case1`: chưa có shorten sources nào trong possible range được preload (tức shortenSources = notEmpty):
+     * `case1`: `if (shortenSources.isNotEmpty())` chưa có shorten sources nào trong possible range được preload
+     * tức là các shorten media sources này chưa từng được preload bởi các lần launched app trước đó
+     * hoặc preload failed hoặc đến hạn cleared cache từ worker:
      * set reels data -> preload all sources -> process background player -> process main player
      *
-     * `case2`: shorten sources nào trong possible range đã preloaded trước đó:
+     * `case2`: `else if (mergedSources.isNotEmpty())` ko có shorten sources nào trong possible range đã preloaded trước đó.
+     * tức là lần launched app gần nhất đã preloaded các shorten media sources và cc media sources đã được preloaded này chưa đến hạn clear cache từ worker này:
      * set reels data -> preload all sources -> process main player
      *
      * Step1: Update reels data và save size của lần fetch đầu tiên
@@ -268,9 +273,10 @@ constructor(
             if (mergedSources.isNotEmpty()) {
                 mainExoPlayer!!.setMediaSources(mergedSources, 0, SEEK_TO_DEFAULT_VALUE)
             }
-            if (shortenSources.isNotEmpty()) {
+            if (shortenSources.isNotEmpty()) { // case1
                 firstTimeProcessBackgroundPlayer(shortenSources)
-            } else if (mergedSources.isNotEmpty()) {
+            } else { // case2
+                if (mergedSources.isEmpty()) return@launch
                 _firstTimeInitializeCompleted.value = 0
             }
         }
@@ -291,7 +297,6 @@ constructor(
         mainExoPlayer!!.prepare()
         mainExoPlayer!!.playWhenReady = false
         _firstFrameRenderedPage.value = page
-        _firstTimeInitializeCompleted.value = -1
         onUpdatePlayerView(mainExoPlayer!!)
     }
 
@@ -485,10 +490,10 @@ constructor(
 
     @OptIn(UnstableApi::class)
     private suspend fun createShortenSourcesAndMergeSources(reels: List<Reel>, baseIndex: Int): Pair<List<MediaSource>, List<MediaSource>> {
-        val shortenSources = reels.mapIndexedNotNull { _, reel ->
-            val backgroundSource = _backgroundMediaSources[reel.shortenUrl]!!
+        val shortenSourcesNeedPreload = reels.mapIndexedNotNull { _, reel ->
+            val backgroundShortenMediaSource = _backgroundMediaSources[reel.shortenUrl]!!
             val isCached = reelPreloadManager.isPreloadedAndCached(reel.shortenUrl)
-            if (!isCached) backgroundSource else null
+            if (!isCached) backgroundShortenMediaSource else null
         }
         val mergedSources = reels.mapIndexedNotNull { index, reel ->
             val shortenMediaSource = _mediaSources[reel.shortenUrl]!!
@@ -509,10 +514,10 @@ constructor(
                 null
             }
         }
-        return shortenSources to mergedSources
+        return shortenSourcesNeedPreload to mergedSources
     }
 
-    /** Sử dụng `addMediaSources()` để update mediasources cho `mainExoPlayer` và `backgroundExoPlayer`
+    /** Sử dụng `addMediaSources()` để update media sources cho `mainExoPlayer` và `backgroundExoPlayer`
      *
      * cần phải call `prepare()` cho `mainExoPlayer` và `backgroundExoPlayer` sau khi addMediaSources.
      * */
@@ -526,13 +531,13 @@ constructor(
         viewModelScope.launch {
             val preloadResult = preloadMediaSourceForRange(currentReelSize, _reels.value.size)
             if (!preloadResult.isSuccess) return@launch
-            val (shortenSources, mergedSources) = createShortenSourcesAndMergeSources(newReels, baseIndex = currentReelSize)
+            val (shortenSourcesNeedPreload, mergedSources) = createShortenSourcesAndMergeSources(newReels, baseIndex = currentReelSize)
             if (backgroundExoPlayer == null || mainExoPlayer == null) {
                 Timber.tag(tag).w("Missing backgroundExoPlayer or mainExoPlayer")
                 return@launch
             }
-            if (shortenSources.isNotEmpty()) {
-                backgroundExoPlayer!!.addMediaSources(shortenSources)
+            if (shortenSourcesNeedPreload.isNotEmpty()) {
+                backgroundExoPlayer!!.addMediaSources(shortenSourcesNeedPreload)
                 backgroundExoPlayer!!.prepare()
             }
             if (mergedSources.isNotEmpty()) {
@@ -558,6 +563,15 @@ constructor(
         mainExoPlayer?.let { player ->
             if (page != 0) {
                 mainPlayerTracker.invalidateSession()
+            }
+            // handle case first time mà chạy case logic firstTimeProcessBackgroundPlayer
+            if (shouldStartPlayAsap && player.currentMediaItemIndex == 0 && _firstFrameRenderedPage.value == 0) {
+                if (!player.isPlaying) {
+                    player.playWhenReady = true
+                    onUpdatePlayerView(player)
+                }
+                _firstTimeInitializeCompleted.value = -1
+                shouldStartPlayAsap = false
             }
             Timber.tag(seekToPageTag).d("seek to page $page and play if needed, mediaItemCount: ${player.mediaItemCount}, playbackState: ${player.playbackState}")
             if (player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE) {

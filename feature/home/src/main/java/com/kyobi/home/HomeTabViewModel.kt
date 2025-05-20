@@ -65,8 +65,10 @@ class HomeTabViewModel @Inject constructor(
                                 async {
                                     val request = ImageRequest.Builder(context)
                                         .data(url)
+                                        .crossfade(false)
                                         .memoryCachePolicy(CachePolicy.ENABLED)
                                         .diskCachePolicy(CachePolicy.ENABLED)
+                                        .allowHardware(true)
                                         .build()
                                     Timber.tag(tag).d("Preloading image: $url")
                                     imageLoader.execute(request)
@@ -94,6 +96,7 @@ class HomeTabViewModel @Inject constructor(
                     async {
                         val request = ImageRequest.Builder(context)
                             .data(reel.imageUrl)
+                            .crossfade(false)
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .diskCachePolicy(CachePolicy.ENABLED)
                             .allowHardware(true)
@@ -125,8 +128,10 @@ class HomeTabViewModel @Inject constructor(
                             async {
                                 val request = ImageRequest.Builder(context)
                                     .data(url)
+                                    .crossfade(false)
                                     .memoryCachePolicy(CachePolicy.ENABLED)
                                     .diskCachePolicy(CachePolicy.ENABLED)
+                                    .allowHardware(true)
                                     .build()
                                 Timber.tag(tag).d("Preloading image: $url")
                                 imageLoader.execute(request)
@@ -154,6 +159,7 @@ class HomeTabViewModel @Inject constructor(
                     imageData?.let { url ->
                         val request = ImageRequest.Builder(context)
                             .data(url)
+                            .crossfade(false)
                             .memoryCachePolicy(CachePolicy.ENABLED)
                             .diskCachePolicy(CachePolicy.ENABLED)
                             .build()
