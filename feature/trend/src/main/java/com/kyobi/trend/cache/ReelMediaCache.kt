@@ -83,7 +83,7 @@ class ReelMediaCache @Inject constructor(
             .setCacheReadDataSourceFactory(upstreamFactory)
             .setCacheWriteDataSinkFactory(CacheDataSink.Factory()
                 .setCache(mediaCache))
-            .setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE or CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+            .setFlags(CacheDataSource.FLAG_BLOCK_ON_CACHE)
             .setCacheKeyFactory { mediaItem ->
                 val uriStr = mediaItem.uri.toString()
                 uriStr.toUniqueReelCacheKey()

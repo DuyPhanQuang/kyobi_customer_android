@@ -57,13 +57,19 @@ class ReelPreloadManager @Inject constructor(
             preloadedUrls[url] = m3u8CacheKey
             val cachedLength = mediaCache.getCache().getCachedLength(m3u8CacheKey, 0L, Long.MAX_VALUE)
             val firstTsCacheKey = tsCacheKeys.firstOrNull()
-            val firstTsCachedLength = firstTsCacheKey?.let {
-                mediaCache.getCache().getCachedLength(it, 0L, Long.MAX_VALUE)
-            } ?: Long.MIN_VALUE
-            Timber.tag(tag).d(
-                "Saved preloaded media: url=$url, cacheKey=$m3u8CacheKey, cachedLength=$cachedLength bytes, " +
-                        "firstTsCacheKey=$firstTsCacheKey, firstTsCachedLength=$firstTsCachedLength bytes"
-            )
+            val firstTsCachedLength = firstTsCacheKey?.let { key ->
+                val spans = mediaCache.getCache().getCachedSpans(key)
+                if (spans.isEmpty() || spans.all { it.length <= 0 }) {
+                    Timber.tag(tag).w("Invalid cache spans for firstTsCacheKey=$key, spans=$spans")
+                    0L
+                } else {
+                    val length = mediaCache.getCache().getCachedLength(key, 0L, Long.MAX_VALUE)
+                    Timber.tag(tag).d("Cache check for firstTsCacheKey=$key, length=$length bytes")
+                    length
+                }
+            } ?: 0L
+            val cachedKeys = mediaCache.getCache().keys.filter { it.contains(".ts") }.joinToString()
+            Timber.tag(tag).d("Saved preloaded media: url=$url, cacheKey=$m3u8CacheKey, cachedLength=$cachedLength bytes, firstTsCacheKey=$firstTsCacheKey, firstTsCachedLength=$firstTsCachedLength bytes, cachedKeys=$cachedKeys")
         } catch (e: Exception) {
             Timber.tag(tag).e(e, "Failed to save preloaded media for url=$url")
         }
@@ -106,6 +112,10 @@ class ReelPreloadManager @Inject constructor(
             Timber.tag(tag).e(e, "Failed to fetch .ts URLs for $m3u8Url")
             emptyList()
         }
+    }
+
+    suspend fun getEntityByUrl(url: String): PreloadedMediaEntity? {
+        return preloadedMediaDao.getByUrl(url)
     }
 
     suspend fun isPreloadedAndCached(url: String): Boolean = withContext(Dispatchers.IO) {
