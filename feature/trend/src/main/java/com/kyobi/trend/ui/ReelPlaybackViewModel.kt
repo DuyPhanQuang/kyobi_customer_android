@@ -59,13 +59,13 @@ constructor(
     private var mainExoPlayer: ExoPlayer? = null
     private var backgroundExoPlayer: ExoPlayer? = null
     private var currentSettledPage = 0
-    private val _firstFrameRendered = MutableStateFlow(-1) // -1: chưa render
-    val firstFrameRendered = _firstFrameRendered.asStateFlow()
+    private val _firstFrameRenderedPage = MutableStateFlow(-1) // -1: chưa render
+    val firstFrameRenderedPage = _firstFrameRenderedPage.asStateFlow()
     private val mainPlayerTracker = VideoPerformanceTracker()
     private val preWarmedPages = mutableSetOf<Int>()
     private val fetchSizes = mutableListOf<Int>()
-    private val _isInitialLoading = MutableStateFlow(true)
-    val isInitialLoading = _isInitialLoading.asStateFlow()
+    private val _isVideoProcessing = MutableStateFlow(true)
+    val isVideoProcessing = _isVideoProcessing.asStateFlow()
 
     /** initiate main & background ExoPlayer instance
      *
@@ -129,7 +129,6 @@ constructor(
                                 "video_decoder=${result.videoPerformanceData.decoders.videoDecoderName}, " +
                                 "video_decoder_init=${result.videoPerformanceData.decoders.videoDecoderInitialisationDurationMs}ms")
                         mainPlayerTracker.invalidateSession()
-                        _firstFrameRendered.value = currentSettledPage
                     }
                     override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
                         if (reason == Player.DISCONTINUITY_REASON_SEEK) {
@@ -213,13 +212,13 @@ constructor(
     @OptIn(UnstableApi::class)
     private fun firstTimeProcessBackgroundPlayer(shortenSources: List<MediaSource>) {
         val startPreloadTimestamp = System.currentTimeMillis()
-        _isInitialLoading.value = true
+        _isVideoProcessing.value = true
         fun preWarmPage(page: Int) {
             val isPreWarmCompleted = firstTimeHasPreWarmCompleted(page, maxPage = shortenSources.size)
             if (isPreWarmCompleted) {
                 val preloadDurationMs = System.currentTimeMillis() - startPreloadTimestamp
                 Timber.tag(tag).d("Background pre warm completed in ${preloadDurationMs}ms, prepare and start video at page 0")
-                _isInitialLoading.value = false
+                _isVideoProcessing.value = false
                 prepareAndStartVideoPage0()
                 return
             }
@@ -285,10 +284,40 @@ constructor(
      * */
     @OptIn(UnstableApi::class)
     fun prepareAndStartVideoPage0() {
+        val prepareAndStartVideoPage0Tag = "prepareAndStartVideoPage0"
+        val page0 = 0
         mainPlayerTracker.invalidateSession()
+        val listener = object : Player.Listener {
+            var localSeekCompleted = false
+            var localFirstFrameRendered = false
+            override fun onRenderedFirstFrame() {
+                if (currentSettledPage == page0) {
+                    Timber.tag(prepareAndStartVideoPage0Tag).d("First frame rendered for page $page0")
+                    localFirstFrameRendered = true
+                    tryAttachAndPlay()
+                }
+            }
+            override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+                if (reason == Player.DISCONTINUITY_REASON_SEEK) {
+                    Timber.tag(prepareAndStartVideoPage0Tag).d("Seek to page $page0 completed")
+                    localSeekCompleted = true
+                    tryAttachAndPlay()
+                }
+            }
+            private fun tryAttachAndPlay() {
+                if (localSeekCompleted && localFirstFrameRendered) {
+                    Timber.tag(prepareAndStartVideoPage0Tag).d("Attaching playerView and playing for page $page0")
+                    _firstFrameRenderedPage.value = currentSettledPage
+                    if (!mainExoPlayer!!.isPlaying) {
+                        mainExoPlayer!!.playWhenReady = true
+                    }
+                    mainExoPlayer!!.removeListener(this)
+                }
+            }
+        }
+        mainExoPlayer!!.addListener(listener)
         mainExoPlayer!!.prepare()
-        mainExoPlayer!!.seekTo(0, SEEK_TO_DEFAULT_VALUE)
-        mainExoPlayer!!.playWhenReady = true
+        mainExoPlayer!!.seekTo(page0, SEEK_TO_DEFAULT_VALUE)
     }
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
@@ -372,10 +401,8 @@ constructor(
     }
 
     @OptIn(UnstableApi::class)
-    fun updateSettledPage(page: Int, playerView: PlayerView) {
+    fun updateSettledPage(page: Int) {
         currentSettledPage = page
-        mainPlayerTracker.invalidateSession()
-        playerView.player = mainExoPlayer
         // Trigger load more tại nửa số item(future reels size / 2) của lần fetch cuối
         val reelSize = _reels.value.size
         val lastFetchSize = fetchSizes.lastOrNull() ?: 0
@@ -535,44 +562,46 @@ constructor(
      * nếu ko chờ `seekTo()` hoàn thành và `onRenderedFirstFrame()` emitted mà play ngay thì sẽ bị nháy last frame của page trước đó do `mainExoPlayer` giữ frame cũ và đang processing `seekTo()` nhưng `playerView` lại render trước)
      * */
     @OptIn(UnstableApi::class)
-    fun seekToPageAndPlayIfNeeded(page: Int, playerView: PlayerView) {
+    fun seekToPageAndPlayIfNeeded(page: Int) {
         val seekToPageTag = "seekToPageAndPlayIfNeeded"
         mainExoPlayer?.let { player ->
+            if (page != 0) {
+                mainPlayerTracker.invalidateSession()
+            }
             Timber.tag(seekToPageTag).d("seek to page $page and play if needed, mediaItemCount: ${player.mediaItemCount}, playbackState: ${player.playbackState}")
             if (player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE) {
                 // Kiểm tra nếu page đã seek và first frame đã render
-                if (player.currentMediaItemIndex == page && _firstFrameRendered.value == page) {
+                if (player.currentMediaItemIndex == page && _firstFrameRenderedPage.value == page) {
                     Timber.tag(seekToPageTag).d("Page $page already seeked and first frame rendered, attaching playerView")
                     if (!player.isPlaying) {
                         player.playWhenReady = true
-                        playerView.player = player
                     }
                     return
                 }
                 val listener = object : Player.Listener {
-                    var seekCompleted = false
-                    var firstFrameRendered = false
+                    var localSeekCompleted = false
+                    var localFirstFrameRendered = false
                     override fun onRenderedFirstFrame() {
                         if (currentSettledPage == page) {
                             Timber.tag(seekToPageTag).d("First frame rendered for page $page")
-                            firstFrameRendered = true
+                            localFirstFrameRendered = true
                             tryAttachAndPlay()
                         }
                     }
                     override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
                         if (reason == Player.DISCONTINUITY_REASON_SEEK && newPosition.mediaItemIndex == page) {
                             Timber.tag(seekToPageTag).d("Seek to page $page completed")
-                            seekCompleted = true
+                            localSeekCompleted = true
                             tryAttachAndPlay()
                         }
                     }
                     private fun tryAttachAndPlay() {
-                        if (seekCompleted && firstFrameRendered) {
+                        if (localSeekCompleted && localFirstFrameRendered) {
                             Timber.tag(seekToPageTag).d("Attaching playerView and playing for page $page")
+                            _firstFrameRenderedPage.value = currentSettledPage
                             if (!player.isPlaying) {
                                 player.playWhenReady = true
                             }
-                            playerView.player = player
                             player.removeListener(this)
                         }
                     }
@@ -585,11 +614,11 @@ constructor(
 
     /** cần check `isPlaying` Bởi vì `startPlay` có thể bị triggered spam từ `ReelVideoPlayer`
      * */
-    fun startPlay(playerView: PlayerView) {
+    fun startPlay(callback: (ExoPlayer) -> Unit) {
         mainExoPlayer?.let { player ->
             if (!player.isPlaying) {
                 player.playWhenReady = true
-                playerView.player = player
+                callback(player)
             }
         }
     }
@@ -597,11 +626,11 @@ constructor(
     /** cần check `isPlaying` Bởi vì `startPause` có thể bị triggered spam từ `ReelVideoPlayer`
      * */
     @OptIn(UnstableApi::class)
-    fun startPause(playerView: PlayerView) {
+    fun startPause(callback: (ExoPlayer) -> Unit) {
         mainExoPlayer?.let { player ->
             if (player.isPlaying) {
                 player.playWhenReady = false
-                playerView.player = player
+                callback(player)
             }
         }
     }

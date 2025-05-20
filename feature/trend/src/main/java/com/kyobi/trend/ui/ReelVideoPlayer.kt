@@ -54,6 +54,9 @@ fun ReelVideoPlayer(
     // Lưu offset trước đó và ngưỡng max/min
     val offsetState = remember(pageIndex) { mutableStateOf(Triple(0f, 0f, 0f)) } // (current, max, min)
 
+    val reelsData = viewModel.reels.value
+    val mainPlayer = viewModel.getMainPlayer()
+
     val playerView = remember(pageIndex) {
         PlayerView(context).apply {
             useController = false
@@ -70,31 +73,31 @@ fun ReelVideoPlayer(
         }
     }
 
-    val player = viewModel.getMainPlayer()
-
-    val reelsData = viewModel.reels.value
-
     // hide showThumbnail
-    LaunchedEffect(pageIndex, viewModel.firstFrameRendered) {
-        viewModel.firstFrameRendered.collect { renderedPage ->
+    LaunchedEffect(pageIndex, viewModel.firstFrameRenderedPage) {
+        viewModel.firstFrameRenderedPage.collect { renderedPage ->
             if (renderedPage == pageIndex) {
-                showThumbnail = false
-                Timber.tag(tag).d("Hiding thumbnail for page $pageIndex")
+                playerView.player = mainPlayer
+                if (showThumbnail) {
+                    showThumbnail = false
+                    Timber.tag(tag).d("Hiding thumbnail for page $pageIndex")
+                }
             }
         }
     }
 
     /** main logic của snapped page
      * */
-    LaunchedEffect(pageIndex, pagerState, player) {
+    LaunchedEffect(pageIndex, pagerState, mainPlayer) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { settledPage ->
                 val isCurrentPage = pageIndex == settledPage
                 val reelItem = reelsData.getOrNull(settledPage)
-                if (isCurrentPage && reelItem != null && player != null) {
-                    viewModel.updateSettledPage(settledPage, playerView)
-                    viewModel.seekToPageAndPlayIfNeeded(settledPage, playerView)
+                if (isCurrentPage && reelItem != null && mainPlayer != null) {
+                    playerView.player = mainPlayer
+                    viewModel.updateSettledPage(settledPage)
+                    viewModel.seekToPageAndPlayIfNeeded(settledPage)
                     isPaused = false // Reset trạng thái khi page snapped
                     offsetState.value = Triple(0f, 0f, 0f) // Reset offset khi snapped
                     Timber.tag(tag).d("ExoPlayer seek to page $settledPage then start playing if needed")
@@ -105,7 +108,7 @@ fun ReelVideoPlayer(
     /** logic start/stop sắp thành current page/current page sắp cũ (forward/backward)
      * cover handle trường hợp user chơi chiêu scroll giữ từ từ ko thả tay
      * */
-    LaunchedEffect(pageIndex, pagerState, player) {
+    LaunchedEffect(pageIndex, pagerState, mainPlayer) {
         snapshotFlow { pagerState.currentPageOffsetFraction to pagerState.settledPage }
             .collect { (offset, settledPage) ->
                 // Chỉ xử lý nếu offset thay đổi đáng kể
@@ -113,25 +116,29 @@ fun ReelVideoPlayer(
                 if (abs(offset - prevOffset) < 0.01f && offset != 0f) return@collect // Bỏ qua thay đổi nhỏ
                 // Cập nhật offset tối đa/min
                 offsetState.value = Triple(offset, max(maxOffset, offset), min(minOffset, offset))
-                Timber.tag(tag).d("Offset check: pageIndex=$pageIndex, settledPage=$settledPage, offset=$offset, maxOffset=$maxOffset, minOffset=$minOffset, isPlaying=${player?.isPlaying}, isPaused=$isPaused")
+                Timber.tag(tag).d("Offset check: pageIndex=$pageIndex, settledPage=$settledPage, offset=$offset, maxOffset=$maxOffset, minOffset=$minOffset, isPlaying=${mainPlayer?.isPlaying}, isPaused=$isPaused")
                 // Reset isPaused khi offset rất nhỏ (video hiển thị gần 100%)
                 if (pageIndex == settledPage && isPaused && abs(offset) < 0.05f) {
                     Timber.tag(tag).d("Reset isPaused and play continue - isPaused: pageIndex=$pageIndex, offset=$offset")
-                    viewModel.startPlay(playerView)
+                    viewModel.startPlay { mainPlayer ->
+                        playerView.player = mainPlayer
+                    }
                     isPaused = false
                     offsetState.value = Triple(offset, offset, offset) // Reset max/min
                 }
                 // Chỉ pause nếu page này là settledPage và video đang phát
-                val shouldPause = pageIndex == settledPage && player != null && player.isPlaying && !isPaused
+                val shouldPause = pageIndex == settledPage && mainPlayer != null && mainPlayer.isPlaying && !isPaused
                 if (shouldPause) {
                     // Pause khi next/back video hiển thị >= 35%
                     if (maxOffset >= 0.35f || minOffset <= -0.35f) {
                         Timber.tag(tag).d("Start Pause video at page $pageIndex, offset: $offset, maxOffset=$maxOffset, minOffset=$minOffset")
-                        viewModel.startPause(playerView)
+                        viewModel.startPause { mainPlayer ->
+                            playerView.player = mainPlayer
+                        }
                         isPaused = true
                     }
                 } else {
-                    Timber.tag(tag).d("Skip pause: pageIndex=$pageIndex, settledPage=$settledPage, isPlaying=${player?.isPlaying}, isPaused=$isPaused")
+                    Timber.tag(tag).d("Skip pause: pageIndex=$pageIndex, settledPage=$settledPage, isPlaying=${mainPlayer?.isPlaying}, isPaused=$isPaused")
                 }
             }
     }
@@ -141,7 +148,9 @@ fun ReelVideoPlayer(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_STOP -> {
-                    viewModel.startPause(playerView)
+                    viewModel.startPause { mainPlayer ->
+                        playerView.player = mainPlayer
+                    }
                 }
                 else -> {}
             }
@@ -161,7 +170,7 @@ fun ReelVideoPlayer(
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onTap = {
-                            player?.let {
+                            mainPlayer?.let {
                                 it.playWhenReady = !it.isPlaying
                                 Timber.tag(tag)
                                     .d("Tapped page $pageIndex, playWhenReady=${it.playWhenReady}")
