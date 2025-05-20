@@ -60,6 +60,8 @@ constructor(
     private var currentSettledPage = 0
     private val _firstFrameRenderedPage = MutableStateFlow(-1) // -1: chưa render
     val firstFrameRenderedPage = _firstFrameRenderedPage.asStateFlow()
+    private val _updateThumbnailPage0 = MutableStateFlow(-1)
+    val updateThumbnailPage0 = _updateThumbnailPage0.asStateFlow()
     private val mainPlayerTracker = VideoPerformanceTracker()
     private val preWarmedPages = mutableSetOf<Int>()
     private val fetchSizes = mutableListOf<Int>()
@@ -96,7 +98,6 @@ constructor(
         val renderersFactory = DefaultRenderersFactory(context)
             .setEnableDecoderFallback(true)
             .forceEnableMediaCodecAsynchronousQueueing()
-            .experimentalSetEnableMediaCodecVideoRendererPrewarming(true)
         val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
             .setPrioritizeTimeOverSizeThresholds(true)
@@ -178,15 +179,12 @@ constructor(
     }
 
     /** setUseLazyPreparation to `FALSE` -> very important -> reduce timing prepare sources and pre-warm renderer
-     *
-     * EXTENSION_RENDERER_MODE_OFF -> disabled audio renderer
      */
     @OptIn(UnstableApi::class)
     fun initializeBackgroundPlayer() {
         val renderersFactory = DefaultRenderersFactory(context)
             .setEnableDecoderFallback(true)
             .forceEnableMediaCodecAsynchronousQueueing()
-            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF)
         val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
             .setPrioritizeTimeOverSizeThresholds(true)
@@ -306,7 +304,7 @@ constructor(
             private fun tryAttachAndPlay() {
                 if (localSeekCompleted && localFirstFrameRendered) {
                     Timber.tag(prepareAndStartVideoPage0Tag).d("Attaching playerView and playing for page $page0")
-                    _firstFrameRenderedPage.value = currentSettledPage
+                    _updateThumbnailPage0.value = page0
                     if (!mainExoPlayer!!.isPlaying) {
                         mainExoPlayer!!.playWhenReady = true
                     }
@@ -315,8 +313,8 @@ constructor(
             }
         }
         mainExoPlayer!!.addListener(listener)
-        mainExoPlayer!!.prepare()
         mainExoPlayer!!.seekTo(page0, SEEK_TO_DEFAULT_VALUE)
+        mainExoPlayer!!.prepare()
     }
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
@@ -561,7 +559,7 @@ constructor(
      * nếu ko chờ `seekTo()` hoàn thành và `onRenderedFirstFrame()` emitted mà play ngay thì sẽ bị nháy last frame của page trước đó do `mainExoPlayer` giữ frame cũ và đang processing `seekTo()` nhưng `playerView` lại render trước)
      * */
     @OptIn(UnstableApi::class)
-    fun seekToPageAndPlayIfNeeded(page: Int) {
+    fun seekToPageAndPlayIfNeeded(page: Int, onUpdatePlayerView: (ExoPlayer) -> Unit) {
         val seekToPageTag = "seekToPageAndPlayIfNeeded"
         mainExoPlayer?.let { player ->
             if (page != 0) {
@@ -574,6 +572,7 @@ constructor(
                     Timber.tag(seekToPageTag).d("Page $page already seeked and first frame rendered, attaching playerView")
                     if (!player.isPlaying) {
                         player.playWhenReady = true
+                        onUpdatePlayerView(player)
                     }
                     return
                 }
@@ -600,6 +599,7 @@ constructor(
                             _firstFrameRenderedPage.value = currentSettledPage
                             if (!player.isPlaying) {
                                 player.playWhenReady = true
+                                onUpdatePlayerView(player)
                             }
                             player.removeListener(this)
                         }
@@ -613,11 +613,11 @@ constructor(
 
     /** cần check `isPlaying` Bởi vì `startPlay` có thể bị triggered spam từ `ReelVideoPlayer`
      * */
-    fun startPlay(callback: (ExoPlayer) -> Unit) {
+    fun startPlay(onUpdatePlayerView: (ExoPlayer) -> Unit) {
         mainExoPlayer?.let { player ->
             if (!player.isPlaying) {
                 player.playWhenReady = true
-                callback(player)
+                onUpdatePlayerView(player)
             }
         }
     }
@@ -625,11 +625,11 @@ constructor(
     /** cần check `isPlaying` Bởi vì `startPause` có thể bị triggered spam từ `ReelVideoPlayer`
      * */
     @OptIn(UnstableApi::class)
-    fun startPause(callback: (ExoPlayer) -> Unit) {
+    fun startPause(onUpdatePlayerView: (ExoPlayer) -> Unit) {
         mainExoPlayer?.let { player ->
             if (player.isPlaying) {
                 player.playWhenReady = false
-                callback(player)
+                onUpdatePlayerView(player)
             }
         }
     }

@@ -73,11 +73,22 @@ fun ReelVideoPlayer(
         }
     }
 
+    // Only triggered for page 0
+    LaunchedEffect(pageIndex, viewModel.updateThumbnailPage0) {
+        viewModel.updateThumbnailPage0.collect { renderedPage ->
+            if (renderedPage == pageIndex) {
+                if (showThumbnail) {
+                    showThumbnail = false
+                    Timber.tag(tag).d("Hiding thumbnail for page $pageIndex")
+                }
+            }
+        }
+    }
+
     // hide showThumbnail
     LaunchedEffect(pageIndex, viewModel.firstFrameRenderedPage) {
         viewModel.firstFrameRenderedPage.collect { renderedPage ->
             if (renderedPage == pageIndex) {
-                playerView.player = mainPlayer
                 if (showThumbnail) {
                     showThumbnail = false
                     Timber.tag(tag).d("Hiding thumbnail for page $pageIndex")
@@ -97,7 +108,7 @@ fun ReelVideoPlayer(
                 if (isCurrentPage && reelItem != null && mainPlayer != null) {
                     playerView.player = mainPlayer
                     viewModel.updateSettledPage(settledPage)
-                    viewModel.seekToPageAndPlayIfNeeded(settledPage)
+                    viewModel.seekToPageAndPlayIfNeeded(settledPage) { playerView.player = it }
                     isPaused = false // Reset trạng thái khi page snapped
                     offsetState.value = Triple(0f, 0f, 0f) // Reset offset khi snapped
                     Timber.tag(tag).d("ExoPlayer seek to page $settledPage then start playing if needed")
@@ -120,9 +131,7 @@ fun ReelVideoPlayer(
                 // Reset isPaused khi offset rất nhỏ (video hiển thị gần 100%)
                 if (pageIndex == settledPage && isPaused && abs(offset) < 0.05f) {
                     Timber.tag(tag).d("Reset isPaused and play continue - isPaused: pageIndex=$pageIndex, offset=$offset")
-                    viewModel.startPlay { mainPlayer ->
-                        playerView.player = mainPlayer
-                    }
+                    viewModel.startPlay { playerView.player = it }
                     isPaused = false
                     offsetState.value = Triple(offset, offset, offset) // Reset max/min
                 }
@@ -130,11 +139,10 @@ fun ReelVideoPlayer(
                 val shouldPause = pageIndex == settledPage && mainPlayer != null && mainPlayer.isPlaying && !isPaused
                 if (shouldPause) {
                     // Pause khi next/back video hiển thị >= 35%
-                    if (maxOffset >= 0.35f || minOffset <= -0.35f) {
+                    val threshold = 0.35f
+                    if (maxOffset >= threshold || minOffset <= -threshold) {
                         Timber.tag(tag).d("Start Pause video at page $pageIndex, offset: $offset, maxOffset=$maxOffset, minOffset=$minOffset")
-                        viewModel.startPause { mainPlayer ->
-                            playerView.player = mainPlayer
-                        }
+                        viewModel.startPause { playerView.player = it }
                         isPaused = true
                     }
                 } else {
@@ -148,9 +156,7 @@ fun ReelVideoPlayer(
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_STOP -> {
-                    viewModel.startPause { mainPlayer ->
-                        playerView.player = mainPlayer
-                    }
+                    viewModel.startPause { playerView.player = it }
                 }
                 else -> {}
             }
