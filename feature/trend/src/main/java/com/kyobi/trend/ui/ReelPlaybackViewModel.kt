@@ -225,8 +225,8 @@ constructor(
             }
             val shortenUrl = _reels.value[page].shortenUrl
             val nextPage = page + 1
-            processingPreWarmSinglePage(page, shortenUrl, nextPage, backgroundExoPlayer!!) {
-                preWarmPage(it)
+            processingPreWarmSinglePage(page, shortenUrl, backgroundExoPlayer!!) {
+                preWarmPage(nextPage)
             }
         }
         preWarmPage(1) // Bắt đầu từ page 1
@@ -348,8 +348,8 @@ constructor(
             }
             val shortenUrl = _reels.value[page].shortenUrl
             val nextPage = page + 1
-            processingPreWarmSinglePage(page, shortenUrl, nextPage, backgroundExoPlayer!!) {
-                preWarmPage(it)
+            processingPreWarmSinglePage(page, shortenUrl, backgroundExoPlayer!!) {
+                preWarmPage(nextPage)
             }
         }
         preWarmPage(startPage)
@@ -357,9 +357,12 @@ constructor(
 
     /** xử lý preload và tracking cache if needed */
     @OptIn(UnstableApi::class)
-    private suspend fun handlePreloadAndCache(shortenUrl: String, onCompleted: () -> Unit) {
-        reelPreloadManager.savePreloadedMedia(shortenUrl) {
-            onCompleted()
+    private suspend fun handlePreloadAndCache(shortenUrl: String): Boolean {
+        try {
+            reelPreloadManager.savePreloadedMedia(shortenUrl)
+            return true
+        } catch (e: Exception) {
+            return false
         }
     }
 
@@ -369,9 +372,8 @@ constructor(
     private fun processingPreWarmSinglePage(
         page: Int,
         shortenUrl: String,
-        nextPage: Int,
         backgroundExoPlayer: ExoPlayer,
-        preWarmCallback: (Int) -> Unit
+        onPreWarmCompleted: () -> Unit
     ) {
         viewModelScope.launch {
             try {
@@ -386,10 +388,11 @@ constructor(
                             if (state == Player.STATE_READY) {
                                 Timber.tag(tag).d("Background page $page playback state: STATE_READY")
                                 viewModelScope.launch {
-                                    handlePreloadAndCache(shortenUrl) {
+                                    val preloadedResult = handlePreloadAndCache(shortenUrl)
+                                    if (preloadedResult) {
                                         preWarmedPages.add(page)
                                         listener?.let { backgroundExoPlayer.removeListener(it) }
-                                        preWarmCallback(nextPage)
+                                        onPreWarmCompleted()
                                     }
                                 }
                             }
@@ -397,17 +400,17 @@ constructor(
                         override fun onPlayerError(error: PlaybackException) {
                             Timber.tag(tag).e(error, "Background page $page player error")
                             backgroundExoPlayer.removeListener(this)
-                            preWarmCallback(nextPage)
+                            onPreWarmCompleted()
                         }
                     }
                     backgroundExoPlayer.addListener(listener)
                 } else {
                     Timber.tag(tag).d("URL already preloaded or pre warmed for page $page")
-                    preWarmCallback(nextPage)
+                    onPreWarmCompleted()
                 }
             } catch (e: Exception) {
                 Timber.tag(tag).e(e, "Failed to pre warm HLS for page $page")
-                preWarmCallback(nextPage)
+                onPreWarmCompleted()
             }
         }
     }
@@ -574,7 +577,7 @@ constructor(
      * nếu ko chờ `seekTo()` hoàn thành và `onRenderedFirstFrame()` emitted mà play ngay thì sẽ bị nháy last frame của page trước đó do `mainExoPlayer` giữ frame cũ và đang processing `seekTo()` nhưng `playerView` lại render trước)
      * */
     @OptIn(UnstableApi::class)
-    fun seekToPageAndPlayIfNeeded(page: Int, onUpdatePlayerView: (ExoPlayer) -> Unit) {
+    fun seekToPageAndPlayIfNeeded(page: Int, onCompleted: (ExoPlayer) -> Unit) {
         val seekToPageTag = "seekToPageAndPlayIfNeeded"
         _isAllowUserScrollEnabled.value = false
         mainExoPlayer?.let { player ->
@@ -588,7 +591,7 @@ constructor(
                     Timber.tag(seekToPageTag).d("Page $page already seeked and first frame rendered, attaching playerView")
                     if (!player.isPlaying) {
                         player.playWhenReady = true
-                        onUpdatePlayerView(player)
+                        onCompleted(player)
                     }
                     return
                 }
@@ -616,7 +619,7 @@ constructor(
                             _isAllowUserScrollEnabled.value = true
                             if (!player.isPlaying) {
                                 player.playWhenReady = true
-                                onUpdatePlayerView(player)
+                                onCompleted(player)
                             }
                             player.removeListener(this)
                         }
@@ -630,11 +633,11 @@ constructor(
 
     /** cần check `isPlaying` Bởi vì `startPlay` có thể bị triggered spam từ `ReelVideoPlayer`
      * */
-    fun startPlay(onUpdatePlayerView: (ExoPlayer) -> Unit) {
+    fun startPlay(onCompleted: (ExoPlayer) -> Unit) {
         mainExoPlayer?.let { player ->
             if (!player.isPlaying) {
                 player.playWhenReady = true
-                onUpdatePlayerView(player)
+                onCompleted(player)
             }
         }
     }
@@ -642,11 +645,11 @@ constructor(
     /** cần check `isPlaying` Bởi vì `startPause` có thể bị triggered spam từ `ReelVideoPlayer`
      * */
     @OptIn(UnstableApi::class)
-    fun startPause(onUpdatePlayerView: (ExoPlayer) -> Unit) {
+    fun startPause(onCompleted: (ExoPlayer) -> Unit) {
         mainExoPlayer?.let { player ->
             if (player.isPlaying) {
                 player.playWhenReady = false
-                onUpdatePlayerView(player)
+                onCompleted(player)
             }
         }
     }

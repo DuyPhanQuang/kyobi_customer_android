@@ -42,10 +42,7 @@ class ReelPreloadManager @Inject constructor(
         Timber.tag(tag).d("Loaded ${entities.size} preloaded URLs from Room")
     }
 
-    suspend fun savePreloadedMedia(
-        url: String,
-        onCompleted: () -> Unit
-    ) = withContext(Dispatchers.IO) {
+    suspend fun savePreloadedMedia(url: String) = withContext(Dispatchers.IO) {
         try {
             val m3u8CacheKey = url.toUniqueReelCacheKey()
             val tsUrls = fetchTsUrls(url)
@@ -73,9 +70,9 @@ class ReelPreloadManager @Inject constructor(
             } ?: 0L
             val cachedKeys = mediaCache.getCache().keys.filter { it.contains(".ts") }.joinToString()
             Timber.tag(tag).d("Saved preloaded media: url=$url, cacheKey=$m3u8CacheKey, cachedLength=$cachedLength bytes, firstTsCacheKey=$firstTsCacheKey, firstTsCachedLength=$firstTsCachedLength bytes, cachedKeys=$cachedKeys")
-            onCompleted()
         } catch (e: Exception) {
             Timber.tag(tag).e(e, "Failed to save preloaded media for url=$url")
+            throw e
         }
     }
 
