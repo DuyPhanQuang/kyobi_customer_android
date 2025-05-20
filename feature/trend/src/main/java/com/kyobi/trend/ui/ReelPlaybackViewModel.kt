@@ -88,11 +88,16 @@ constructor(
         }
     }
 
+    /** experimentalSetEnableMediaCodecVideoRendererPrewarming -> enable pre-warm renderer
+     *
+     * Giảm độ trễ khi chuyển media item, phù hợp với playback liên tục
+     * */
     @OptIn(UnstableApi::class)
     fun initializeMainPlayer() {
         val renderersFactory = DefaultRenderersFactory(context)
             .setEnableDecoderFallback(true)
             .forceEnableMediaCodecAsynchronousQueueing()
+            .experimentalSetEnableMediaCodecVideoRendererPrewarming(true)
         val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
             .setPrioritizeTimeOverSizeThresholds(true)
@@ -176,8 +181,6 @@ constructor(
 
     /** setUseLazyPreparation to `FALSE` -> very important -> reduce timing prepare sources and pre-warm renderer
      *
-     * experimentalSetEnableMediaCodecVideoRendererPrewarming -> enable pre-warm renderer
-     *
      * EXTENSION_RENDERER_MODE_OFF -> disabled audio renderer
      */
     @OptIn(UnstableApi::class)
@@ -185,7 +188,6 @@ constructor(
         val renderersFactory = DefaultRenderersFactory(context)
             .setEnableDecoderFallback(true)
             .forceEnableMediaCodecAsynchronousQueueing()
-            .experimentalSetEnableMediaCodecVideoRendererPrewarming(true)
             .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF)
         val cacheDataSourceFactory = mediaCache.getMediaSourceFactory(shouldCache = true)
         val loadControl = DefaultLoadControl.Builder()
@@ -530,17 +532,43 @@ constructor(
      *
      * important: chờ `seekTo()` hoàn tất -> update `player` of `playerView` and start `play`
      *
-     * nếu ko chờ `seekTo()` mà play ngay thì sẽ bị nháy last frame của page trước đó do `mainExoPlayer` giữ frame cũ và đang processing `seekTo()` nhưng `playerView` lại render trước)
+     * nếu ko chờ `seekTo()` hoàn thành và `onRenderedFirstFrame()` emitted mà play ngay thì sẽ bị nháy last frame của page trước đó do `mainExoPlayer` giữ frame cũ và đang processing `seekTo()` nhưng `playerView` lại render trước)
      * */
     @OptIn(UnstableApi::class)
     fun seekToPageAndPlayIfNeeded(page: Int, playerView: PlayerView) {
+        val seekToPageTag = "seekToPageAndPlayIfNeeded"
         mainExoPlayer?.let { player ->
-            Timber.tag(tag).d("seek to page $page and play if needed, mediaItemCount: ${player.mediaItemCount}, playbackState: ${player.playbackState}")
+            Timber.tag(seekToPageTag).d("seek to page $page and play if needed, mediaItemCount: ${player.mediaItemCount}, playbackState: ${player.playbackState}")
             if (player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE) {
+                // Kiểm tra nếu page đã seek và first frame đã render
+                if (player.currentMediaItemIndex == page && _firstFrameRendered.value == page) {
+                    Timber.tag(seekToPageTag).d("Page $page already seeked and first frame rendered, attaching playerView")
+                    if (!player.isPlaying) {
+                        player.playWhenReady = true
+                        playerView.player = player
+                    }
+                    return
+                }
                 val listener = object : Player.Listener {
+                    var seekCompleted = false
+                    var firstFrameRendered = false
+                    override fun onRenderedFirstFrame() {
+                        if (currentSettledPage == page) {
+                            Timber.tag(seekToPageTag).d("First frame rendered for page $page")
+                            firstFrameRendered = true
+                            tryAttachAndPlay()
+                        }
+                    }
                     override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
                         if (reason == Player.DISCONTINUITY_REASON_SEEK && newPosition.mediaItemIndex == page) {
-                            Timber.tag(tag).d("Seek to page $page completed, attaching playerView and playing")
+                            Timber.tag(seekToPageTag).d("Seek to page $page completed")
+                            seekCompleted = true
+                            tryAttachAndPlay()
+                        }
+                    }
+                    private fun tryAttachAndPlay() {
+                        if (seekCompleted && firstFrameRendered) {
+                            Timber.tag(seekToPageTag).d("Attaching playerView and playing for page $page")
                             if (!player.isPlaying) {
                                 player.playWhenReady = true
                             }

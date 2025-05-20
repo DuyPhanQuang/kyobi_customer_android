@@ -86,12 +86,12 @@ fun ReelVideoPlayer(
 
     /** main logic của snapped page
      * */
-    LaunchedEffect(pageIndex, pagerState, viewModel.reels.value, player) {
+    LaunchedEffect(pageIndex, pagerState, player) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { settledPage ->
                 val isCurrentPage = pageIndex == settledPage
-                val reelItem = viewModel.reels.value.getOrNull(settledPage)
+                val reelItem = reelsData.getOrNull(settledPage)
                 if (isCurrentPage && reelItem != null && player != null) {
                     viewModel.updateSettledPage(settledPage, playerView)
                     viewModel.seekToPageAndPlayIfNeeded(settledPage, playerView)
