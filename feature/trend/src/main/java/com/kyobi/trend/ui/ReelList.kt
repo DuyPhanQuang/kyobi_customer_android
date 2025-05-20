@@ -47,6 +47,7 @@ fun ReelList(
         pageCount = { viewModel.reels.value.size }
     )
     val isVideoProcessing by viewModel.isVideoProcessing.collectAsState()
+    val isAllowUserScrollEnabled by viewModel.isAllowUserScrollEnabled.collectAsState()
     val fling = PagerDefaults.flingBehavior(
         state = pagerState,
         pagerSnapDistance = PagerSnapDistance.atMost(1),
@@ -68,7 +69,7 @@ fun ReelList(
                 modifier = Modifier.zIndex(0f),
                 state = pagerState,
                 flingBehavior = fling,
-                userScrollEnabled = !isVideoProcessing,
+                userScrollEnabled = !isVideoProcessing && isAllowUserScrollEnabled,
                 key = { it }
             ) { page ->
                 Box(modifier = Modifier.fillMaxSize()) {

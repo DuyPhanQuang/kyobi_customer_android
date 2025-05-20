@@ -66,8 +66,10 @@ constructor(
     private val mainPlayerTracker = VideoPerformanceTracker()
     private val preWarmedPages = mutableSetOf<Int>()
     private val fetchSizes = mutableListOf<Int>()
-    private val _isVideoProcessing = MutableStateFlow(true)
-    val isVideoProcessing = _isVideoProcessing.asStateFlow()
+    private val _isVideoProcessing = MutableStateFlow(true) // thể hiện show ui loading
+    val isVideoProcessing = _isVideoProcessing.asStateFlow() // thể hiện show ui loading
+    private val _isAllowUserScrollEnabled = MutableStateFlow(true)
+    val isAllowUserScrollEnabled = _isAllowUserScrollEnabled.asStateFlow()
 
     /** initiate main & background ExoPlayer instance
      *
@@ -307,6 +309,7 @@ constructor(
                 if (localSeekCompleted && localFirstFrameRendered) {
                     Timber.tag(prepareAndStartVideoPage0Tag).d("Attaching playerView and playing for page $page0")
                     _updateThumbnailPage0.value = page0
+                    _isAllowUserScrollEnabled.value = true
                     if (!mainExoPlayer!!.isPlaying) {
                         mainExoPlayer!!.playWhenReady = true
                     }
@@ -354,9 +357,10 @@ constructor(
 
     /** xử lý preload và tracking cache if needed */
     @OptIn(UnstableApi::class)
-    private suspend fun handlePreloadAndCache(shortenUrl: String, callback: () -> Unit) {
-        reelPreloadManager.savePreloadedMedia(shortenUrl)
-        callback()
+    private suspend fun handlePreloadAndCache(shortenUrl: String, onCompleted: () -> Unit) {
+        reelPreloadManager.savePreloadedMedia(shortenUrl) {
+            onCompleted()
+        }
     }
 
     /** `prepare()` của background player nên called cho mỗi lần pre warm page
@@ -572,6 +576,7 @@ constructor(
     @OptIn(UnstableApi::class)
     fun seekToPageAndPlayIfNeeded(page: Int, onUpdatePlayerView: (ExoPlayer) -> Unit) {
         val seekToPageTag = "seekToPageAndPlayIfNeeded"
+        _isAllowUserScrollEnabled.value = false
         mainExoPlayer?.let { player ->
             if (page != 0) {
                 mainPlayerTracker.invalidateSession()
@@ -608,6 +613,7 @@ constructor(
                         if (localSeekCompleted && localFirstFrameRendered) {
                             Timber.tag(seekToPageTag).d("Attaching playerView and playing for page $page")
                             _firstFrameRenderedPage.value = currentSettledPage
+                            _isAllowUserScrollEnabled.value = true
                             if (!player.isPlaying) {
                                 player.playWhenReady = true
                                 onUpdatePlayerView(player)
