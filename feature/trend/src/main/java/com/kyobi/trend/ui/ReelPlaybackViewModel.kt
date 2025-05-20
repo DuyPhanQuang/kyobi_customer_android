@@ -28,7 +28,6 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.hls.DefaultHlsExtractorFactory
 import androidx.media3.exoplayer.source.ConcatenatingMediaSource2
-import androidx.media3.ui.PlayerView
 import com.kyobi.trend.cache.ReelPreloadManager
 import com.kyobi.trend.extensions.addPerformanceTracker
 import com.kyobi.trend.performance_metrics.AudioFocusManager
