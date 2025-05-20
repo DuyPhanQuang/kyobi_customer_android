@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.compositionLocalOf
@@ -33,17 +34,22 @@ import com.kyobi.featurecommon.routes.Screen
 import com.kyobi.featurecommon.routes.getDecodedByKey
 import com.kyobi.featurecommon.routes.getDecodedUserId
 import com.kyobi.featurecommon.routes.getParcelable
+import com.kyobi.trend.ui.ReelPlaybackViewModel
 import ly.img.camera.core.CameraResult
 
-// Tạo CompositionLocal để cung cấp AuthViewModel
+// Tạo CompositionLocal để provide AuthViewModel
 val LocalAuthViewModel = compositionLocalOf<AuthViewModel> { error("No AuthViewModel provided") }
+
+// Tạo CompositionLocal để provide ReelPlaybackViewModel
+val LocalReelPlaybackViewModel = compositionLocalOf<ReelPlaybackViewModel> { error("No ReelPlaybackViewModel provided") }
 
 @Composable
 fun RootApp(
     navController: NavHostController,
     deepLinkState: State<Uri?>,
     authViewModel: AuthViewModel = hiltViewModel(),
-    editorVideoViewModel: EditorVideoViewModel = hiltViewModel()
+    editorVideoViewModel: EditorVideoViewModel = hiltViewModel(),
+    reelPlaybackViewModel: ReelPlaybackViewModel = hiltViewModel(),
 ) {
     val tag = "RootApp"
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -113,73 +119,79 @@ fun RootApp(
         }
     }
 
-    AppTheme {
-        Scaffold(
-            bottomBar = {
-                if (shouldShowBottomBar) {
-                    BottomNavigationBar(navController = navController)
-                }
-            },
-        ) { innerPadding ->
-            // show popup update version dialog
-            RootUpdateVersionDialog()
+    CompositionLocalProvider(
+        LocalAuthViewModel provides authViewModel,
+        LocalReelPlaybackViewModel provides reelPlaybackViewModel
+    ) {
+        AppTheme {
+            Scaffold(
+                bottomBar = {
+                    if (shouldShowBottomBar) {
+                        BottomNavigationBar(navController = navController)
+                    }
+                },
+            ) { innerPadding ->
+                // show popup update version dialog
+                RootUpdateVersionDialog()
 
-            NavHost(
-                navController = navController,
-                startDestination = "home",
-            ) {
-                composable(screen = Screen.HomeTab) {
-                    HomeTab(
-                        navController = navController,
-                        topPadding = innerPadding.calculateTopPadding(),
-                        bottomPadding = innerPadding.calculateBottomPadding()
-                    )
-                }
-                composable(screen = Screen.CollectionTab) {
-                    CollectionTab(
-                        navController = navController,
-                        topPadding = innerPadding.calculateTopPadding(),
-                        bottomPadding = innerPadding.calculateBottomPadding()
-                    )
-                }
-                composable(screen = Screen.TrendTab) {
-                    TrendTab(
-                        navController = navController,
-                        topPadding = innerPadding.calculateTopPadding(),
-                        bottomPadding = innerPadding.calculateBottomPadding()
-                    )
-                }
-                composable(screen = Screen.ProfileTab) {
-                    ProfileTab(navController = navController)
-                }
-                // EditorVideoScreen
-                composable(screen = Screen.EditorVideo) {
-                    val selectTypeString = it.getDecodedByKey("selectType")
-                    val selectType = enumValueOf<SelectMediaType>(selectTypeString!!)
-                    val uri = it.getDecodedByKey("uri")?.toUri()
-                    val recording = navController.getParcelable<CameraResult.Record>("recording")
-
-                    val userId = it.getDecodedUserId()
-                    val isExporting by editorVideoViewModel.isExporting.collectAsStateWithLifecycle()
-                    val exportProgress by editorVideoViewModel.exportProgress.collectAsStateWithLifecycle()
-                    val animatedProgress by animateFloatAsState(
-                        targetValue = exportProgress,
-                        animationSpec = tween(durationMillis = 200),
-                        label = "ExportProgressAnimation"
-                    )
-                    EditorTheme {
-                        EditorVideoScreen(
-                            selectType = selectType,
-                            uri = uri,
-                            cameraResult = recording,
-                            userId = userId,
-                            editorVideoViewModel = editorVideoViewModel,
-                            isExporting = isExporting,
-                            animatedProgress = animatedProgress,
-                            onClose = {
-                                navController.popBackStack()
-                            }
+                NavHost(
+                    navController = navController,
+                    startDestination = "home",
+                ) {
+                    composable(screen = Screen.HomeTab) {
+                        HomeTab(
+                            navController = navController,
+                            topPadding = innerPadding.calculateTopPadding(),
+                            bottomPadding = innerPadding.calculateBottomPadding()
                         )
+                    }
+                    composable(screen = Screen.CollectionTab) {
+                        CollectionTab(
+                            navController = navController,
+                            topPadding = innerPadding.calculateTopPadding(),
+                            bottomPadding = innerPadding.calculateBottomPadding()
+                        )
+                    }
+                    composable(screen = Screen.TrendTab) {
+                        TrendTab(
+                            navController = navController,
+                            reelPlaybackViewModel = LocalReelPlaybackViewModel.current,
+                            topPadding = innerPadding.calculateTopPadding(),
+                            bottomPadding = innerPadding.calculateBottomPadding()
+                        )
+                    }
+                    composable(screen = Screen.ProfileTab) {
+                        ProfileTab(navController = navController)
+                    }
+                    // EditorVideoScreen
+                    composable(screen = Screen.EditorVideo) {
+                        val selectTypeString = it.getDecodedByKey("selectType")
+                        val selectType = enumValueOf<SelectMediaType>(selectTypeString!!)
+                        val uri = it.getDecodedByKey("uri")?.toUri()
+                        val recording = navController.getParcelable<CameraResult.Record>("recording")
+
+                        val userId = it.getDecodedUserId()
+                        val isExporting by editorVideoViewModel.isExporting.collectAsStateWithLifecycle()
+                        val exportProgress by editorVideoViewModel.exportProgress.collectAsStateWithLifecycle()
+                        val animatedProgress by animateFloatAsState(
+                            targetValue = exportProgress,
+                            animationSpec = tween(durationMillis = 200),
+                            label = "ExportProgressAnimation"
+                        )
+                        EditorTheme {
+                            EditorVideoScreen(
+                                selectType = selectType,
+                                uri = uri,
+                                cameraResult = recording,
+                                userId = userId,
+                                editorVideoViewModel = editorVideoViewModel,
+                                isExporting = isExporting,
+                                animatedProgress = animatedProgress,
+                                onClose = {
+                                    navController.popBackStack()
+                                }
+                            )
+                        }
                     }
                 }
             }

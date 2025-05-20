@@ -61,15 +61,13 @@ constructor(
     private var currentSettledPage = 0
     private val _firstFrameRenderedPage = MutableStateFlow(-1) // -1: chưa render
     val firstFrameRenderedPage = _firstFrameRenderedPage.asStateFlow()
-    private val _updateThumbnailPage0 = MutableStateFlow(-1)
-    val updateThumbnailPage0 = _updateThumbnailPage0.asStateFlow()
+    private val _firstTimeInitializeCompleted = MutableStateFlow(-1)
+    val firstTimeInitializeCompleted = _firstTimeInitializeCompleted.asStateFlow()
     private val mainPlayerTracker = VideoPerformanceTracker()
     private val preWarmedPages = mutableSetOf<Int>()
     private val fetchSizes = mutableListOf<Int>()
     private val _isVideoProcessing = MutableStateFlow(true) // thể hiện show ui loading
     val isVideoProcessing = _isVideoProcessing.asStateFlow() // thể hiện show ui loading
-    private val _isAllowUserScrollEnabled = MutableStateFlow(true)
-    val isAllowUserScrollEnabled = _isAllowUserScrollEnabled.asStateFlow()
 
     /** initiate main & background ExoPlayer instance
      *
@@ -221,7 +219,7 @@ constructor(
                 val preloadDurationMs = System.currentTimeMillis() - startPreloadTimestamp
                 Timber.tag(tag).d("Background pre warm completed in ${preloadDurationMs}ms, prepare and start video at page 0")
                 _isVideoProcessing.value = false
-                prepareAndStartVideoPage0()
+                _firstTimeInitializeCompleted.value = 0
                 return
             }
             val shortenUrl = _reels.value[page].shortenUrl
@@ -273,7 +271,7 @@ constructor(
             if (shortenSources.isNotEmpty()) {
                 firstTimeProcessBackgroundPlayer(shortenSources)
             } else if (mergedSources.isNotEmpty()) {
-                prepareAndStartVideoPage0()
+                _firstTimeInitializeCompleted.value = 0
             }
         }
     }
@@ -283,44 +281,18 @@ constructor(
      * `prepare()` của main player chỉ nên call ở case sau:
      *
      * First time sau khi background player pre-warm cho possible pages done
+     *
+     *  _firstTimeInitializeCompleted.value = -1 // reset để ko cho trigger `LaunchedEffect(viewModel.firstTimeInitializeCompleted)` nữa
      * */
     @OptIn(UnstableApi::class)
-    fun prepareAndStartVideoPage0() {
-        val prepareAndStartVideoPage0Tag = "prepareAndStartVideoPage0"
-        val page0 = 0
+    fun firstTimePrepareVideoAtFirstPage(onUpdatePlayerView: (ExoPlayer) -> Unit) {
+        val page = 0
         mainPlayerTracker.invalidateSession()
-        val listener = object : Player.Listener {
-            var localSeekCompleted = false
-            var localFirstFrameRendered = false
-            override fun onRenderedFirstFrame() {
-                if (currentSettledPage == page0) {
-                    Timber.tag(prepareAndStartVideoPage0Tag).d("First frame rendered for page $page0")
-                    localFirstFrameRendered = true
-                    tryAttachAndPlay()
-                }
-            }
-            override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
-                if (reason == Player.DISCONTINUITY_REASON_SEEK) {
-                    Timber.tag(prepareAndStartVideoPage0Tag).d("Seek to page $page0 completed")
-                    localSeekCompleted = true
-                    tryAttachAndPlay()
-                }
-            }
-            private fun tryAttachAndPlay() {
-                if (localSeekCompleted && localFirstFrameRendered) {
-                    Timber.tag(prepareAndStartVideoPage0Tag).d("Attaching playerView and playing for page $page0")
-                    _updateThumbnailPage0.value = page0
-                    _isAllowUserScrollEnabled.value = true
-                    if (!mainExoPlayer!!.isPlaying) {
-                        mainExoPlayer!!.playWhenReady = true
-                    }
-                    mainExoPlayer!!.removeListener(this)
-                }
-            }
-        }
-        mainExoPlayer!!.addListener(listener)
-        mainExoPlayer!!.seekTo(page0, SEEK_TO_DEFAULT_VALUE)
         mainExoPlayer!!.prepare()
+        mainExoPlayer!!.playWhenReady = false
+        _firstFrameRenderedPage.value = page
+        _firstTimeInitializeCompleted.value = -1
+        onUpdatePlayerView(mainExoPlayer!!)
     }
 
     /** Only call at first time fetch reel data (api fetch reel page 1)
@@ -581,9 +553,8 @@ constructor(
      * nếu ko chờ `seekTo()` hoàn thành và `onRenderedFirstFrame()` emitted mà play ngay thì sẽ bị nháy last frame của page trước đó do `mainExoPlayer` giữ frame cũ và đang processing `seekTo()` nhưng `playerView` lại render trước)
      * */
     @OptIn(UnstableApi::class)
-    fun seekToPageAndPlayIfNeeded(page: Int, onCompleted: (ExoPlayer) -> Unit) {
+    fun seekToPageAndPlayIfNeeded(page: Int, onUpdatePlayerView: (ExoPlayer) -> Unit) {
         val seekToPageTag = "seekToPageAndPlayIfNeeded"
-        _isAllowUserScrollEnabled.value = false
         mainExoPlayer?.let { player ->
             if (page != 0) {
                 mainPlayerTracker.invalidateSession()
@@ -592,10 +563,10 @@ constructor(
             if (player.mediaItemCount > 0 && player.playbackState != Player.STATE_IDLE) {
                 // Kiểm tra nếu page đã seek và first frame đã render
                 if (player.currentMediaItemIndex == page && _firstFrameRenderedPage.value == page) {
-                    Timber.tag(seekToPageTag).d("Page $page already seeked and first frame rendered, attaching playerView")
+                    Timber.tag(seekToPageTag).d("Page $page already sought and first frame rendered, attaching playerView")
                     if (!player.isPlaying) {
                         player.playWhenReady = true
-                        onCompleted(player)
+                        onUpdatePlayerView(player)
                     }
                     return
                 }
@@ -620,28 +591,28 @@ constructor(
                         if (localSeekCompleted && localFirstFrameRendered) {
                             Timber.tag(seekToPageTag).d("Attaching playerView and playing for page $page")
                             _firstFrameRenderedPage.value = currentSettledPage
-                            _isAllowUserScrollEnabled.value = true
                             if (!player.isPlaying) {
                                 player.playWhenReady = true
-                                onCompleted(player)
                             }
                             player.removeListener(this)
+                            onUpdatePlayerView(player)
                         }
                     }
                 }
                 player.addListener(listener)
                 player.seekTo(page, SEEK_TO_DEFAULT_VALUE)
+                onUpdatePlayerView(player)
             }
         }
     }
 
     /** cần check `isPlaying` Bởi vì `startPlay` có thể bị triggered spam từ `ReelVideoPlayer`
      * */
-    fun startPlay(onCompleted: (ExoPlayer) -> Unit) {
+    fun startPlay(onUpdatePlayerView: (ExoPlayer) -> Unit) {
         mainExoPlayer?.let { player ->
             if (!player.isPlaying) {
                 player.playWhenReady = true
-                onCompleted(player)
+                onUpdatePlayerView(player)
             }
         }
     }
@@ -649,16 +620,17 @@ constructor(
     /** cần check `isPlaying` Bởi vì `startPause` có thể bị triggered spam từ `ReelVideoPlayer`
      * */
     @OptIn(UnstableApi::class)
-    fun startPause(onCompleted: (ExoPlayer) -> Unit) {
+    fun startPause(onUpdatePlayerView: (ExoPlayer) -> Unit) {
         mainExoPlayer?.let { player ->
             if (player.isPlaying) {
                 player.playWhenReady = false
-                onCompleted(player)
+                onUpdatePlayerView(player)
             }
         }
     }
 
     private fun startMainRelease() {
+        if (mainExoPlayer == null) return
         _mediaSources.clear()
         AudioFocusManager(context).abandonAudioFocus()
         mainExoPlayer!!.seekTo(SEEK_TO_DEFAULT_VALUE)
@@ -670,6 +642,7 @@ constructor(
     }
 
     private fun startBackgroundRelease() {
+        if (backgroundExoPlayer == null) return
         _backgroundMediaSources.clear()
         backgroundExoPlayer!!.stop()
         backgroundExoPlayer!!.clearMediaItems()

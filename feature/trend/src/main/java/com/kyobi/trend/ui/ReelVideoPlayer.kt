@@ -73,13 +73,13 @@ fun ReelVideoPlayer(
         }
     }
 
-    // Only triggered for page 0
-    LaunchedEffect(pageIndex, viewModel.updateThumbnailPage0) {
-        viewModel.updateThumbnailPage0.collect { renderedPage ->
-            if (renderedPage == pageIndex) {
-                if (showThumbnail) {
-                    showThumbnail = false
-                    Timber.tag(tag).d("Hiding thumbnail for page $pageIndex")
+    // Only triggered case first time
+    LaunchedEffect(viewModel.firstTimeInitializeCompleted) {
+        viewModel.firstTimeInitializeCompleted.collect { renderedPage ->
+            if (renderedPage == -1) return@collect
+            if (renderedPage == 0) {
+                viewModel.firstTimePrepareVideoAtFirstPage { player ->
+                    playerView.player = player
                 }
             }
         }
