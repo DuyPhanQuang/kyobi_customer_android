@@ -1,4 +1,4 @@
-package com.kyobi.feature.collection
+package com.kyobi.feature.collection.screen.tab
 
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow

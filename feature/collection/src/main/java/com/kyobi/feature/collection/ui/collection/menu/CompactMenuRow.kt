@@ -1,4 +1,4 @@
-package com.kyobi.feature.collection.ui.tab.category
+package com.kyobi.feature.collection.ui.collection.menu
 
 import android.graphics.Color
 import androidx.compose.foundation.background
@@ -31,18 +31,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import coil.ImageLoader
 import com.kyobi.composable.R
-import com.kyobi.domain.model.CategoryMenu
+import com.kyobi.feature.collection.screen.collection.model.CollectionMenu
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
 
 @Composable
-fun CompactCategoryRow(
+fun CompactMenuRow(
     modifier: Modifier,
-    categories: List<CategoryMenu>,
     imageLoader: ImageLoader,
+    collectionMenus: List<CollectionMenu>,
     onAllClick: () -> Unit,
-    selectedCategoryId: String?,
-    onItemClick: (CategoryMenu) -> Unit
+    selectedCollectionId: String?,
+    onItemClick: (CollectionMenu) -> Unit
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
     val iconSize = MaterialTheme.kyobiTheme.icon.lg
@@ -66,17 +66,17 @@ fun CompactCategoryRow(
             )
         ) {
             items(
-                categories,
-                key = { "compact_category_${it.id}_${it.filterHandle}" }
-            ) { category ->
-                CollectionCategoryTile(
+                collectionMenus,
+                key = { "compact_menu_${it.id}_${it.filterHandle}" }
+            ) { collectionMenu ->
+                CollectionMenuTile(
                     modifier = Modifier.padding(
                         top = spacing.dp8
                     ),
-                    category = category,
                     imageLoader = imageLoader,
-                    isSelected = category.id == selectedCategoryId,
-                    onItemClick = { onItemClick(category) }
+                    collectionMenu = collectionMenu,
+                    isSelected = collectionMenu.id == selectedCollectionId,
+                    onItemClick = { onItemClick(collectionMenu) }
                 )
             }
         }

@@ -1,4 +1,4 @@
-package com.kyobi.feature.collection
+package com.kyobi.feature.collection.screen.tab
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -20,7 +20,7 @@ class CollectionTabViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val getSubMenusUseCase: GetSubMenusUseCase,
     private val imageLoader: ImageLoader,
-    private val collectionEventBus: CollectionTabEventBus
+    private val collectionTabEventBus: CollectionTabEventBus
 ): ViewModel() {
     private val tag = "CollectionTabViewModel"
     private val _uiState = MutableStateFlow(CollectionTabUiState())
@@ -31,6 +31,12 @@ class CollectionTabViewModel @Inject constructor(
     }
 
     fun getImageLoader(): ImageLoader = imageLoader
+
+    fun getCategorySelected(categoryId: String): CategoryMenu? {
+        val itemSelected = _uiState.value.selectedCategory ?: return null
+        if (categoryId == itemSelected.id) return itemSelected
+        return null
+    }
 
     private fun fetchSubMenus() {
         viewModelScope.launchOnIO {
@@ -46,9 +52,12 @@ class CollectionTabViewModel @Inject constructor(
 
     fun updateCategorySelected(category: CategoryMenu) {
         if (category.id == _uiState.value.selectedCategoryId) return
-        _uiState.value = _uiState.value.copy(selectedCategoryId = category.id)
+        _uiState.value = _uiState.value.copy(
+            selectedCategory = category,
+            selectedCategoryId = category.id
+        )
         viewModelScope.launchOnIO {
-            collectionEventBus.emitCollectionTabEvent(CollectionTabEvent.CategorySelected(category.filterHandle))
+            collectionTabEventBus.emitCollectionTabEvent(CollectionTabEvent.CategorySelected(category.filterHandle))
             Timber.tag(tag).d("Emitted CategorySelected event with filterHandle: ${category.filterHandle}")
         }
     }
@@ -57,7 +66,7 @@ class CollectionTabViewModel @Inject constructor(
         if (subCategory.id == _uiState.value.selectedSubCategoryId) return
         _uiState.value = _uiState.value.copy(selectedSubCategoryId = subCategory.id)
         viewModelScope.launchOnIO {
-            collectionEventBus.emitCollectionTabEvent(CollectionTabEvent.SubCategorySelected(subCategory.filterHandle))
+            collectionTabEventBus.emitCollectionTabEvent(CollectionTabEvent.SubCategorySelected(subCategory.filterHandle))
             Timber.tag(tag).d("Emitted SubCategorySelected event with filterHandle: ${subCategory.filterHandle}")
         }
     }

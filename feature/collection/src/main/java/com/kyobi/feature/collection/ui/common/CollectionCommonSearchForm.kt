@@ -1,4 +1,4 @@
-package com.kyobi.feature.collection.ui.tab.header
+package com.kyobi.feature.collection.ui.common
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,7 +23,7 @@ import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.paragraphXs
 
 @Composable
-fun CollectionSearchForm(
+fun CollectionCommonSearchForm(
     modifier: Modifier,
     onSearchClick: () -> Unit,
 ) {

@@ -6,5 +6,7 @@ data class CategoryMenu(
     val filterHandle: String,
     val groups: List<SubCategoryGroup>? = emptyList(),
     val title: String,
-    val order: Int
+    val order: Int,
+    val thumbnail: String? = null,
+    val thumbnailInfo: ShopifyMedia? = null
 )

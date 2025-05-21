@@ -10,6 +10,7 @@ dependencies {
     COMMON_COMPOSABLE
     FEATURECOMMON_AUTH
     FEATURECOMMON_PRODUCT
+    FEATURECOMMON_ROUTES
 }
 android {
     namespace = "com.kyobi.feature.collection"

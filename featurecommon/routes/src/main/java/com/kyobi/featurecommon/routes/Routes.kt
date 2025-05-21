@@ -4,11 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.kyobi.core.utils.CoreUtils.decodeBase64
 import com.kyobi.core.utils.CoreUtils.encodeBase64
 
-sealed class Screen(
+sealed class Routes(
     val routeScheme: String,
     val arguments: List<NamedNavArgument>,
 ) {
@@ -24,59 +25,73 @@ sealed class Screen(
         )
     }
 
-    data object HomeTab : Screen(
-        routeScheme = "home",
+    // bottom tab
+    data object HomeTab : Routes(
+        routeScheme = "home-tab",
         arguments = emptyList(),
     )
 
-    data object CollectionTab : Screen(
-        routeScheme = "collection",
+    // bottom tab
+    data object CollectionTab : Routes(
+        routeScheme = "collection-tab",
         arguments = emptyList(),
     )
 
-    // EditorVideoScreen
-    data object EditorVideo : Screen(
-        routeScheme = "editor-video?selectType={selectType}&uri={uri}&userId={userId}",
+    // bottom tab
+    data object TrendTab : Routes(
+        routeScheme = "trend-tab",
+        arguments = emptyList(),
+    )
+
+    // bottom tab
+    data object ProfileTab : Routes(
+        routeScheme = "profile-tab",
+        arguments = emptyList(),
+    )
+
+    data object Collection : Routes(
+        routeScheme = "collection?categoryId={categoryId}",
         arguments = listOf(
-            navArgument("selectType") {
-                nullable = false
-                type = androidx.navigation.NavType.StringType
-            },
-            navArgument("uri") {
+            navArgument("categoryId") {
                 nullable = true
                 defaultValue = null
-                type = androidx.navigation.NavType.StringType
-            },
-            navArgument("userId") {
-                nullable = true
-                defaultValue = null
-                type = androidx.navigation.NavType.StringType
+                type = NavType.StringType
             },
         ),
     )
 
-    data object TrendTab : Screen(
-        routeScheme = "trend",
-        arguments = emptyList(),
-    )
-
-    data object ProfileTab : Screen(
-        routeScheme = "profile",
-        arguments = emptyList(),
+    data object EditorVideo : Routes(
+        routeScheme = "editor-video?selectType={selectType}&uri={uri}&userId={userId}",
+        arguments = listOf(
+            navArgument("selectType") {
+                nullable = false
+                type = NavType.StringType
+            },
+            navArgument("uri") {
+                nullable = true
+                defaultValue = null
+                type = NavType.StringType
+            },
+            navArgument("userId") {
+                nullable = true
+                defaultValue = null
+                type = NavType.StringType
+            },
+        ),
     )
 
     companion object {
-        private const val BASE_URL = "http://192.168.148.2:3000"
+        private const val BASE_URL = "http://192.168.148.2:3000" //deeplink url website
         const val BASE_64_URL_PREFIX = "data:text/plain;base64,"
     }
 }
 
 fun NavBackStackEntry.getDecodedUserId(): String? {
-    return this.arguments?.getString("userId")?.decodeBase64(Screen.BASE_64_URL_PREFIX)
+    return this.arguments?.getString("userId")?.decodeBase64(Routes.BASE_64_URL_PREFIX)
 }
 
 fun NavBackStackEntry.getDecodedByKey(key: String): String? {
-    return this.arguments?.getString(key)?.decodeBase64(Screen.BASE_64_URL_PREFIX)
+    return this.arguments?.getString(key)?.decodeBase64(Routes.BASE_64_URL_PREFIX)
 }
 
 @Composable

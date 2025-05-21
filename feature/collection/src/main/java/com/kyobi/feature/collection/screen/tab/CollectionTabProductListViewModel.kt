@@ -1,4 +1,4 @@
-package com.kyobi.feature.collection
+package com.kyobi.feature.collection.screen.tab
 
 import androidx.lifecycle.viewModelScope
 import com.kyobi.core.coroutines.launchOnIO

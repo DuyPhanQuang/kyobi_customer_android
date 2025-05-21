@@ -121,6 +121,8 @@ class GetSubMenusUseCaseImpl @Inject constructor(
                 filterHandle = flattenCategoryFields["filter_handle"] as? String ?: "",
                 title = flattenCategoryFields["label"] as? String ?: "",
                 order = (flattenCategoryFields["order"] as? String)?.toIntOrNull() ?: 0,
+                thumbnail = null,
+                thumbnailInfo = null,
                 groups = groups
             )
         }.sortedBy { it.order }
@@ -142,7 +144,8 @@ class GetSubMenusUseCaseImpl @Inject constructor(
                     handle = subcategory.handle,
                     filterHandle = flattenSubcategoryFields["filter_handle"] as? String ?: "",
                     title = flattenSubcategoryFields["label"] as? String ?: "",
-                    thumbnail = flattenSubcategoryFields["thumbnail"] as? String
+                    thumbnail = flattenSubcategoryFields["thumbnail"] as? String,
+                    thumbnailInfo = null
                 )
             }
     }

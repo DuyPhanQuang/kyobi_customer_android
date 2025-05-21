@@ -1,4 +1,4 @@
-package com.kyobi.feature.collection.ui.tab.header
+package com.kyobi.feature.collection.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -13,7 +13,7 @@ import com.kyobi.composable.space.XsSpaceX
 import com.kyobi.theme.kyobiTheme
 
 @Composable
-fun CollectionSectionHeader(
+fun CollectionCommonSectionHeader(
     modifier: Modifier = Modifier,
     onSearchClick: () -> Unit,
     onFavouritesClick: () -> Unit,
@@ -24,7 +24,7 @@ fun CollectionSectionHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        CollectionSearchForm(
+        CollectionCommonSearchForm(
             modifier = Modifier.weight(1f),
             onSearchClick = onSearchClick
         )

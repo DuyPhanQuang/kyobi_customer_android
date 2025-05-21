@@ -17,7 +17,7 @@ import com.kyobi.trend.ui.ReelPlaybackViewModel
 fun TrendTab(
     navController: NavController,
     viewModel: TrendTabViewModel = hiltViewModel(),
-    authViewModel: AuthViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel,
     reelPlaybackViewModel: ReelPlaybackViewModel,
     topPadding: Dp,
     bottomPadding: Dp,
@@ -32,5 +32,4 @@ fun TrendTab(
         viewModel = reelPlaybackViewModel,
         imageLoader = imageLoader
     )
-
 }

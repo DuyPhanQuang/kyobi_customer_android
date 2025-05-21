@@ -1,4 +1,4 @@
-package com.kyobi.feature.collection.ui.tab.category
+package com.kyobi.feature.collection.ui.collection.menu
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.expandVertically
@@ -9,47 +9,44 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import coil.ImageLoader
-import com.kyobi.domain.model.CategoryMenu
+import com.kyobi.feature.collection.screen.collection.model.CollectionMenu
 
 @Composable
-fun CollectionSectionCategory(
+fun CollectionSectionMenu(
     modifier: Modifier = Modifier,
-    categories: List<CategoryMenu>,
     imageLoader: ImageLoader,
+    collectionMenus: List<CollectionMenu>,
+    selectedCollectionId: String?,
     expanded: Boolean = false,
     onAllClick: () -> Unit,
-    selectedCategoryId: String?,
     onCollapseClick: () -> Unit,
-    onCategoryClick: (CategoryMenu) -> Unit
+    onMenuItemClick: (CollectionMenu) -> Unit
 ) {
     AnimatedContent(
         targetState = expanded,
         transitionSpec = {
             (fadeIn() + expandVertically()).togetherWith(fadeOut() + shrinkVertically())
         },
-        label = "CollectionSectionCategoryExpandedTransition"
+        label = "CollectionSectionMenuExpandedTransition"
     ) { targetExpanded ->
         if (!targetExpanded) {
-            CompactCategoryRow(
+            CompactMenuRow(
                 modifier = modifier,
-                categories = categories,
                 imageLoader = imageLoader,
+                collectionMenus = collectionMenus,
                 onAllClick = onAllClick,
-                selectedCategoryId = selectedCategoryId,
-                onItemClick = onCategoryClick
+                selectedCollectionId = selectedCollectionId,
+                onItemClick = onMenuItemClick
             )
         } else {
-            ExpandedCategoryGrid(
+            ExpandedMenuGrid(
                 modifier = modifier,
-                categories = categories,
                 imageLoader = imageLoader,
+                collectionMenus = collectionMenus,
                 onCollapseClick = onCollapseClick,
-                selectedCategoryId = selectedCategoryId,
-                onItemClick = onCategoryClick
+                selectedCollectionId = selectedCollectionId,
+                onItemClick = onMenuItemClick
             )
         }
     }
 }
-
-
-

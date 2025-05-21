@@ -29,8 +29,11 @@ import com.kyobi.createreel.editor_video.EditorVideoScreen
 import com.kyobi.createreel.editor_video.EditorVideoViewModel
 import com.kyobi.createreel.editor_video.SelectMediaType
 import com.kyobi.customer.extension.composable
-import com.kyobi.feature.collection.CollectionTab
-import com.kyobi.featurecommon.routes.Screen
+import com.kyobi.domain.model.CategoryMenu
+import com.kyobi.feature.collection.screen.collection.CollectionScreen
+import com.kyobi.feature.collection.screen.tab.CollectionTab
+import com.kyobi.feature.collection.screen.tab.CollectionTabViewModel
+import com.kyobi.featurecommon.routes.Routes
 import com.kyobi.featurecommon.routes.getDecodedByKey
 import com.kyobi.featurecommon.routes.getDecodedUserId
 import com.kyobi.featurecommon.routes.getParcelable
@@ -40,6 +43,9 @@ import ly.img.camera.core.CameraResult
 // Tạo CompositionLocal để provide AuthViewModel
 val LocalAuthViewModel = compositionLocalOf<AuthViewModel> { error("No AuthViewModel provided") }
 
+// Tạo CompositionLocal để provide CollectionTabViewModel
+val LocalCollectionTabViewModel = compositionLocalOf<CollectionTabViewModel> { error("No CollectionTabViewModel provided") }
+
 // Tạo CompositionLocal để provide ReelPlaybackViewModel
 val LocalReelPlaybackViewModel = compositionLocalOf<ReelPlaybackViewModel> { error("No ReelPlaybackViewModel provided") }
 
@@ -48,13 +54,14 @@ fun RootApp(
     navController: NavHostController,
     deepLinkState: State<Uri?>,
     authViewModel: AuthViewModel = hiltViewModel(),
+    collectionTabViewModel: CollectionTabViewModel = hiltViewModel(),
     editorVideoViewModel: EditorVideoViewModel = hiltViewModel(),
     reelPlaybackViewModel: ReelPlaybackViewModel = hiltViewModel(),
 ) {
     val tag = "RootApp"
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val shouldShowBottomBar = currentRoute != Screen.EditorVideo.routeScheme
+    val shouldShowBottomBar = currentRoute != Routes.EditorVideo.routeScheme
 
     // Xử lý deep link
     LaunchedEffect(deepLinkState.value) {
@@ -64,39 +71,39 @@ fun RootApp(
             try {
                 when (deepLinkUri.path) {
                     "/" -> {
-                        navController.navigate(Screen.HomeTab.routeScheme) {
+                        navController.navigate(Routes.HomeTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
                             launchSingleTop = true
                         }
                     }
-                    "/home" -> {
-                        navController.navigate(Screen.HomeTab.routeScheme) {
+                    "/home-tab" -> {
+                        navController.navigate(Routes.HomeTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
                             launchSingleTop = true
                         }
                     }
-                    "/collection" -> {
-                        navController.navigate(Screen.CollectionTab.routeScheme) {
+                    "/collection-tab" -> {
+                        navController.navigate(Routes.CollectionTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
                             launchSingleTop = true
                         }
                     }
-                    "/trend" -> {
-                        navController.navigate(Screen.TrendTab.routeScheme) {
+                    "/trend-tab" -> {
+                        navController.navigate(Routes.TrendTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
                             launchSingleTop = true
                         }
                     }
-                    "/profile" -> {
-                        navController.navigate(Screen.ProfileTab.routeScheme) {
+                    "/profile-tab" -> {
+                        navController.navigate(Routes.ProfileTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
@@ -105,7 +112,7 @@ fun RootApp(
                     }
                     else -> {
                         Timber.tag(tag).w("Unknown deeplink path: ${deepLinkUri.path}, falling back to Home")
-                        navController.navigate(Screen.HomeTab.routeScheme) {
+                        navController.navigate(Routes.HomeTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
@@ -121,6 +128,7 @@ fun RootApp(
 
     CompositionLocalProvider(
         LocalAuthViewModel provides authViewModel,
+        LocalCollectionTabViewModel provides collectionTabViewModel,
         LocalReelPlaybackViewModel provides reelPlaybackViewModel
     ) {
         AppTheme {
@@ -136,40 +144,50 @@ fun RootApp(
 
                 NavHost(
                     navController = navController,
-                    startDestination = "home",
+                    startDestination = "home-tab",
                 ) {
-                    composable(screen = Screen.HomeTab) {
+                    composable(routes = Routes.HomeTab) {
                         HomeTab(
                             navController = navController,
                             topPadding = innerPadding.calculateTopPadding(),
                             bottomPadding = innerPadding.calculateBottomPadding()
                         )
                     }
-                    composable(screen = Screen.CollectionTab) {
+                    composable(routes = Routes.CollectionTab) {
                         CollectionTab(
                             navController = navController,
-                            topPadding = innerPadding.calculateTopPadding(),
+                            authViewModel = LocalAuthViewModel.current,
+                            viewModel = LocalCollectionTabViewModel.current,
                             bottomPadding = innerPadding.calculateBottomPadding()
                         )
                     }
-                    composable(screen = Screen.TrendTab) {
+                    composable(routes = Routes.TrendTab) {
                         TrendTab(
                             navController = navController,
+                            authViewModel = LocalAuthViewModel.current,
                             reelPlaybackViewModel = LocalReelPlaybackViewModel.current,
                             topPadding = innerPadding.calculateTopPadding(),
                             bottomPadding = innerPadding.calculateBottomPadding()
                         )
                     }
-                    composable(screen = Screen.ProfileTab) {
+                    composable(routes = Routes.ProfileTab) {
                         ProfileTab(navController = navController)
                     }
-                    // EditorVideoScreen
-                    composable(screen = Screen.EditorVideo) {
+                    composable(routes = Routes.Collection) {
+                        val categoryIdFromNav = it.getDecodedByKey("categoryId")
+                        CollectionScreen(
+                            navController = navController,
+                            authViewModel = LocalAuthViewModel.current,
+                            collectionTabViewModel = LocalCollectionTabViewModel.current,
+                            categoryId = categoryIdFromNav,
+                            bottomPadding = innerPadding.calculateBottomPadding()
+                        )
+                    }
+                    composable(routes = Routes.EditorVideo) {
                         val selectTypeString = it.getDecodedByKey("selectType")
                         val selectType = enumValueOf<SelectMediaType>(selectTypeString!!)
                         val uri = it.getDecodedByKey("uri")?.toUri()
                         val recording = navController.getParcelable<CameraResult.Record>("recording")
-
                         val userId = it.getDecodedUserId()
                         val isExporting by editorVideoViewModel.isExporting.collectAsStateWithLifecycle()
                         val exportProgress by editorVideoViewModel.exportProgress.collectAsStateWithLifecycle()

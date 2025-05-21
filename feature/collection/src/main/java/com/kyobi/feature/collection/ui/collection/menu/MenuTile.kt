@@ -1,4 +1,4 @@
-package com.kyobi.feature.collection.ui.tab.category
+package com.kyobi.feature.collection.ui.collection.menu
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,19 +20,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import coil.ImageLoader
 import com.kyobi.composable.image.AppImage
-import com.kyobi.domain.model.CategoryMenu
+import com.kyobi.feature.collection.screen.collection.model.CollectionMenu
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.paragraphXs
 import java.util.Locale
 
 @Composable
-fun CollectionCategoryTile(
+fun CollectionMenuTile(
     modifier: Modifier = Modifier,
-    category: CategoryMenu,
     imageLoader: ImageLoader,
+    collectionMenu: CollectionMenu,
     isSelected: Boolean = false,
     onItemClick: () -> Unit,
-) {
+    ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
     val width = MaterialTheme.kyobiTheme.width
     val colorTheme = MaterialTheme.kyobiTheme.colors
@@ -66,9 +66,9 @@ fun CollectionCategoryTile(
         Text(
             modifier = Modifier
                 .padding(top = spacing.dp4),
-            text = category.title,
+            text = collectionMenu.title,
             style = typographyTheme.paragraphXs,
-            color = if (category.title.lowercase(Locale.getDefault()) == "sale")
+            color = if (collectionMenu.title.lowercase(Locale.getDefault()) == "sale")
                 colorTheme.text.red700 else
                 colorTheme.onBackground,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,

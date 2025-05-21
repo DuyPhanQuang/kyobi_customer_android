@@ -6,16 +6,16 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
-import com.kyobi.featurecommon.routes.Screen
+import com.kyobi.featurecommon.routes.Routes
 
 fun NavGraphBuilder.composable(
-    screen: Screen,
+    routes: Routes,
     content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit
 ) {
     composable(
-        route = screen.routeScheme,
-        deepLinks = listOf(navDeepLink { uriPattern = screen.deeplinkScheme }),
-        arguments = screen.arguments,
+        route = routes.routeScheme,
+        deepLinks = listOf(navDeepLink { uriPattern = routes.deeplinkScheme }),
+        arguments = routes.arguments,
         content = content,
     )
 }

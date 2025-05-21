@@ -44,7 +44,7 @@ import com.kyobi.createreel.Secrets
 import com.kyobi.createreel.editor_video.SelectMediaType
 import com.kyobi.customer.R
 import com.kyobi.featurecommon.auth.AuthViewModel
-import com.kyobi.featurecommon.routes.Screen
+import com.kyobi.featurecommon.routes.Routes
 import com.kyobi.theme.Colors
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.paragraphXs
@@ -73,12 +73,12 @@ data class BottomNavItem(
 
 val bottomNavItems = listOf(
     BottomNavItem(
-        route = "home",
+        route = "home-tab",
         iconResId = R.drawable.ic_home_tab,
         label = "Shop"
     ),
     BottomNavItem(
-        route = "collection",
+        route = "collection-tab",
         iconResId = R.drawable.ic_category_tab,
         label = "Collection"
     ),
@@ -88,12 +88,12 @@ val bottomNavItems = listOf(
         label = "Lookbook"
     ),
     BottomNavItem(
-        route = "trend",
+        route = "trend-tab",
         iconResId = R.drawable.ic_category_tab,
         label = "Trend"
     ),
     BottomNavItem(
-        route = "profile",
+        route = "profile-tab",
         iconResId = R.drawable.ic_profile_tab,
         label = "Profile",
         badgeCount = 3
@@ -125,7 +125,7 @@ fun BottomNavigationBar(
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 Timber.tag(tag).d("video URI (original): $uri")
-                val route = Screen.EditorVideo.getRoute(
+                val route = Routes.EditorVideo.getRoute(
                     "selectType" to SelectMediaType.VIDEO.toString(),
                     "uri" to uri.toString(),
                     "userId" to userId
@@ -141,7 +141,7 @@ fun BottomNavigationBar(
             is CameraResult.Record -> {
                 Timber.tag(tag).d("cameraResult (original): $result")
                 navController.currentBackStackEntry?.savedStateHandle?.set("recording", result)
-                val route = Screen.EditorVideo.getRoute(
+                val route = Routes.EditorVideo.getRoute(
                     "selectType" to SelectMediaType.CAMERA_RECORD.toString(),
                     "userId" to userId
                 )
@@ -156,7 +156,7 @@ fun BottomNavigationBar(
         containerColor = MaterialTheme.kyobiTheme.colors.surface,
         contentColor = MaterialTheme.kyobiTheme.colors.onSurface
     ) {
-        // Danh sách các item theo thứ tự: Home, Catalog, Lookbook, Trend, Profile
+        // Danh sách các bottom tab item theo thứ tự: Home, Collection, Lookbook, Trend, Profile
         listOf(
             NavBarItemType.HOME,
             NavBarItemType.CATALOG,

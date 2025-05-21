@@ -1,4 +1,4 @@
-package com.kyobi.feature.collection
+package com.kyobi.feature.collection.screen.tab
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -35,16 +35,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.SubcategoryMenu
 import com.kyobi.feature.collection.ui.tab.category.CollectionSectionCategory
-import com.kyobi.feature.collection.ui.tab.header.CollectionSectionHeader
+import com.kyobi.feature.collection.ui.common.CollectionCommonSectionHeader
 import com.kyobi.feature.collection.ui.tab.products.CollectionSectionProductsGridView
 import com.kyobi.feature.collection.ui.tab.sub_category.CollectionSectionSubCategory
 import com.kyobi.featurecommon.auth.AuthViewModel
+import com.kyobi.featurecommon.routes.Routes
 import com.kyobi.theme.Colors
 import com.kyobi.theme.Dimension
 import com.kyobi.theme.kyobiTheme
@@ -53,9 +53,8 @@ import com.kyobi.theme.kyobiTheme
 @Composable
 fun CollectionTab(
     navController: NavController,
-    viewModel: CollectionTabViewModel = hiltViewModel(),
-    authViewModel: AuthViewModel = hiltViewModel(),
-    topPadding: Dp,
+    viewModel: CollectionTabViewModel,
+    authViewModel: AuthViewModel,
     bottomPadding: Dp,
 ) {
     val tag = "CollectionTab"
@@ -63,14 +62,14 @@ fun CollectionTab(
     val imageLoader = viewModel.getImageLoader()
     val lazyListState = rememberLazyListState()
     val subCategoryLazyListState = rememberLazyListState()
-    val productLazyListState = rememberLazyGridState()
+    val productLazyGridState = rememberLazyGridState()
     val topAppBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topAppBarState)
 
     var showCategorySection by remember { mutableStateOf(true) }
     var lastVisibleItemIndex by remember { mutableIntStateOf(0) }
-    val currentVisibleItemIndex by remember { derivedStateOf { productLazyListState.firstVisibleItemIndex } }
-    var showAllCategories by remember { mutableStateOf(false) }
+    val currentVisibleItemIndex by remember { derivedStateOf { productLazyGridState.firstVisibleItemIndex } }
+    var expandedCategorySection by remember { mutableStateOf(false) }
 
     val selectedCategoryId = uiState.selectedCategoryId
     val selectedSubCategoryId = uiState.selectedSubCategoryId
@@ -99,14 +98,16 @@ fun CollectionTab(
         // scroll up
         if (currentVisibleItemIndex < lastVisibleItemIndex || currentVisibleItemIndex == 0) {
             showCategorySection = true
-            showAllCategories = false
+            expandedCategorySection = false
         }
         lastVisibleItemIndex = currentVisibleItemIndex
     }
 
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val spacing = MaterialTheme.kyobiTheme.spacing
+
     Scaffold(
-        modifier = Modifier
-            .statusBarsPadding(),
+        modifier = Modifier.statusBarsPadding(),
         topBar = {
             TopAppBar(
                 modifier = Modifier
@@ -114,21 +115,21 @@ fun CollectionTab(
                 scrollBehavior = scrollBehavior,
                 windowInsets = WindowInsets(MaterialTheme.kyobiTheme.width.dp0),
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.kyobiTheme.colors.background,
-                    titleContentColor = MaterialTheme.kyobiTheme.colors.background,
-                    scrolledContainerColor = MaterialTheme.kyobiTheme.colors.background,
+                    containerColor = colorTheme.background,
+                    titleContentColor = colorTheme.background,
+                    scrolledContainerColor = colorTheme.background,
                 ),
                 title = {
-                    CollectionSectionHeader(
+                    CollectionCommonSectionHeader(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(MaterialTheme.kyobiTheme.height.dp88)
-                            .background(MaterialTheme.kyobiTheme.colors.background)
+                            .background(colorTheme.background)
                             .padding(
-                                start = MaterialTheme.kyobiTheme.spacing.dp0,
-                                end = MaterialTheme.kyobiTheme.spacing.dp14,
-                                top = MaterialTheme.kyobiTheme.spacing.dp8,
-                                bottom = MaterialTheme.kyobiTheme.spacing.dp8
+                                start = spacing.dp0,
+                                end = spacing.dp14,
+                                top = spacing.dp8,
+                                bottom = spacing.dp8
                             ),
                         onSearchClick = {
                         },
@@ -149,7 +150,7 @@ fun CollectionTab(
             item {
                 AnimatedVisibility(
                     modifier = Modifier
-                        .padding(top = MaterialTheme.kyobiTheme.spacing.dp2)
+                        .padding(top = spacing.dp2)
                         .drawBehind {
                             val strokeWidth = Dimension.dp1.toPx()
                             val borderColor = Colors().stone100
@@ -167,9 +168,9 @@ fun CollectionTab(
                     CollectionSectionCategory(
                         categories = categoryMenus,
                         imageLoader = imageLoader,
-                        expanded = showAllCategories,
-                        onAllClick = { showAllCategories = true },
-                        onCollapseClick = { showAllCategories = false },
+                        expanded = expandedCategorySection,
+                        onAllClick = { expandedCategorySection = true },
+                        onCollapseClick = { expandedCategorySection = false },
                         selectedCategoryId = selectedCategoryId,
                         onCategoryClick = { category ->
                             viewModel.updateCategorySelected(category)
@@ -192,7 +193,7 @@ fun CollectionTab(
                                 strokeWidth = strokeWidth
                             )
                         }
-                        .padding(top = MaterialTheme.kyobiTheme.spacing.dp2)
+                        .padding(top = spacing.dp2)
                 ) {
                     CollectionSectionSubCategory(
                         modifier = Modifier
@@ -211,8 +212,17 @@ fun CollectionTab(
                             .weight(1f)
                             .fillMaxHeight(),
                         imageLoader = imageLoader,
-                        lazyListState = productLazyListState,
+                        lazyGridState = productLazyGridState,
                         bottomPadding = bottomPadding,
+                        onSortClick = {
+
+                        },
+                        onFilterClick = {
+                            val route = Routes.Collection.getRoute(
+                                "categoryId" to selectedCategoryId,
+                            )
+                            navController.navigate(route)
+                        }
                     )
                 }
             }

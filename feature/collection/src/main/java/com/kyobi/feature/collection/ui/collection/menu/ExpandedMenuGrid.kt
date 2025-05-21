@@ -1,4 +1,4 @@
-package com.kyobi.feature.collection.ui.tab.category
+package com.kyobi.feature.collection.ui.collection.menu
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,18 +27,18 @@ import androidx.compose.ui.text.style.TextAlign
 import coil.ImageLoader
 import com.kyobi.composable.R
 import com.kyobi.composable.space.XxsSpaceX
-import com.kyobi.domain.model.CategoryMenu
+import com.kyobi.feature.collection.screen.collection.model.CollectionMenu
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.paragraphXs
 
 @Composable
-fun ExpandedCategoryGrid(
+fun ExpandedMenuGrid(
     modifier: Modifier,
-    categories: List<CategoryMenu>,
     imageLoader: ImageLoader,
+    collectionMenus: List<CollectionMenu>,
     onCollapseClick: () -> Unit,
-    selectedCategoryId: String?,
-    onItemClick: (CategoryMenu) -> Unit
+    selectedCollectionId: String?,
+    onItemClick: (CollectionMenu) -> Unit
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
     val width = MaterialTheme.kyobiTheme.width
@@ -53,7 +53,7 @@ fun ExpandedCategoryGrid(
     val horizontalSpacing = spacing.dp16
     val contentPaddingHorizontal = spacing.dp12
     val contentPaddingVertical = spacing.dp12
-    val gridWidth = tileWidth * columns + horizontalSpacing * columns + tileWidth / 2 // hé 1 phần ui của next category
+    val gridWidth = tileWidth * columns + horizontalSpacing * columns + tileWidth / 2 // + them `tileWidth / 2` hé 1 phần ui của next category
     val gridHeight = tileHeight * rows + (contentPaddingVertical * rows)
 
     Column(
@@ -70,18 +70,18 @@ fun ExpandedCategoryGrid(
             contentPadding = PaddingValues(horizontal = contentPaddingHorizontal)
         ) {
             items(
-                categories,
-                key = { "expanded_category_${it.id}_${it.filterHandle}" }
-            ) { category ->
-                CollectionCategoryTile(
+                collectionMenus,
+                key = { "expanded_menu_${it.id}_${it.filterHandle}" }
+            ) { collectionMenu ->
+                CollectionMenuTile(
                     modifier = Modifier
                         .width(tileWidth)
                         .height(tileHeight)
                         .padding(top = contentPaddingVertical),
-                    category = category,
                     imageLoader = imageLoader,
-                    isSelected = category.id == selectedCategoryId,
-                    onItemClick = { onItemClick(category) }
+                    collectionMenu = collectionMenu,
+                    isSelected = collectionMenu.id == selectedCollectionId,
+                    onItemClick = { onItemClick(collectionMenu) }
                 )
             }
         }

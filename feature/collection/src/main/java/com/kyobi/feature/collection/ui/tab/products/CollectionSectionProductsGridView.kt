@@ -21,7 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.kyobi.composable.skeleton.SkeletonProductCard
 import com.kyobi.domain.model.DomainNetworkResult
-import com.kyobi.feature.collection.CollectionTabProductListViewModel
+import com.kyobi.feature.collection.screen.tab.CollectionTabProductListViewModel
 import com.kyobi.feature.collection.ui.tab.sort_filter.CollectionSectionSortFilter
 import com.kyobi.featurecommon.product.ProductCard
 import com.kyobi.featurecommon.product.ProductUiState
@@ -32,8 +32,10 @@ fun CollectionSectionProductsGridView(
     modifier: Modifier = Modifier,
     imageLoader: ImageLoader,
     productListViewModel: CollectionTabProductListViewModel = hiltViewModel(),
-    lazyListState: LazyGridState,
+    lazyGridState: LazyGridState,
     bottomPadding: Dp,
+    onSortClick: () -> Unit,
+    onFilterClick: () -> Unit
 ) {
     val productsResult by productListViewModel.products.collectAsStateWithLifecycle()
     val itemStates by productListViewModel.itemStates.collectAsStateWithLifecycle()
@@ -42,7 +44,7 @@ fun CollectionSectionProductsGridView(
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
-        state = lazyListState,
+        state = lazyGridState,
         modifier = modifier
             .background(MaterialTheme.kyobiTheme.colors.background),
         contentPadding = PaddingValues(
@@ -54,7 +56,9 @@ fun CollectionSectionProductsGridView(
     ) {
         stickyHeader {
             CollectionSectionSortFilter(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                onSortClick = onSortClick,
+                onFilterClick = onFilterClick
             )
         }
         when (productsResult) {
