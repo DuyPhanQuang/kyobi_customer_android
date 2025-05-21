@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,9 +37,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.kyobi.feature.collection.extension.toCollectionMenu
 import com.kyobi.feature.collection.extension.toCollectionMenus
 import com.kyobi.feature.collection.screen.tab.CollectionTabViewModel
 import com.kyobi.feature.collection.ui.collection.menu.CollectionSectionMenu
+import com.kyobi.feature.collection.ui.collection.products.CollectionSectionProductsGridView
 import com.kyobi.feature.collection.ui.common.CollectionCommonSectionHeader
 import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.theme.Colors
@@ -52,9 +55,11 @@ fun CollectionScreen(
     authViewModel: AuthViewModel,
     collectionTabViewModel: CollectionTabViewModel,
     viewModel: CollectionScreenViewModel = hiltViewModel(),
+    productListViewModel: CollectionScreenProductListViewModel = hiltViewModel(),
     categoryId: String?,
-    bottomPadding: Dp,
-    ) {
+    subCategoryId: String?,
+    bottomPadding: Dp
+) {
     val tag = "CollectionScreen"
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val imageLoader = viewModel.getImageLoader()
@@ -72,17 +77,30 @@ fun CollectionScreen(
     val selectedCollectionId = uiState.selectedCollectionId
     val collectionMenus = uiState.collectionMenus
 
-    LaunchedEffect(categoryId) {
+    LaunchedEffect(Unit) {
+        productListViewModel.initWithEventBus(viewModel.getEventBus())
+    }
+
+    LaunchedEffect(categoryId, subCategoryId) {
         if (categoryId == null) {
             val categories = collectionTabViewModel.getCategories()
             if (!categories.isNullOrEmpty()) {
                 val categoriesAsCollectionMenus = categories.toCollectionMenus()
                 viewModel.setCollectionMenus(categoriesAsCollectionMenus)
+                viewModel.fetchProductByCollectionDefault()
             }
         } else {
-            val categorySelected = collectionTabViewModel.getCategorySelected(categoryId)
-            val initCollectionMenus = categorySelected?.toCollectionMenus() ?: return@LaunchedEffect
+            val categorySelected = collectionTabViewModel.getCategorySelected(categoryId) ?: return@LaunchedEffect
+            val subCategorySelected = collectionTabViewModel.getSubCategorySelected(subCategoryId)
+            val initCollectionMenus = categorySelected.toCollectionMenus()
             viewModel.setCollectionMenus(initCollectionMenus)
+            if (subCategorySelected == null) {
+                val categorySelectedAsCollectionMenu = categorySelected.toCollectionMenu()
+                viewModel.updateCollectionSelected(categorySelectedAsCollectionMenu)
+            } else {
+                val subCategorySelectedAsCollectionMenu = subCategorySelected.toCollectionMenu()
+                viewModel.updateCollectionSelected(subCategorySelectedAsCollectionMenu)
+            }
         }
     }
 
@@ -177,6 +195,33 @@ fun CollectionScreen(
                         onMenuItemClick = { collectionMenu ->
                             viewModel.updateCollectionSelected(collectionMenu)
                         }
+                    )
+                }
+            }
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillParentMaxHeight() // important
+                        .drawBehind {
+                            val strokeWidth = Dimension.dp1.toPx()
+                            val borderColor = Colors().stone100
+                            drawLine(
+                                color = borderColor,
+                                start = Offset(0f, 0f),
+                                end = Offset(size.width, 0f),
+                                strokeWidth = strokeWidth
+                            )
+                        }
+                        .padding(top = hackyPaddingTop)
+                ) {
+                    CollectionSectionProductsGridView(
+                        modifier = Modifier
+                            .fillMaxSize(),
+                        imageLoader = imageLoader,
+                        lazyGridState = productLazyGridState,
+                        productListViewModel = productListViewModel,
+                        bottomPadding = bottomPadding,
                     )
                 }
             }

@@ -25,7 +25,7 @@ import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.smallTitle
 
 @Composable
-fun CollectionSectionSubCategory(
+fun CollectionTabSectionSubCategory(
     modifier: Modifier = Modifier,
     lazyListState: LazyListState,
     selectedSubCategoryId: String?,

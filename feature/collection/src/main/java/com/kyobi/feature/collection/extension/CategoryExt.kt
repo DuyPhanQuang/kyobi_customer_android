@@ -46,3 +46,16 @@ fun List<CategoryMenu>.toCollectionMenus(): List<CollectionMenu> {
         )
     }
 }
+
+fun CategoryMenu.toCollectionMenu(): CollectionMenu {
+    val categoryAsCollection = CollectionMenu(
+        id = this.id,
+        handle = this.handle,
+        filterHandle = this.filterHandle,
+        title = this.title,
+        thumbnail = this.thumbnail,
+        thumbnailInfo = this.thumbnailInfo,
+        type = CollectionMenuType.CATEGORY
+    )
+    return categoryAsCollection
+}

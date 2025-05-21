@@ -51,9 +51,14 @@ sealed class Routes(
     )
 
     data object Collection : Routes(
-        routeScheme = "collection?categoryId={categoryId}",
+        routeScheme = "collection?categoryId={categoryId}&subCategoryId={subCategoryId}",
         arguments = listOf(
             navArgument("categoryId") {
+                nullable = true
+                defaultValue = null
+                type = NavType.StringType
+            },
+            navArgument("subCategoryId") {
                 nullable = true
                 defaultValue = null
                 type = NavType.StringType

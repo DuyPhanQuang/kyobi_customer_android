@@ -12,7 +12,7 @@ import coil.ImageLoader
 import com.kyobi.domain.model.CategoryMenu
 
 @Composable
-fun CollectionSectionCategory(
+fun CollectionTabSectionCategory(
     modifier: Modifier = Modifier,
     categories: List<CategoryMenu>,
     imageLoader: ImageLoader,

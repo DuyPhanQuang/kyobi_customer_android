@@ -22,6 +22,7 @@ class CollectionScreenViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val getShopifyMediaUseCase: GetShopifyMediaUseCase,
     private val imageLoader: ImageLoader,
+    private val collectionScreenEventBus: CollectionScreenEventBus
 ): ViewModel() {
     private val tag = "CollectionViewModel"
     private val _uiState = MutableStateFlow(CollectionScreenUiState(emptyList()))
@@ -29,12 +30,19 @@ class CollectionScreenViewModel @Inject constructor(
 
     fun setCollectionMenus(data: List<CollectionMenu>) {
         _uiState.value = _uiState.value.copy(collectionMenus = data)
+        fetchImagesThenUpdateCollectionMenus(data)
+    }
 
-        val thumbnailInfoCache = mutableMapOf<String, ShopifyMedia>()
-        val idsToFetch = data
-            .mapNotNull { item -> item.thumbnail?.toFirstGid() }
-            .filter { id -> id !in thumbnailInfoCache }
+    fun getEventBus(): CollectionScreenEventBus = collectionScreenEventBus
+
+    fun getImageLoader(): ImageLoader = imageLoader
+
+    private fun fetchImagesThenUpdateCollectionMenus(currentCollectionMenus: List<CollectionMenu>) {
         viewModelScope.launchOnIO {
+            val thumbnailInfoCache = mutableMapOf<String, ShopifyMedia>()
+            val idsToFetch = currentCollectionMenus
+                .mapNotNull { item -> item.thumbnail?.toFirstGid() }
+                .filter { id -> id !in thumbnailInfoCache }
             try {
                 getShopifyMediaUseCase.getImagesByIds(idsToFetch).collect { result ->
                     when (result) {
@@ -54,16 +62,25 @@ class CollectionScreenViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                Timber.tag(tag).e(e, "set collection menus failed")
+                Timber.tag(tag).e(e, "fetch images and update collection menus failed")
             }
         }
     }
 
-    fun getImageLoader(): ImageLoader = imageLoader
-
     fun updateCollectionSelected(itemSelected: CollectionMenu) {
         if (itemSelected.id == _uiState.value.selectedCollectionId) return
         _uiState.value = _uiState.value.copy(selectedCollectionId = itemSelected.id)
+        viewModelScope.launchOnIO {
+            collectionScreenEventBus.emitEvent(CollectionScreenEvent.CollectionSelected(itemSelected.filterHandle))
+            Timber.tag(tag).d("Emitted CollectionSelected event with filterHandle: ${itemSelected.filterHandle}")
+        }
+    }
 
+    fun fetchProductByCollectionDefault() {
+        val collectionDefaultConfig = "women"
+        viewModelScope.launchOnIO {
+            collectionScreenEventBus.emitEvent(CollectionScreenEvent.CollectionSelected(collectionDefaultConfig))
+            Timber.tag(tag).d("Emitted CollectionSelected event with filterHandle: $collectionDefaultConfig")
+        }
     }
 }

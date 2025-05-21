@@ -24,7 +24,7 @@ import com.kyobi.theme.Dimension
 import com.kyobi.theme.paragraphXs
 
 @Composable
-fun CollectionSectionSortFilter(
+fun CollectionTabSectionSortFilter(
     modifier: Modifier = Modifier,
     onSortClick: () -> Unit,
     onFilterClick: () -> Unit

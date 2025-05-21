@@ -1,4 +1,4 @@
-package com.kyobi.feature.collection.ui.tab.products
+package com.kyobi.feature.collection.ui.collection.products
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -13,16 +13,15 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.kyobi.composable.skeleton.SkeletonProductCard
 import com.kyobi.domain.model.DomainNetworkResult
-import com.kyobi.feature.collection.screen.tab.CollectionTabProductListViewModel
-import com.kyobi.feature.collection.ui.tab.sort_filter.CollectionSectionSortFilter
+import com.kyobi.feature.collection.screen.collection.CollectionScreenProductListViewModel
 import com.kyobi.featurecommon.product.ProductCard
 import com.kyobi.featurecommon.product.ProductUiState
 import com.kyobi.theme.kyobiTheme
@@ -31,22 +30,21 @@ import com.kyobi.theme.kyobiTheme
 fun CollectionSectionProductsGridView(
     modifier: Modifier = Modifier,
     imageLoader: ImageLoader,
-    productListViewModel: CollectionTabProductListViewModel = hiltViewModel(),
+    productListViewModel: CollectionScreenProductListViewModel,
     lazyGridState: LazyGridState,
-    bottomPadding: Dp,
-    onSortClick: () -> Unit,
-    onFilterClick: () -> Unit
+    bottomPadding: Dp
 ) {
     val productsResult by productListViewModel.products.collectAsStateWithLifecycle()
     val itemStates by productListViewModel.itemStates.collectAsStateWithLifecycle()
 
     val spacing = MaterialTheme.kyobiTheme.spacing
+    val colorTheme = MaterialTheme.kyobiTheme.colors
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         state = lazyGridState,
         modifier = modifier
-            .background(MaterialTheme.kyobiTheme.colors.background),
+            .background(colorTheme.background),
         contentPadding = PaddingValues(
             bottom = bottomPadding,
             start = spacing.dp12,
@@ -54,13 +52,6 @@ fun CollectionSectionProductsGridView(
         ),
         horizontalArrangement = Arrangement.spacedBy(spacing.dp8)
     ) {
-        stickyHeader {
-            CollectionSectionSortFilter(
-                modifier = Modifier.fillMaxWidth(),
-                onSortClick = onSortClick,
-                onFilterClick = onFilterClick
-            )
-        }
         when (productsResult) {
             is DomainNetworkResult.Loading -> {
                 items(4) {

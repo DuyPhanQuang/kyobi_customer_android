@@ -12,10 +12,10 @@ sealed class CollectionTabEvent {
 
 @Singleton
 class CollectionTabEventBus @Inject constructor() {
-    private val _collectionTabEvents = MutableSharedFlow<CollectionTabEvent>(replay = 0)
-    val collectionTabEvents: SharedFlow<CollectionTabEvent> = _collectionTabEvents
+    private val _events = MutableSharedFlow<CollectionTabEvent>(replay = 0)
+    val events: SharedFlow<CollectionTabEvent> = _events
 
-    suspend fun emitCollectionTabEvent(event: CollectionTabEvent) {
-        _collectionTabEvents.emit(event)
+    suspend fun emitEvent(event: CollectionTabEvent) {
+        _events.emit(event)
     }
 }

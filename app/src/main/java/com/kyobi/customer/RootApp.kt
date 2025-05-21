@@ -29,7 +29,6 @@ import com.kyobi.createreel.editor_video.EditorVideoScreen
 import com.kyobi.createreel.editor_video.EditorVideoViewModel
 import com.kyobi.createreel.editor_video.SelectMediaType
 import com.kyobi.customer.extension.composable
-import com.kyobi.domain.model.CategoryMenu
 import com.kyobi.feature.collection.screen.collection.CollectionScreen
 import com.kyobi.feature.collection.screen.tab.CollectionTab
 import com.kyobi.feature.collection.screen.tab.CollectionTabViewModel
@@ -178,11 +177,13 @@ fun RootApp(
                     }
                     composable(routes = Routes.Collection) {
                         val categoryIdFromNav = it.getDecodedByKey("categoryId")
+                        val subCategoryIdFromNav = it.getDecodedByKey("subCategoryId")
                         CollectionScreen(
                             navController = navController,
                             authViewModel = LocalAuthViewModel.current,
                             collectionTabViewModel = LocalCollectionTabViewModel.current,
                             categoryId = categoryIdFromNav,
+                            subCategoryId = subCategoryIdFromNav,
                             bottomPadding = innerPadding.calculateBottomPadding()
                         )
                     }

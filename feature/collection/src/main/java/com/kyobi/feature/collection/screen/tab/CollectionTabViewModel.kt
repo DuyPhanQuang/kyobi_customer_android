@@ -33,9 +33,17 @@ class CollectionTabViewModel @Inject constructor(
 
     fun getImageLoader(): ImageLoader = imageLoader
 
-    fun getCategorySelected(categoryId: String): CategoryMenu? {
+    fun getCategorySelected(categoryId: String?): CategoryMenu? {
+        if (categoryId == null) return null
         val itemSelected = _uiState.value.selectedCategory ?: return null
         if (categoryId == itemSelected.id) return itemSelected
+        return null
+    }
+
+    fun getSubCategorySelected(subCategoryId: String?): SubcategoryMenu? {
+        if (subCategoryId == null) return null
+        val itemSelected = _uiState.value.selectedSubCategory ?: return null
+        if (subCategoryId == itemSelected.id) return itemSelected
         return null
     }
 
@@ -67,16 +75,19 @@ class CollectionTabViewModel @Inject constructor(
             selectedCategoryId = category.id
         )
         viewModelScope.launchOnIO {
-            collectionTabEventBus.emitCollectionTabEvent(CollectionTabEvent.CategorySelected(category.filterHandle))
+            collectionTabEventBus.emitEvent(CollectionTabEvent.CategorySelected(category.filterHandle))
             Timber.tag(tag).d("Emitted CategorySelected event with filterHandle: ${category.filterHandle}")
         }
     }
 
     fun updateSubCategorySelected(subCategory: SubcategoryMenu) {
         if (subCategory.id == _uiState.value.selectedSubCategoryId) return
-        _uiState.value = _uiState.value.copy(selectedSubCategoryId = subCategory.id)
+        _uiState.value = _uiState.value.copy(
+            selectedSubCategory = subCategory,
+            selectedSubCategoryId = subCategory.id
+        )
         viewModelScope.launchOnIO {
-            collectionTabEventBus.emitCollectionTabEvent(CollectionTabEvent.SubCategorySelected(subCategory.filterHandle))
+            collectionTabEventBus.emitEvent(CollectionTabEvent.SubCategorySelected(subCategory.filterHandle))
             Timber.tag(tag).d("Emitted SubCategorySelected event with filterHandle: ${subCategory.filterHandle}")
         }
     }

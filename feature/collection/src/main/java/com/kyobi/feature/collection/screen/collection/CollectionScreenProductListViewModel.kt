@@ -1,4 +1,4 @@
-package com.kyobi.feature.collection.screen.tab
+package com.kyobi.feature.collection.screen.collection
 
 import androidx.lifecycle.viewModelScope
 import com.kyobi.core.coroutines.launchOnIO
@@ -14,34 +14,24 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class CollectionTabProductListViewModel @Inject constructor(
+class CollectionScreenProductListViewModel @Inject constructor(
     private val getProductsUseCase: GetProductsUseCase,
     addToCartUseCase: AddToCartUseCase,
     addRemoveProductToFavoriteUseCase: AddRemoveProductToFavoriteUseCase,
-    private val collectionTabEventBus: CollectionTabEventBus,
 ): BaseProductListViewModel(
     addToCartUseCase,
     addRemoveProductToFavoriteUseCase
 ) {
-    private val tag = "CollectionTabProductListViewModel"
+    private val tag = "CollectionProductListViewModel"
 
-    init {
-        fetchAllProducts()
-        observeCategoryOrSubCategorySelection()
-    }
-
-    private fun observeCategoryOrSubCategorySelection() {
+    fun initWithEventBus(eventBus: CollectionScreenEventBus) {
         viewModelScope.launchOnIO {
-            collectionTabEventBus.events.collect { event ->
+            eventBus.events.collect { event ->
                 when (event) {
-                    is CollectionTabEvent.CategorySelected -> {
+                    is CollectionScreenEvent.CollectionSelected -> {
                         val filterHandle = event.filterHandle
-                        Timber.tag(tag).d("Received CategorySelected event with filterHandle: $filterHandle")
-                        fetchProductsByCollection(filterHandle)
-                    }
-                    is CollectionTabEvent.SubCategorySelected -> {
-                        val filterHandle = event.filterHandle
-                        Timber.tag(tag).d("Received SubCategorySelected event with filterHandle: $filterHandle")
+                        Timber.tag(tag).d("Received CollectionSelected event with filterHandle: $filterHandle")
+                        if (filterHandle == null) return@collect
                         fetchProductsByCollection(filterHandle)
                     }
                 }
@@ -49,17 +39,12 @@ class CollectionTabProductListViewModel @Inject constructor(
         }
     }
 
-    private fun fetchAllProducts() {
-        fetchProductsByCollection(null)
-    }
-
-    private fun fetchProductsByCollection(filterHandle: String?) {
+    private fun fetchProductsByCollection(filterHandle: String) {
         viewModelScope.launchOnIO {
             productsResult.value = DomainNetworkResult.Loading
             try {
-                val tag = filterHandle ?: "women"
                 getProductsUseCase.invoke(
-                    query = tag.toQueryBySingleTag(),
+                    query = filterHandle.toQueryBySingleTag(),
                     reverse = null,
                     sortKey = null,
                     identifiers = null,

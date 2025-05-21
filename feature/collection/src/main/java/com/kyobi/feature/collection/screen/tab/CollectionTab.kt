@@ -39,10 +39,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.SubcategoryMenu
-import com.kyobi.feature.collection.ui.tab.category.CollectionSectionCategory
+import com.kyobi.feature.collection.ui.tab.category.CollectionTabSectionCategory
 import com.kyobi.feature.collection.ui.common.CollectionCommonSectionHeader
-import com.kyobi.feature.collection.ui.tab.products.CollectionSectionProductsGridView
-import com.kyobi.feature.collection.ui.tab.sub_category.CollectionSectionSubCategory
+import com.kyobi.feature.collection.ui.tab.products.CollectionTabSectionProductsGridView
+import com.kyobi.feature.collection.ui.tab.sub_category.CollectionTabSectionSubCategory
 import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.featurecommon.routes.Routes
 import com.kyobi.theme.Colors
@@ -166,7 +166,7 @@ fun CollectionTab(
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut()
                 ) {
-                    CollectionSectionCategory(
+                    CollectionTabSectionCategory(
                         categories = categoryMenus,
                         imageLoader = imageLoader,
                         expanded = expandedCategorySection,
@@ -196,7 +196,7 @@ fun CollectionTab(
                         }
                         .padding(top = hackyPaddingTop)
                 ) {
-                    CollectionSectionSubCategory(
+                    CollectionTabSectionSubCategory(
                         modifier = Modifier
                             .fillMaxWidth(0.25f)
                             .fillMaxHeight(),
@@ -208,7 +208,7 @@ fun CollectionTab(
                             viewModel.updateSubCategorySelected(subCategory)
                         }
                     )
-                    CollectionSectionProductsGridView(
+                    CollectionTabSectionProductsGridView(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(),
@@ -221,6 +221,7 @@ fun CollectionTab(
                         onFilterClick = {
                             val route = Routes.Collection.getRoute(
                                 "categoryId" to selectedCategoryId,
+                                "subCategoryId" to selectedSubCategoryId
                             )
                             navController.navigate(route)
                         }
