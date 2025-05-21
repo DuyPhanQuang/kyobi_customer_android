@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +33,6 @@ fun CollectionCategoryTile(
     isSelected: Boolean = false,
     onItemClick: () -> Unit,
 ) {
-    val spacing = MaterialTheme.kyobiTheme.spacing
     val width = MaterialTheme.kyobiTheme.width
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val typographyTheme = MaterialTheme.kyobiTheme.typography
@@ -63,7 +61,6 @@ fun CollectionCategoryTile(
             imageLoader = imageLoader
         )
         Text(
-            modifier = Modifier.padding(top = spacing.dp4),
             text = category.title,
             style = typographyTheme.paragraphXs,
             color = if (category.title.lowercase(Locale.getDefault()) == "sale")
@@ -71,7 +68,7 @@ fun CollectionCategoryTile(
                 colorTheme.onBackground,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             textAlign = TextAlign.Center,
-            maxLines = 2,
+            maxLines = 1,
             overflow = TextOverflow.Clip
         )
     }

@@ -32,10 +32,11 @@ fun CollectionTabSectionSortFilter(
     val typographyTheme = MaterialTheme.kyobiTheme.typography
     val spacing = MaterialTheme.kyobiTheme.spacing
     val iconTheme = MaterialTheme.kyobiTheme.icon
+    val colorTheme = MaterialTheme.kyobiTheme.colors
 
     Row(
         modifier = modifier
-            .background(MaterialTheme.kyobiTheme.colors.background)
+            .background(colorTheme.background)
             .drawBehind {
                 val strokeWidth = Dimension.dp1.toPx()
                 val borderColor = Colors().stone100
@@ -63,7 +64,7 @@ fun CollectionTabSectionSortFilter(
                 Text(
                     text = "Sort",
                     style = typographyTheme.paragraphXs,
-                    color = MaterialTheme.kyobiTheme.colors.onBackground,
+                    color = colorTheme.onBackground,
                 )
                 XxsSpaceX()
                 Icon(
@@ -86,8 +87,7 @@ fun CollectionTabSectionSortFilter(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    modifier = Modifier
-                        .size(iconTheme.sm),
+                    modifier = Modifier.size(iconTheme.sm),
                     painter = painterResource(id = R.drawable.ic_filter),
                     contentDescription = "Filter Icon",
                 )
@@ -95,7 +95,7 @@ fun CollectionTabSectionSortFilter(
                 Text(
                     text = "Filter",
                     style = typographyTheme.paragraphXs,
-                    color = MaterialTheme.kyobiTheme.colors.onBackground,
+                    color = colorTheme.onBackground,
                 )
             }
         }

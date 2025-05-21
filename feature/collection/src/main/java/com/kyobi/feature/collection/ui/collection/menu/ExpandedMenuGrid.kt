@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -69,10 +69,10 @@ fun ExpandedMenuGrid(
             horizontalArrangement = Arrangement.spacedBy(horizontalSpacing),
             contentPadding = PaddingValues(horizontal = contentPaddingHorizontal)
         ) {
-            items(
+            itemsIndexed(
                 collectionMenus,
-                key = { "expanded_menu_${it.id}_${it.filterHandle}" }
-            ) { collectionMenu ->
+                key = { index, _ -> "expanded_menu_$index" }
+            ) { _, collectionMenu ->
                 CollectionMenuTile(
                     modifier = Modifier
                         .width(tileWidth)

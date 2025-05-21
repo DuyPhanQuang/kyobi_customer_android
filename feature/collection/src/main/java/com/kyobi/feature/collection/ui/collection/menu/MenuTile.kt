@@ -35,7 +35,6 @@ fun CollectionMenuTile(
     onItemClick: () -> Unit,
     ) {
 
-    val spacing = MaterialTheme.kyobiTheme.spacing
     val width = MaterialTheme.kyobiTheme.width
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val typographyTheme = MaterialTheme.kyobiTheme.typography
@@ -64,7 +63,6 @@ fun CollectionMenuTile(
             imageLoader = imageLoader
         )
         Text(
-            modifier = Modifier.padding(top = spacing.dp4),
             text = collectionMenu.title,
             style = typographyTheme.paragraphXs,
             color = if (collectionMenu.title.lowercase(Locale.getDefault()) == "sale")
@@ -72,7 +70,7 @@ fun CollectionMenuTile(
                 colorTheme.onBackground,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             textAlign = TextAlign.Center,
-            maxLines = 2,
+            maxLines = 1,
             overflow = TextOverflow.Clip
         )
     }

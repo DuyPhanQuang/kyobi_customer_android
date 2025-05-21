@@ -26,14 +26,14 @@ fun SkeletonProductCard(
             .fillMaxWidth()
             .padding(bottom = spacing.dp16)
     ) {
-        // Placeholder cho hình ảnh
+        // Placeholder cho image
         SkeletonContainer(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.kyobiTheme.shapes.small)
                 .aspectRatio(aspectRatio)
         )
-        // Placeholder cho tiêu đề
+        // Placeholder cho title
         Spacer(modifier = Modifier.height(spacing.dp8))
         SkeletonContainer(
             modifier = Modifier
@@ -41,7 +41,7 @@ fun SkeletonProductCard(
                 .height(spacing.dp12)
                 .clip(MaterialTheme.kyobiTheme.shapes.small)
         )
-        // Placeholder cho giá
+        // Placeholder cho price
         Spacer(modifier = Modifier.height(spacing.dp4))
         SkeletonContainer(
             modifier = Modifier

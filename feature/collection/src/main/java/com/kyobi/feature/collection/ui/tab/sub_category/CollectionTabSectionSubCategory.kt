@@ -8,8 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +26,6 @@ import com.kyobi.theme.smallTitle
 @Composable
 fun CollectionTabSectionSubCategory(
     modifier: Modifier = Modifier,
-    lazyListState: LazyListState,
     selectedSubCategoryId: String?,
     bottomPadding: Dp,
     subCategories: List<SubcategoryMenu>,
@@ -38,15 +36,14 @@ fun CollectionTabSectionSubCategory(
     val typographyTheme = MaterialTheme.kyobiTheme.typography
 
     LazyColumn(
-        state = lazyListState,
         modifier = modifier
             .background(colorTheme.bg.stone100),
         contentPadding = PaddingValues(bottom = bottomPadding)
     ) {
-        items(
-            subCategories,
-            key = { "subcategory_${it.id}_${it.filterHandle}" }
-        ) { subCategory ->
+        itemsIndexed(
+            items = subCategories,
+            key = { index, _ -> "subCategory_$index" }
+        ) { _, subCategory ->
             val isSelected = subCategory.id == selectedSubCategoryId
             val backgroundColor = if (isSelected) colorTheme.background else colorTheme.bg.stone100
             val stripeWidth = MaterialTheme.kyobiTheme.width.dp3

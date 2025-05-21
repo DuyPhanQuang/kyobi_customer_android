@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -70,10 +70,10 @@ fun CompactMenuRow(
                 bottom = spacing.dp8
             )
         ) {
-            items(
+            itemsIndexed(
                 collectionMenus,
-                key = { "compact_menu_${it.id}_${it.filterHandle}" }
-            ) { collectionMenu ->
+                key = { index, _ -> "compact_menu_$index" }
+            ) { _, collectionMenu ->
                 CollectionMenuTile(
                     modifier = Modifier
                         .width(tileWidth)

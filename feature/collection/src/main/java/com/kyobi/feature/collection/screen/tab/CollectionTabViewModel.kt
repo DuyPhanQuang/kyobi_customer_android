@@ -84,9 +84,17 @@ class CollectionTabViewModel @Inject constructor(
         }
     }
 
-    fun updateSubCategorySelected(subCategory: SubcategoryMenu) {
+    fun updateSubCategorySelected(subCategory: SubcategoryMenu, categoryMenus: List<CategoryMenu>) {
         if (subCategory.id == _uiState.value.selectedSubCategoryId) return
+        val parentCategory = categoryMenus.find { category ->
+            category.groups?.any { group ->
+                group.subcategories?.any { sub -> sub.id == subCategory.id } == true
+            } == true
+        }
+        if (parentCategory == null) return
         _uiState.value = _uiState.value.copy(
+            selectedCategory = parentCategory,
+            selectedCategoryId = parentCategory.id,
             selectedSubCategory = subCategory,
             selectedSubCategoryId = subCategory.id
         )

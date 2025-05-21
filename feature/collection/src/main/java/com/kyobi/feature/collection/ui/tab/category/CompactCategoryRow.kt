@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -70,10 +70,10 @@ fun CompactCategoryRow(
                 bottom = spacing.dp8
             )
         ) {
-            items(
-                categories,
-                key = { "compact_category_${it.id}_${it.filterHandle}" }
-            ) { category ->
+            itemsIndexed(
+                items = categories,
+                key = { index, _ -> "compact_category_$index" }
+            ) { _, category ->
                 CollectionCategoryTile(
                     modifier = Modifier
                         .width(tileWidth)

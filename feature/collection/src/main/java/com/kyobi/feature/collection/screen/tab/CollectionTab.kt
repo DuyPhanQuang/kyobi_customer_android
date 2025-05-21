@@ -64,7 +64,6 @@ fun CollectionTab(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val imageLoader = viewModel.getImageLoader()
     val lazyListState = rememberLazyListState()
-    val subCategoryLazyListState = rememberLazyListState()
     val productLazyGridState = rememberLazyGridState()
     val topAppBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topAppBarState)
@@ -112,7 +111,7 @@ fun CollectionTab(
 
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val spacing = MaterialTheme.kyobiTheme.spacing
-    val hackyPaddingTop = Dimension.dp2
+    val paddingTopHacky = Dimension.dp2
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
@@ -158,7 +157,7 @@ fun CollectionTab(
             item {
                 AnimatedVisibility(
                     modifier = Modifier
-                        .padding(top = hackyPaddingTop)
+                        .padding(top = paddingTopHacky)
                         .drawBehind {
                             val strokeWidth = Dimension.dp1.toPx()
                             val borderColor = Colors().stone100
@@ -201,18 +200,17 @@ fun CollectionTab(
                                 strokeWidth = strokeWidth
                             )
                         }
-                        .padding(top = hackyPaddingTop)
+                        .padding(top = paddingTopHacky)
                 ) {
                     CollectionTabSectionSubCategory(
                         modifier = Modifier
                             .fillMaxWidth(0.25f)
                             .fillMaxHeight(),
-                        lazyListState = subCategoryLazyListState,
                         bottomPadding = bottomPadding,
                         subCategories = subCategoryMenus,
                         selectedSubCategoryId = selectedSubCategoryId,
                         onItemClick = { subCategory ->
-                            viewModel.updateSubCategorySelected(subCategory)
+                            viewModel.updateSubCategorySelected(subCategory, categoryMenus)
                         }
                     )
                     CollectionTabSectionProductsGridView(

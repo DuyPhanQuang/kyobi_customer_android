@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -69,10 +70,10 @@ fun ExpandedCategoryGrid(
             horizontalArrangement = Arrangement.spacedBy(horizontalSpacing),
             contentPadding = PaddingValues(horizontal = contentPaddingHorizontal)
         ) {
-            items(
+            itemsIndexed(
                 categories,
-                key = { "expanded_category_${it.id}_${it.filterHandle}" }
-            ) { category ->
+                key = { index, _ -> "expanded_category_$index" }
+            ) { _, category ->
                 CollectionCategoryTile(
                     modifier = Modifier
                         .width(tileWidth)

@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
@@ -32,7 +31,7 @@ fun CollectionSectionProductsGridView(
     imageLoader: ImageLoader,
     productListViewModel: CollectionScreenProductListViewModel,
     lazyGridState: LazyGridState,
-    bottomPadding: Dp
+    bottomPadding: Dp,
 ) {
     val productsResult by productListViewModel.products.collectAsStateWithLifecycle()
     val itemStates by productListViewModel.itemStates.collectAsStateWithLifecycle()

@@ -42,6 +42,7 @@ import com.kyobi.feature.collection.extension.toCollectionMenus
 import com.kyobi.feature.collection.screen.tab.CollectionTabViewModel
 import com.kyobi.feature.collection.ui.collection.menu.CollectionSectionMenu
 import com.kyobi.feature.collection.ui.collection.products.CollectionSectionProductsGridView
+import com.kyobi.feature.collection.ui.collection.sort_filter.CollectionSectionSortFilter
 import com.kyobi.feature.collection.ui.common.CollectionCommonSectionHeader
 import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.theme.Colors
@@ -123,7 +124,7 @@ fun CollectionScreen(
 
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val spacing = MaterialTheme.kyobiTheme.spacing
-    val hackyPaddingTop = Dimension.dp2
+    val paddingTopHacky = Dimension.dp2
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
@@ -173,7 +174,7 @@ fun CollectionScreen(
             item {
                 AnimatedVisibility(
                     modifier = Modifier
-                        .padding(top = hackyPaddingTop)
+                        .padding(top = paddingTopHacky)
                         .drawBehind {
                             val strokeWidth = Dimension.dp1.toPx()
                             val borderColor = Colors().stone100
@@ -201,6 +202,29 @@ fun CollectionScreen(
                     )
                 }
             }
+            stickyHeader {
+                CollectionSectionSortFilter(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .drawBehind {
+                            val strokeWidth = Dimension.dp1.toPx()
+                            val borderColor = Colors().stone100
+                            drawLine(
+                                color = borderColor,
+                                start = Offset(0f, 0f),
+                                end = Offset(size.width, 0f),
+                                strokeWidth = strokeWidth
+                            )
+                        }
+                        .padding(
+                            vertical = spacing.dp12,
+                            horizontal = spacing.dp12),
+                    onSortClick = {},
+                    onColorFilterClick = {},
+                    onSizeFilterClick = {},
+                    onFilterAllClick = {},
+                )
+            }
             item {
                 Row(
                     modifier = Modifier
@@ -216,7 +240,7 @@ fun CollectionScreen(
                                 strokeWidth = strokeWidth
                             )
                         }
-                        .padding(top = hackyPaddingTop)
+                        .padding(top = paddingTopHacky)
                 ) {
                     CollectionSectionProductsGridView(
                         modifier = Modifier
