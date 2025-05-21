@@ -22,18 +22,20 @@ class CollectionScreenViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val getShopifyMediaUseCase: GetShopifyMediaUseCase,
     private val imageLoader: ImageLoader,
-    private val collectionScreenEventBus: CollectionScreenEventBus
 ): ViewModel() {
     private val tag = "CollectionViewModel"
     private val _uiState = MutableStateFlow(CollectionScreenUiState(emptyList()))
     val uiState = _uiState.asStateFlow()
+    private lateinit var eventBus: CollectionScreenEventBus
+
+    fun initWithEventBus(eventBus: CollectionScreenEventBus) {
+        this.eventBus = eventBus
+    }
 
     fun setCollectionMenus(data: List<CollectionMenu>) {
         _uiState.value = _uiState.value.copy(collectionMenus = data)
         fetchImagesThenUpdateCollectionMenus(data)
     }
-
-    fun getEventBus(): CollectionScreenEventBus = collectionScreenEventBus
 
     fun getImageLoader(): ImageLoader = imageLoader
 
@@ -71,7 +73,7 @@ class CollectionScreenViewModel @Inject constructor(
         if (itemSelected.id == _uiState.value.selectedCollectionId) return
         _uiState.value = _uiState.value.copy(selectedCollectionId = itemSelected.id)
         viewModelScope.launchOnIO {
-            collectionScreenEventBus.emitEvent(CollectionScreenEvent.CollectionSelected(itemSelected.filterHandle))
+            eventBus.emitEvent(CollectionScreenEvent.CollectionSelected(itemSelected.filterHandle))
             Timber.tag(tag).d("Emitted CollectionSelected event with filterHandle: ${itemSelected.filterHandle}")
         }
     }
@@ -79,7 +81,7 @@ class CollectionScreenViewModel @Inject constructor(
     fun fetchProductByCollectionDefault() {
         val collectionDefaultConfig = "women"
         viewModelScope.launchOnIO {
-            collectionScreenEventBus.emitEvent(CollectionScreenEvent.CollectionSelected(collectionDefaultConfig))
+            eventBus.emitEvent(CollectionScreenEvent.CollectionSelected(collectionDefaultConfig))
             Timber.tag(tag).d("Emitted CollectionSelected event with filterHandle: $collectionDefaultConfig")
         }
     }

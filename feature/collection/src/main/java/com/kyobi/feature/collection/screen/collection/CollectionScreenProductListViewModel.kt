@@ -23,8 +23,10 @@ class CollectionScreenProductListViewModel @Inject constructor(
     addRemoveProductToFavoriteUseCase
 ) {
     private val tag = "CollectionProductListViewModel"
+    private lateinit var eventBus: CollectionScreenEventBus
 
-    fun initWithEventBus(eventBus: CollectionScreenEventBus) {
+    fun initWithEventBus(initEventBus: CollectionScreenEventBus) {
+        this.eventBus = initEventBus
         viewModelScope.launchOnIO {
             eventBus.events.collect { event ->
                 when (event) {

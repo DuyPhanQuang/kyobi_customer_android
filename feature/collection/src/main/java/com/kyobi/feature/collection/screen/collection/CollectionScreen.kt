@@ -54,13 +54,15 @@ fun CollectionScreen(
     navController: NavController,
     authViewModel: AuthViewModel,
     collectionTabViewModel: CollectionTabViewModel,
-    viewModel: CollectionScreenViewModel = hiltViewModel(),
-    productListViewModel: CollectionScreenProductListViewModel = hiltViewModel(),
     categoryId: String?,
     subCategoryId: String?,
     bottomPadding: Dp
 ) {
     val tag = "CollectionScreen"
+    val eventBus = remember { CollectionScreenEventBus() }
+    val viewModel: CollectionScreenViewModel = hiltViewModel()
+    val productListViewModel: CollectionScreenProductListViewModel = hiltViewModel()
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val imageLoader = viewModel.getImageLoader()
     val lazyListState = rememberLazyListState()
@@ -77,8 +79,9 @@ fun CollectionScreen(
     val selectedCollectionId = uiState.selectedCollectionId
     val collectionMenus = uiState.collectionMenus
 
-    LaunchedEffect(Unit) {
-        productListViewModel.initWithEventBus(viewModel.getEventBus())
+    LaunchedEffect(eventBus) {
+        viewModel.initWithEventBus(eventBus)
+        productListViewModel.initWithEventBus(eventBus)
     }
 
     LaunchedEffect(categoryId, subCategoryId) {
