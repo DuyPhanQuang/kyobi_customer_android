@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
 import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.domain.model.CategoryMenu
+import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.SubcategoryMenu
 import com.kyobi.domain.usecase.GetSubMenusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,6 +37,15 @@ class CollectionTabViewModel @Inject constructor(
         val itemSelected = _uiState.value.selectedCategory ?: return null
         if (categoryId == itemSelected.id) return itemSelected
         return null
+    }
+
+    fun getCategories(): List<CategoryMenu>? {
+        val data = when (val result = _uiState.value.subMenusResult) {
+            is DomainNetworkResult.Success -> result.data
+            is DomainNetworkResult.Loading -> null
+            is DomainNetworkResult.Error -> null
+        }
+        return data
     }
 
     private fun fetchSubMenus() {

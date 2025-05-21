@@ -7,7 +7,7 @@ data class ShopifyVideoPreviewImage(
 enum class ShopifySourceFormatType { mp4, m3u8 }
 
 data class ShopifySource(
-    val format: ShopifySourceFormatType,
+    val format: String,
     val url: String,
 )
 

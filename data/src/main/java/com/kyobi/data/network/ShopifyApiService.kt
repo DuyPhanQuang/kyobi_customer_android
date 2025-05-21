@@ -43,10 +43,6 @@ interface ShopifyApiService {
         key: String
     ): List<TrendingResearch>
 
-    suspend fun getMediaImagesByIds(
-        mediaIds: List<String>
-    ): List<ShopifyMedia>
-
     suspend fun getCollectionProducts(
         handle: String,
         reverse: Boolean?,
@@ -67,4 +63,16 @@ interface ShopifyApiService {
         handle: String,
         identifiers: List<MetafieldIdentifierRequest>?
     ): ShopifyCollection
+
+    suspend fun getMediaImagesByIds(
+        imageIds: List<String>
+    ): List<ShopifyMedia>
+
+    suspend fun getDynamicMediasByIds(
+        mediaIds: List<String>
+    ): List<ShopifyMedia>
+
+    suspend fun getMediaImage(
+        imageId: String
+    ): ShopifyMedia?
 }

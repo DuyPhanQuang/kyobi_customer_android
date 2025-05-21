@@ -1,0 +1,23 @@
+query GetDynamicMediasByIds($ids: [ID!]!) {
+    nodes(ids: $ids) {
+        ... on MediaImage {
+            id
+            image {
+                url
+                altText
+                width
+                height
+            }
+        }
+        ... on Video {
+            id
+            previewImage {
+                url
+            }
+            sources {
+                url
+                format
+            }
+        }
+    }
+}

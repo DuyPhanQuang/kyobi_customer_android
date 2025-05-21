@@ -10,6 +10,7 @@ import com.kyobi.domain.usecase.GetHomePagesUseCase
 import com.kyobi.domain.usecase.GetProductRecommendationsUseCase
 import com.kyobi.domain.usecase.GetProductsByIdsUseCase
 import com.kyobi.domain.usecase.GetProductsUseCase
+import com.kyobi.domain.usecase.GetShopifyMediaUseCase
 import com.kyobi.domain.usecase.GetSubMenusUseCase
 import com.kyobi.domain.usecase.GetUserUseCase
 import com.kyobi.domain.usecase.LoginUseCase
@@ -26,6 +27,7 @@ import com.kyobi.domain.usecase.impl.GetHomePagesUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetProductRecommendationsUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetProductsByIdsUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetProductsUseCaseImpl
+import com.kyobi.domain.usecase.impl.GetShopifyMediaUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetSubMenusUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetUserUseCaseImpl
 import com.kyobi.domain.usecase.impl.LoginUseCaseImpl
@@ -104,4 +106,8 @@ abstract class UseCaseModule {
     @Binds
     @Singleton
     abstract fun bindGetSubMenusUseCase(impl: GetSubMenusUseCaseImpl): GetSubMenusUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindGetShopifyMediaUseCase(impl: GetShopifyMediaUseCaseImpl): GetShopifyMediaUseCase
 }

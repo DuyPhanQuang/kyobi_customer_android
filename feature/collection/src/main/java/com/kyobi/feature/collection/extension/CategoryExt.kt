@@ -4,6 +4,7 @@ import com.kyobi.domain.model.CategoryMenu
 import com.kyobi.feature.collection.screen.collection.model.CollectionMenu
 import com.kyobi.feature.collection.screen.collection.model.CollectionMenuType
 
+// map category menu + list subcategory menu thành list collection menu
 fun CategoryMenu.toCollectionMenus(): List<CollectionMenu> {
     val categoryAsCollection = CollectionMenu(
         id = this.id,
@@ -29,4 +30,19 @@ fun CategoryMenu.toCollectionMenus(): List<CollectionMenu> {
         )
     }
     return listOf(categoryAsCollection) + subcategoryCollections
+}
+
+// map list category menu thành list collection menu
+fun List<CategoryMenu>.toCollectionMenus(): List<CollectionMenu> {
+    return this.map { categoryMenu ->
+        CollectionMenu(
+            id = categoryMenu.id,
+            handle = categoryMenu.handle,
+            filterHandle = categoryMenu.filterHandle,
+            title = categoryMenu.title,
+            thumbnail = categoryMenu.thumbnail,
+            thumbnailInfo = categoryMenu.thumbnailInfo,
+            type = CollectionMenuType.CATEGORY
+        )
+    }
 }

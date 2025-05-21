@@ -4,6 +4,7 @@ import com.kyobi.data.repository.AppConfigRepositoryImpl
 import com.kyobi.data.repository.AuthRepositoryImpl
 import com.kyobi.data.repository.CatalogRepositoryImpl
 import com.kyobi.data.repository.CollectionRepositoryImpl
+import com.kyobi.data.repository.MediaRepositoryImpl
 import com.kyobi.data.repository.MetaobjectRepositoryImpl
 import com.kyobi.data.repository.NotificationRepositoryImpl
 import com.kyobi.data.repository.PageRepositoryImpl
@@ -12,6 +13,7 @@ import com.kyobi.domain.repository.AppConfigRepository
 import com.kyobi.domain.repository.AuthRepository
 import com.kyobi.domain.repository.CatalogRepository
 import com.kyobi.domain.repository.CollectionRepository
+import com.kyobi.domain.repository.MediaRepository
 import com.kyobi.domain.repository.MetaobjectRepository
 import com.kyobi.domain.repository.NotificationRepository
 import com.kyobi.domain.repository.PageRepository
@@ -56,4 +58,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCollectionRepository(impl: CollectionRepositoryImpl): CollectionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMediaRepository(impl: MediaRepositoryImpl): MediaRepository
 }

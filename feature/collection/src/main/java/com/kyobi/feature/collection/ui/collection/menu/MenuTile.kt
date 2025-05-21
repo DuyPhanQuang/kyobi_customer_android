@@ -34,6 +34,7 @@ fun CollectionMenuTile(
     isSelected: Boolean = false,
     onItemClick: () -> Unit,
     ) {
+
     val spacing = MaterialTheme.kyobiTheme.spacing
     val width = MaterialTheme.kyobiTheme.width
     val colorTheme = MaterialTheme.kyobiTheme.colors
@@ -44,23 +45,22 @@ fun CollectionMenuTile(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
+        val imageData = collectionMenu.thumbnailInfo?.image
         AppImage(
-            imageUrl = null,
+            imageUrl = imageData?.url,
             modifier = Modifier
                 .size(width.dp48)
                 .clip(CircleShape)
                 .border(
                     width = if (isSelected) width.dp2 else width.dp1,
                     color = if (isSelected) colorTheme.bg.stone950 else colorTheme.bg.stone100,
-                    shape = CircleShape
-                )
+                    shape = CircleShape)
                 .aspectRatio(1f)
                 .background(
                     color = colorTheme.background,
-                    shape = CircleShape
-                ),
-            contentScale = ContentScale.Crop,
-            contentDescription = null,
+                    shape = CircleShape),
+            contentScale = ContentScale.Fit,
+            contentDescription = imageData?.altText,
             imageLoader = imageLoader
         )
         Text(

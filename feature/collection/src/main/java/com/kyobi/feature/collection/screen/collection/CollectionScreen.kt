@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -52,7 +51,7 @@ fun CollectionScreen(
     navController: NavController,
     authViewModel: AuthViewModel,
     collectionTabViewModel: CollectionTabViewModel,
-    viewModel: CollectionViewModel = hiltViewModel(),
+    viewModel: CollectionScreenViewModel = hiltViewModel(),
     categoryId: String?,
     bottomPadding: Dp,
     ) {
@@ -74,7 +73,13 @@ fun CollectionScreen(
     val collectionMenus = uiState.collectionMenus
 
     LaunchedEffect(categoryId) {
-        if (categoryId != null) {
+        if (categoryId == null) {
+            val categories = collectionTabViewModel.getCategories()
+            if (!categories.isNullOrEmpty()) {
+                val categoriesAsCollectionMenus = categories.toCollectionMenus()
+                viewModel.setCollectionMenus(categoriesAsCollectionMenus)
+            }
+        } else {
             val categorySelected = collectionTabViewModel.getCategorySelected(categoryId)
             val initCollectionMenus = categorySelected?.toCollectionMenus() ?: return@LaunchedEffect
             viewModel.setCollectionMenus(initCollectionMenus)
@@ -124,6 +129,10 @@ fun CollectionScreen(
                                 top = spacing.dp8,
                                 bottom = spacing.dp8
                             ),
+                        showBackIcon = true,
+                        onBackClick = {
+                            navController.popBackStack()
+                        },
                         onSearchClick = {
                         },
                         onFavouritesClick = {

@@ -7,14 +7,14 @@ import com.kyobi.domain.model.ShopifyMedia
 
 fun mapBanners(
     nodes: List<GetHomepageKeyDataQuery.Node>,
-    mediaData: List<ShopifyMedia>
+    imagesData: List<ShopifyMedia>
 ): List<Banner> {
     return nodes.mapNotNull { node ->
         node.onMetaobject?.let { metaobject ->
             try {
                 val fieldMap = metaobject.fields.associate { it.key to it.value }
                 val imageValue = fieldMap["image"]
-                val image = mediaData.find { it.id == imageValue }
+                val image = imagesData.find { it.id == imageValue }
                 Banner(
                     link = fieldMap["link"] ?: "",
                     order = fieldMap["order"]?.toIntOrNull() ?: 0,

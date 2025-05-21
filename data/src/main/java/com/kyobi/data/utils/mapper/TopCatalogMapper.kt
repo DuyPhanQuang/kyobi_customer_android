@@ -7,14 +7,14 @@ import com.kyobi.domain.model.ShopifyMedia
 
 fun mapTopCatalogs(
     nodes: List<GetHomepageKeyDataQuery.Node>,
-    mediaData: List<ShopifyMedia>
+    imagesData: List<ShopifyMedia>
 ): List<TopCatalog> {
     return nodes.mapNotNull { node ->
         node.onMetaobject?.let { metaobject ->
             try {
                 val fieldMap = metaobject.fields.associate { it.key to it.value }
                 val imageValue = fieldMap["image"]
-                val image = mediaData.find { it.id == imageValue }
+                val image = imagesData.find { it.id == imageValue }
                 TopCatalog(
                     link = fieldMap["link"] ?: "",
                     order = fieldMap["order"]?.toIntOrNull() ?: 0,

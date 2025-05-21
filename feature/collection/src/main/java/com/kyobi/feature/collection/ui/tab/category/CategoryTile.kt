@@ -57,9 +57,8 @@ fun CollectionCategoryTile(
                 .aspectRatio(1f)
                 .background(
                     color = colorTheme.background,
-                    shape = CircleShape
-                ),
-            contentScale = ContentScale.Crop,
+                    shape = CircleShape),
+            contentScale = ContentScale.Fit,
             contentDescription = null,
             imageLoader = imageLoader
         )

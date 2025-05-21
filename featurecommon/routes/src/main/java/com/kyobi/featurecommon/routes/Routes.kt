@@ -6,6 +6,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.kyobi.core.extensions.toNullIfStringNull
 import com.kyobi.core.utils.CoreUtils.decodeBase64
 import com.kyobi.core.utils.CoreUtils.encodeBase64
 
@@ -91,7 +92,7 @@ fun NavBackStackEntry.getDecodedUserId(): String? {
 }
 
 fun NavBackStackEntry.getDecodedByKey(key: String): String? {
-    return this.arguments?.getString(key)?.decodeBase64(Routes.BASE_64_URL_PREFIX)
+    return this.arguments?.getString(key)?.decodeBase64(Routes.BASE_64_URL_PREFIX)?.toNullIfStringNull()
 }
 
 @Composable

@@ -21,3 +21,17 @@ fun String.toUniqueReelCacheKey(): String {
     val token = this.substringAfter("?token=").takeIf { it.isNotEmpty() } ?: "notoken"
     return "$fileName-$hash-${token.hashCode()}"
 }
+
+fun String?.toFirstGid(): String? {
+    if (this == null) return null
+    return try {
+        val ids = Json.decodeFromString<List<String>>(this)
+        ids.firstOrNull()
+    } catch (e: Exception) {
+        null
+    }
+}
+
+fun String?.toNullIfStringNull(): String? {
+    return if (this == "null") null else this
+}

@@ -61,7 +61,10 @@ fun RootApp(
     val tag = "RootApp"
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val shouldShowBottomBar = currentRoute != Routes.EditorVideo.routeScheme
+    val shouldShowBottomBar = currentRoute == Routes.HomeTab.routeScheme ||
+            currentRoute == Routes.CollectionTab.routeScheme ||
+            currentRoute == Routes.TrendTab.routeScheme ||
+            currentRoute == Routes.ProfileTab.routeScheme
 
     // Xử lý deep link
     LaunchedEffect(deepLinkState.value) {

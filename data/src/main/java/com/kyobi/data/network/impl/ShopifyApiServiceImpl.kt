@@ -8,7 +8,9 @@ import com.kyobi.core.exceptions.ShopifyApiException
 import com.kyobi.core.exceptions.ShopifyErrorHandler
 import com.kyobi.data.graphql.GetCollectionProductsQuery
 import com.kyobi.data.graphql.GetCollectionsLargeQuery
+import com.kyobi.data.graphql.GetDynamicMediasByIdsQuery
 import com.kyobi.data.graphql.GetHomepageKeyDataQuery
+import com.kyobi.data.graphql.GetMediaImageByIdQuery
 import com.kyobi.data.graphql.GetMediaImagesByIdsQuery
 import com.kyobi.data.graphql.GetMetaobjectsByIdsForFlashsaleQuery
 import com.kyobi.data.graphql.GetMetaobjectsByIdsQuery
@@ -36,6 +38,8 @@ import com.kyobi.domain.model.ShopifyMedia
 import com.kyobi.domain.model.ShopifyMetafield
 import com.kyobi.domain.model.ShopifyMetaobject
 import com.kyobi.domain.model.ShopifyMetaobjectField
+import com.kyobi.domain.model.ShopifySource
+import com.kyobi.domain.model.ShopifyVideoPreviewImage
 import com.kyobi.domain.model.TopCatalog
 import com.kyobi.domain.model.TrendingResearch
 import com.kyobi.domain.model.request.MetafieldIdentifierRequest
@@ -127,10 +131,7 @@ class ShopifyApiServiceImpl @Inject constructor(
                 }
             } else { emptyList() }
             val response: ApolloResponse<GetProductsByIdsQuery.Data> = apolloClient
-                .query(
-                    GetProductsByIdsQuery(
-                        ids = ids,
-                        identifiers = metafieldIdentifiers))
+                .query(GetProductsByIdsQuery(ids = ids, identifiers = metafieldIdentifiers))
                 .execute()
             if (response.hasErrors()) {
                 throw ShopifyApiException(
@@ -151,10 +152,7 @@ class ShopifyApiServiceImpl @Inject constructor(
     override suspend fun getBanners(handle: String, key: String): List<Banner> {
         try {
             val response: ApolloResponse<GetHomepageKeyDataQuery.Data> = apolloClient
-                .query(
-                    GetHomepageKeyDataQuery(
-                        handle = handle,
-                        key = key))
+                .query(GetHomepageKeyDataQuery(handle = handle, key = key))
                 .execute()
             if (response.hasErrors()) {
                 throw ShopifyApiException(
@@ -163,17 +161,17 @@ class ShopifyApiServiceImpl @Inject constructor(
             }
             val nodes = response.data?.page?.metafield?.references?.nodes ?: return emptyList()
             // Fetch media details
-            val mediaIds = nodes.mapNotNull { node ->
+            val imageIds = nodes.mapNotNull { node ->
                 node.onMetaobject?.fields?.find { it.key == "image" }?.value
             }.filter { it.isNotEmpty() }
-            val mediaData = if (mediaIds.isNotEmpty()) {
+            val imagesData = if (imageIds.isNotEmpty()) {
                 try {
-                    getMediaImagesByIds(mediaIds)
+                    getMediaImagesByIds(imageIds)
                 } catch (e: Exception) {
                     emptyList()
                 }
             } else { emptyList() }
-            return mapBanners(nodes, mediaData)
+            return mapBanners(nodes, imagesData)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {
@@ -184,10 +182,7 @@ class ShopifyApiServiceImpl @Inject constructor(
     override suspend fun getTopCatalogs(handle: String, key: String): List<TopCatalog> {
         try {
             val response: ApolloResponse<GetHomepageKeyDataQuery.Data> = apolloClient
-                .query(
-                    GetHomepageKeyDataQuery(
-                        handle = handle,
-                        key = key))
+                .query(GetHomepageKeyDataQuery(handle = handle, key = key))
                 .execute()
             if (response.hasErrors()) {
                 throw ShopifyApiException(
@@ -196,17 +191,17 @@ class ShopifyApiServiceImpl @Inject constructor(
             }
             val nodes = response.data?.page?.metafield?.references?.nodes ?: return emptyList()
             // Fetch media details
-            val mediaIds = nodes.mapNotNull { node ->
+            val imageIds = nodes.mapNotNull { node ->
                 node.onMetaobject?.fields?.find { it.key == "image" }?.value
             }.filter { it.isNotEmpty() }
-            val mediaData = if (mediaIds.isNotEmpty()) {
+            val imagesData = if (imageIds.isNotEmpty()) {
                 try {
-                    getMediaImagesByIds(mediaIds)
+                    getMediaImagesByIds(imageIds)
                 } catch (e: Exception) {
                     emptyList()
                 }
             } else { emptyList() }
-            return mapTopCatalogs(nodes, mediaData)
+            return mapTopCatalogs(nodes, imagesData)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {
@@ -217,10 +212,7 @@ class ShopifyApiServiceImpl @Inject constructor(
     override suspend fun getTrendingResearchs(handle: String, key: String): List<TrendingResearch> {
         try {
             val response: ApolloResponse<GetHomepageKeyDataQuery.Data> = apolloClient
-                .query(
-                    GetHomepageKeyDataQuery(
-                        handle = handle,
-                        key = key))
+                .query(GetHomepageKeyDataQuery(handle = handle, key = key))
                 .execute()
             if (response.hasErrors()) {
                 throw ShopifyApiException(
@@ -229,17 +221,17 @@ class ShopifyApiServiceImpl @Inject constructor(
             }
             val nodes = response.data?.page?.metafield?.references?.nodes ?: return emptyList()
             // Fetch media details
-            val mediaIds = nodes.mapNotNull { node ->
+            val imageIds = nodes.mapNotNull { node ->
                 node.onMetaobject?.fields?.find { it.key == "thumbnail" }?.value
             }.filter { it.isNotEmpty() }
-            val mediaData = if (mediaIds.isNotEmpty()) {
+            val imagesData = if (imageIds.isNotEmpty()) {
                 try {
-                    getMediaImagesByIds(mediaIds)
+                    getMediaImagesByIds(imageIds)
                 } catch (e: Exception) {
                     emptyList()
                 }
             } else { emptyList() }
-            return mapTrendingResearchs(nodes, mediaData)
+            return mapTrendingResearchs(nodes, imagesData)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {
@@ -247,16 +239,15 @@ class ShopifyApiServiceImpl @Inject constructor(
         }
     }
 
-    override suspend fun getMediaImagesByIds(mediaIds: List<String>): List<ShopifyMedia> {
+    override suspend fun getMediaImagesByIds(imageIds: List<String>): List<ShopifyMedia> {
         try {
             val response: ApolloResponse<GetMediaImagesByIdsQuery.Data> = apolloClient
-                .query(GetMediaImagesByIdsQuery(ids = mediaIds))
+                .query(GetMediaImagesByIdsQuery(ids = imageIds))
                 .execute()
             if (response.hasErrors()) {
                 throw ShopifyApiException(
                     message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
-                    errorCode = null
-                )
+                    errorCode = null)
             }
             val nodes = response.data?.nodes
             return nodes?.mapNotNull { node ->
@@ -268,14 +259,87 @@ class ShopifyApiServiceImpl @Inject constructor(
                                 url = it.url.toString(),
                                 altText = it.altText,
                                 width = it.width?.toFloat(),
-                                height = it.height?.toFloat()
-                            )
+                                height = it.height?.toFloat())
                         },
                         previewImage = null,
-                        sources = emptyList()
-                    )
+                        sources = emptyList())
                 }
             } ?: emptyList()
+        } catch (e: ApolloException) {
+            throw errorHandler.handleError(e)
+        } catch (e: Exception) {
+            throw errorHandler.handleError(e)
+        }
+    }
+
+    override suspend fun getDynamicMediasByIds(mediaIds: List<String>): List<ShopifyMedia> {
+        try {
+            val response: ApolloResponse<GetDynamicMediasByIdsQuery.Data> = apolloClient
+                .query(GetDynamicMediasByIdsQuery(ids = mediaIds))
+                .execute()
+            if (response.hasErrors()) {
+                throw ShopifyApiException(
+                    message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
+                    errorCode = null)
+            }
+            return response.data?.nodes?.mapNotNull { node ->
+                when {
+                    node?.onMediaImage != null -> ShopifyMedia(
+                        id = node.onMediaImage.id,
+                        image = node.onMediaImage.image?.let {
+                            ShopifyImage(
+                                url = it.url.toString(),
+                                altText = it.altText,
+                                width = it.width?.toFloat(),
+                                height = it.height?.toFloat())
+                        },
+                        previewImage = null,
+                        sources = emptyList())
+                    node?.onVideo != null -> ShopifyMedia(
+                        id = node.onVideo.id,
+                        image = null,
+                        previewImage = node.onVideo.previewImage?.let {
+                            ShopifyVideoPreviewImage(
+                                url = it.url.toString())
+                        },
+                        sources = node.onVideo.sources.map { source ->
+                            ShopifySource(
+                                url = source.url,
+                                format = source.format)
+                        })
+                    else -> null
+                }
+            } ?: emptyList()
+        } catch (e: ApolloException) {
+            throw errorHandler.handleError(e)
+        } catch (e: Exception) {
+            throw errorHandler.handleError(e)
+        }
+    }
+
+    override suspend fun getMediaImage(imageId: String): ShopifyMedia? {
+        try {
+            val response: ApolloResponse<GetMediaImageByIdQuery.Data> = apolloClient
+                .query(GetMediaImageByIdQuery(id = imageId))
+                .execute()
+            if (response.hasErrors()) {
+                throw ShopifyApiException(
+                    message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
+                    errorCode = null)
+            }
+            return response.data?.node?.onMediaImage?.let { media ->
+                ShopifyMedia(
+                    id = media.id,
+                    image = media.image?.let {
+                        ShopifyImage(
+                            url = it.url.toString(),
+                            altText = it.altText,
+                            width = it.width?.toFloat(),
+                            height = it.height?.toFloat())
+                    },
+                    previewImage = null,
+                    sources = emptyList())
+            }
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {

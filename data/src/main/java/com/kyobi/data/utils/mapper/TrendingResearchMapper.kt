@@ -8,14 +8,14 @@ import org.json.JSONException
 
 fun mapTrendingResearchs(
     nodes: List<GetHomepageKeyDataQuery.Node>,
-    mediaData: List<ShopifyMedia>
+    imagesData: List<ShopifyMedia>
 ): List<TrendingResearch> {
     return nodes.mapNotNull { node ->
         node.onMetaobject?.let { metaobject ->
             try {
                 val fieldMap = metaobject.fields.associate { it.key to it.value }
                 val thumbnailValue = fieldMap["thumbnail"]
-                val thumbnailImage = mediaData.find { it.id == thumbnailValue }
+                val thumbnailImage = imagesData.find { it.id == thumbnailValue }
                 TrendingResearch(
                     link = fieldMap["link"] ?: "",
                     label = fieldMap["label"] ?: "",
