@@ -31,6 +31,8 @@ class CollectionTabViewModel @Inject constructor(
         fetchSubMenus()
     }
 
+    fun getCollectionTabEventBus(): CollectionTabEventBus = collectionTabEventBus
+
     fun getImageLoader(): ImageLoader = imageLoader
 
     fun getCategorySelected(categoryId: String?): CategoryMenu? {
@@ -72,7 +74,9 @@ class CollectionTabViewModel @Inject constructor(
         if (category.id == _uiState.value.selectedCategoryId) return
         _uiState.value = _uiState.value.copy(
             selectedCategory = category,
-            selectedCategoryId = category.id
+            selectedCategoryId = category.id,
+            selectedSubCategory = null,
+            selectedSubCategoryId = null
         )
         viewModelScope.launchOnIO {
             collectionTabEventBus.emitEvent(CollectionTabEvent.CategorySelected(category.filterHandle))

@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.kyobi.domain.model.DomainNetworkResult
@@ -58,6 +59,8 @@ fun CollectionTab(
     bottomPadding: Dp,
 ) {
     val tag = "CollectionTab"
+    val productListViewModel: CollectionTabProductListViewModel = hiltViewModel()
+    val eventBus = viewModel.getCollectionTabEventBus()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val imageLoader = viewModel.getImageLoader()
     val lazyListState = rememberLazyListState()
@@ -87,6 +90,10 @@ fun CollectionTab(
             .filter { it.id == selectedCategoryId }
             .flatMap { category -> category.groups ?: emptyList() }
             .flatMap { group -> group.subcategories ?: emptyList() }
+    }
+
+    LaunchedEffect(eventBus) {
+        productListViewModel.initWithEventBus(eventBus)
     }
 
     // Track scroll direction
@@ -214,10 +221,9 @@ fun CollectionTab(
                             .fillMaxHeight(),
                         imageLoader = imageLoader,
                         lazyGridState = productLazyGridState,
+                        productListViewModel = productListViewModel,
                         bottomPadding = bottomPadding,
-                        onSortClick = {
-
-                        },
+                        onSortClick = {},
                         onFilterClick = {
                             val route = Routes.Collection.getRoute(
                                 "categoryId" to selectedCategoryId,

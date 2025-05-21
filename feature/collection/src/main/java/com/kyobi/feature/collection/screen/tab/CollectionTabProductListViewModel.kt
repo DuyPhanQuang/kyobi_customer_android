@@ -10,6 +10,7 @@ import com.kyobi.domain.usecase.GetProductsUseCase
 import com.kyobi.featurecommon.product.BaseProductListViewModel
 import com.kyobi.featurecommon.product.ProductUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.collectLatest
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -18,21 +19,21 @@ class CollectionTabProductListViewModel @Inject constructor(
     private val getProductsUseCase: GetProductsUseCase,
     addToCartUseCase: AddToCartUseCase,
     addRemoveProductToFavoriteUseCase: AddRemoveProductToFavoriteUseCase,
-    private val collectionTabEventBus: CollectionTabEventBus,
 ): BaseProductListViewModel(
     addToCartUseCase,
     addRemoveProductToFavoriteUseCase
 ) {
     private val tag = "CollectionTabProductListViewModel"
+    private lateinit var eventBus: CollectionTabEventBus
 
     init {
         fetchAllProducts()
-        observeCategoryOrSubCategorySelection()
     }
 
-    private fun observeCategoryOrSubCategorySelection() {
+    fun initWithEventBus(initEventBus: CollectionTabEventBus) {
+        this.eventBus = initEventBus
         viewModelScope.launchOnIO {
-            collectionTabEventBus.events.collect { event ->
+            eventBus.events.collect { event ->
                 when (event) {
                     is CollectionTabEvent.CategorySelected -> {
                         val filterHandle = event.filterHandle
@@ -64,7 +65,7 @@ class CollectionTabProductListViewModel @Inject constructor(
                     sortKey = null,
                     identifiers = null,
                     first = 250
-                ).collect { result ->
+                ).collectLatest { result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
                             productsResult.value = DomainNetworkResult.Success(

@@ -31,7 +31,7 @@ import com.kyobi.theme.kyobiTheme
 fun CollectionTabSectionProductsGridView(
     modifier: Modifier = Modifier,
     imageLoader: ImageLoader,
-    productListViewModel: CollectionTabProductListViewModel = hiltViewModel(),
+    productListViewModel: CollectionTabProductListViewModel,
     lazyGridState: LazyGridState,
     bottomPadding: Dp,
     onSortClick: () -> Unit,

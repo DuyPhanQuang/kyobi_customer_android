@@ -10,6 +10,7 @@ import com.kyobi.domain.usecase.GetProductsUseCase
 import com.kyobi.featurecommon.product.BaseProductListViewModel
 import com.kyobi.featurecommon.product.ProductUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.collectLatest
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -51,7 +52,7 @@ class CollectionScreenProductListViewModel @Inject constructor(
                     sortKey = null,
                     identifiers = null,
                     first = 250
-                ).collect { result ->
+                ).collectLatest { result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
                             productsResult.value = DomainNetworkResult.Success(

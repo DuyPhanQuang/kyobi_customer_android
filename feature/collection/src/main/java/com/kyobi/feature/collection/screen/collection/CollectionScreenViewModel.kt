@@ -28,8 +28,8 @@ class CollectionScreenViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
     private lateinit var eventBus: CollectionScreenEventBus
 
-    fun initWithEventBus(eventBus: CollectionScreenEventBus) {
-        this.eventBus = eventBus
+    fun initWithEventBus(initEventBus: CollectionScreenEventBus) {
+        this.eventBus = initEventBus
     }
 
     fun setCollectionMenus(data: List<CollectionMenu>) {
