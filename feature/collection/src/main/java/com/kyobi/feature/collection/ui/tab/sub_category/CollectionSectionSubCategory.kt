@@ -31,12 +31,16 @@ fun CollectionSectionSubCategory(
     selectedSubCategoryId: String?,
     bottomPadding: Dp,
     subCategories: List<SubcategoryMenu>,
-    onItemClick: (SubcategoryMenu) -> Unit = {}
+    onItemClick: (SubcategoryMenu) -> Unit
 ) {
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+
     LazyColumn(
         state = lazyListState,
         modifier = modifier
-            .background(MaterialTheme.kyobiTheme.colors.bg.stone100),
+            .background(colorTheme.bg.stone100),
         contentPadding = PaddingValues(bottom = bottomPadding)
     ) {
         items(
@@ -44,8 +48,7 @@ fun CollectionSectionSubCategory(
             key = { "subcategory_${it.id}_${it.filterHandle}" }
         ) { subCategory ->
             val isSelected = subCategory.id == selectedSubCategoryId
-            val backgroundColor = if (isSelected) MaterialTheme.kyobiTheme.colors.background else
-                MaterialTheme.kyobiTheme.colors.bg.stone100
+            val backgroundColor = if (isSelected) colorTheme.background else colorTheme.bg.stone100
             val stripeWidth = MaterialTheme.kyobiTheme.width.dp3
 
             Box(
@@ -69,11 +72,11 @@ fun CollectionSectionSubCategory(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
-                            vertical = MaterialTheme.kyobiTheme.spacing.dp20,
-                            horizontal = MaterialTheme.kyobiTheme.spacing.dp8),
+                            vertical = spacing.dp20,
+                            horizontal = spacing.dp8),
                     text = subCategory.title,
-                    style = MaterialTheme.kyobiTheme.typography.smallTitle,
-                    color = MaterialTheme.kyobiTheme.colors.onBackground,
+                    style = typographyTheme.smallTitle,
+                    color = colorTheme.onBackground,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                     textAlign = TextAlign.Center
                 )

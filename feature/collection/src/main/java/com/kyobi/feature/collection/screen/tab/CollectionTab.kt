@@ -105,6 +105,7 @@ fun CollectionTab(
 
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val spacing = MaterialTheme.kyobiTheme.spacing
+    val hackyPaddingTop = Dimension.dp2
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
@@ -150,7 +151,7 @@ fun CollectionTab(
             item {
                 AnimatedVisibility(
                     modifier = Modifier
-                        .padding(top = spacing.dp2)
+                        .padding(top = hackyPaddingTop)
                         .drawBehind {
                             val strokeWidth = Dimension.dp1.toPx()
                             val borderColor = Colors().stone100
@@ -193,7 +194,7 @@ fun CollectionTab(
                                 strokeWidth = strokeWidth
                             )
                         }
-                        .padding(top = spacing.dp2)
+                        .padding(top = hackyPaddingTop)
                 ) {
                     CollectionSectionSubCategory(
                         modifier = Modifier

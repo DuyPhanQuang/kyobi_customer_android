@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import coil.ImageLoader
 import com.kyobi.composable.image.AppImage
 import com.kyobi.feature.collection.screen.collection.model.CollectionMenu
@@ -39,8 +40,7 @@ fun CollectionMenuTile(
     val typographyTheme = MaterialTheme.kyobiTheme.typography
 
     Column(
-        modifier = modifier
-            .clickable { onItemClick() },
+        modifier = modifier.clickable { onItemClick() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -64,8 +64,7 @@ fun CollectionMenuTile(
             imageLoader = imageLoader
         )
         Text(
-            modifier = Modifier
-                .padding(top = spacing.dp4),
+            modifier = Modifier.padding(top = spacing.dp4),
             text = collectionMenu.title,
             style = typographyTheme.paragraphXs,
             color = if (collectionMenu.title.lowercase(Locale.getDefault()) == "sale")
@@ -73,6 +72,8 @@ fun CollectionMenuTile(
                 colorTheme.onBackground,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Clip
         )
     }
 }

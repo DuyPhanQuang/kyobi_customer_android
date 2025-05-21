@@ -50,6 +50,9 @@ fun CompactMenuRow(
     val typographyTheme = MaterialTheme.kyobiTheme.typography
     val allContainerWidth = spacing.dp48
 
+    val width = MaterialTheme.kyobiTheme.width
+    val tileWidth = width.dp60
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -62,7 +65,9 @@ fun CompactMenuRow(
             horizontalArrangement = Arrangement.spacedBy(spacing.dp16),
             contentPadding = PaddingValues(
                 start = spacing.dp12,
-                end = spacing.dp12 + allContainerWidth
+                end = spacing.dp12 + allContainerWidth,
+                top = spacing.dp8,
+                bottom = spacing.dp8
             )
         ) {
             items(
@@ -70,9 +75,9 @@ fun CompactMenuRow(
                 key = { "compact_menu_${it.id}_${it.filterHandle}" }
             ) { collectionMenu ->
                 CollectionMenuTile(
-                    modifier = Modifier.padding(
-                        top = spacing.dp8
-                    ),
+                    modifier = Modifier
+                        .width(tileWidth)
+                        .fillMaxHeight(),
                     imageLoader = imageLoader,
                     collectionMenu = collectionMenu,
                     isSelected = collectionMenu.id == selectedCollectionId,
@@ -80,7 +85,6 @@ fun CompactMenuRow(
                 )
             }
         }
-
         Box(
             modifier = Modifier
                 .width(allContainerWidth)
