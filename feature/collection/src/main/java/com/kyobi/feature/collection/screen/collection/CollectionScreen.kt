@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -116,13 +117,29 @@ fun CollectionScreen(
         // scroll up behavior
         if (currentVisibleItemIndex > lastVisibleItemIndex) {
             showCollectionSection = false
-            expandedMenuSection = false
+            if (expandedMenuSection) {
+                expandedMenuSection = false
+            }
         }
-        // scroll down
+        // scroll down behavior
         if (currentVisibleItemIndex < lastVisibleItemIndex || currentVisibleItemIndex == 0) {
             showCollectionSection = true
         }
         lastVisibleItemIndex = currentVisibleItemIndex
+    }
+
+    LaunchedEffect(productLazyGridState.isScrollInProgress) {
+        if (productLazyGridState.isScrollInProgress) {
+            // scroll up behavior
+            snapshotFlow { productLazyGridState.firstVisibleItemScrollOffset }
+                .collect { scrollOffset ->
+                    if (scrollOffset > 0) {
+                        if (expandedMenuSection) {
+                            expandedMenuSection = false
+                        }
+                    }
+                }
+        }
     }
 
     val colorTheme = MaterialTheme.kyobiTheme.colors
