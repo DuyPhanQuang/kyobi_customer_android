@@ -45,7 +45,7 @@ fun CollectionTabSectionSubCategory(
             key = { index, _ -> "subCategory_$index" }
         ) { _, subCategory ->
             val isSelected = subCategory.id == selectedSubCategoryId
-            val backgroundColor = if (isSelected) colorTheme.background else colorTheme.bg.stone100
+            val backgroundColor = if (isSelected) colorTheme.bg.red100 else colorTheme.bg.stone100
             val stripeWidth = MaterialTheme.kyobiTheme.width.dp3
 
             Box(
@@ -59,7 +59,7 @@ fun CollectionTabSectionSubCategory(
                         modifier = Modifier.matchParentSize()
                     ) {
                         drawRect(
-                            color = Colors().stone950,
+                            color = Colors().red950,
                             topLeft = Offset.Zero,
                             size = Size(stripeWidth.toPx(), size.height)
                         )

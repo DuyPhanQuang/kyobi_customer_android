@@ -50,13 +50,10 @@ fun CompactMenuRow(
     val typographyTheme = MaterialTheme.kyobiTheme.typography
     val allContainerWidth = spacing.dp48
 
-    val width = MaterialTheme.kyobiTheme.width
-    val tileWidth = width.dp60
-
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(MaterialTheme.kyobiTheme.height.dp84)
+            .height(MaterialTheme.kyobiTheme.height.dp56)
             .background(colorTheme.background),
         contentAlignment = Alignment.Center
     ) {
@@ -67,8 +64,7 @@ fun CompactMenuRow(
                 start = spacing.dp12,
                 end = spacing.dp12 + allContainerWidth,
                 top = spacing.dp8,
-                bottom = spacing.dp8
-            )
+                bottom = spacing.dp8)
         ) {
             itemsIndexed(
                 collectionMenus,
@@ -76,9 +72,9 @@ fun CompactMenuRow(
             ) { _, collectionMenu ->
                 CollectionMenuTile(
                     modifier = Modifier
-                        .width(tileWidth)
                         .fillMaxHeight(),
                     imageLoader = imageLoader,
+                    showOnlyLabel = true,
                     collectionMenu = collectionMenu,
                     isSelected = collectionMenu.id == selectedCollectionId,
                     onItemClick = { onItemClick(collectionMenu) }

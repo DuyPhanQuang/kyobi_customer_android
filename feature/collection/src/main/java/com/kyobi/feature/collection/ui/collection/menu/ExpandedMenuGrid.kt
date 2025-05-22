@@ -59,7 +59,7 @@ fun ExpandedMenuGrid(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.kyobiTheme.colors.background)
+            .background(colorTheme.background)
     ) {
         LazyHorizontalGrid(
             rows = GridCells.Fixed(rows),
