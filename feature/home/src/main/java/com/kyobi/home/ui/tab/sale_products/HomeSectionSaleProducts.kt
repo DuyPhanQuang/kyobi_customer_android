@@ -50,9 +50,9 @@ fun HomeSectionSaleProducts(
                     Column(
                         modifier = Modifier
                             .weight(1f)
+                            .padding(MaterialTheme.kyobiTheme.spacing.dp8)
                             .clip(MaterialTheme.kyobiTheme.shapes.small)
                             .background(MaterialTheme.kyobiTheme.colors.bg.stone100)
-                            .padding(MaterialTheme.kyobiTheme.spacing.dp8)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),

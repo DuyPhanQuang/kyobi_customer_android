@@ -50,9 +50,7 @@ fun HomeSectionDeals(
             .fillMaxWidth()
             .clip(MaterialTheme.kyobiTheme.shapes.small)
             .background(Color.Transparent)
-            .padding(
-                horizontal = MaterialTheme.kyobiTheme.spacing.dp12
-            )
+            .padding(horizontal = MaterialTheme.kyobiTheme.spacing.dp12)
     ) {
         AppImage(
             imageUrl = backgroundImage?.url,

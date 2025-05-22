@@ -54,13 +54,14 @@ fun CollectionTabSectionSortFilter(
     ) {
         Box(
             modifier = Modifier
+                .padding(vertical = spacing.dp8)
                 .clip(shapesTheme.extraSmall)
                 .clickable { onSortClick() }
         ) {
             Row(
                 modifier = Modifier
                     .padding(
-                        vertical = spacing.dp12,
+                        vertical = spacing.dp4,
                         horizontal = spacing.dp8),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -80,13 +81,14 @@ fun CollectionTabSectionSortFilter(
         }
         Box(
             modifier = Modifier
+                .padding(vertical = spacing.dp8)
                 .clip(shapesTheme.extraSmall)
                 .clickable { onFilterClick() }
         ) {
             Row(
                 modifier = Modifier
                     .padding(
-                        vertical = spacing.dp12,
+                        vertical = spacing.dp4,
                         horizontal = spacing.dp8),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

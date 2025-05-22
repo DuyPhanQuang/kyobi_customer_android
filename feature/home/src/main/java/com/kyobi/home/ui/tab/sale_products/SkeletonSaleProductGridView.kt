@@ -42,9 +42,9 @@ fun SkeletonSaleProductGridView(
                         Column(
                             modifier = Modifier
                                 .weight(1f)
+                                .padding(spacing)
                                 .clip(MaterialTheme.kyobiTheme.shapes.small)
                                 .background(MaterialTheme.kyobiTheme.colors.bg.stone100)
-                                .padding(spacing)
                         ) {
                             // Header Skeleton
                             Row(
