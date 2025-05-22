@@ -57,9 +57,7 @@ fun ExpandedMenuGrid(
     val gridHeight = tileHeight * rows + (contentPaddingVertical * rows)
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(colorTheme.background)
+        modifier = modifier.fillMaxWidth()
     ) {
         LazyHorizontalGrid(
             rows = GridCells.Fixed(rows),

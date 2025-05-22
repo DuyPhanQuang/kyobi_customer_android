@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -128,7 +129,6 @@ fun CollectionTab(
 
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val spacing = MaterialTheme.kyobiTheme.spacing
-    val paddingTopHacky = Dimension.dp2
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
@@ -168,14 +168,20 @@ fun CollectionTab(
     ) { paddingValues ->
         LazyColumn(
             state = lazyListState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colorTheme.background),
             contentPadding = paddingValues
         ) {
             item {
                 AnimatedVisibility(
-                    modifier = Modifier
-                        .padding(top = paddingTopHacky)
-                        .drawBehind {
+                    visible = showCategorySection,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .drawBehind {
                             val strokeWidth = Dimension.dp1.toPx()
                             val borderColor = Colors().stone100
                             drawLine(
@@ -184,22 +190,20 @@ fun CollectionTab(
                                 end = Offset(size.width, 0f),
                                 strokeWidth = strokeWidth
                             )
-                        },
-                    visible = showCategorySection,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
-                ) {
-                    CollectionTabSectionCategory(
-                        categories = categoryMenus,
-                        imageLoader = imageLoader,
-                        expanded = expandedCategorySection,
-                        onAllClick = { expandedCategorySection = true },
-                        onCollapseClick = { expandedCategorySection = false },
-                        selectedCategoryId = selectedCategoryId,
-                        onCategoryClick = { category ->
-                            viewModel.updateCategorySelected(category)
                         }
-                    )
+                    ) {
+                        CollectionTabSectionCategory(
+                            categories = categoryMenus,
+                            imageLoader = imageLoader,
+                            expanded = expandedCategorySection,
+                            onAllClick = { expandedCategorySection = true },
+                            onCollapseClick = { expandedCategorySection = false },
+                            selectedCategoryId = selectedCategoryId,
+                            onCategoryClick = { category ->
+                                viewModel.updateCategorySelected(category)
+                            }
+                        )
+                    }
                 }
             }
             item {
@@ -217,7 +221,6 @@ fun CollectionTab(
                                 strokeWidth = strokeWidth
                             )
                         }
-                        .padding(top = paddingTopHacky)
                 ) {
                     CollectionTabSectionSubCategory(
                         modifier = Modifier

@@ -26,7 +26,6 @@ fun CollectionSortFilterTile(
     label: String,
     isSelected: Boolean = false,
     iconDesc: String? = null,
-    onItemClick: () -> Unit
 ) {
     val typographyTheme = MaterialTheme.kyobiTheme.typography
     val spacing = MaterialTheme.kyobiTheme.spacing
@@ -39,7 +38,6 @@ fun CollectionSortFilterTile(
         modifier = modifier
             .clip(MaterialTheme.kyobiTheme.shapes.extraSmall)
             .background(background)
-            .clickable { onItemClick() }
     ) {
         Row(
             modifier = Modifier

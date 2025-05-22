@@ -40,10 +40,9 @@ fun CollectionSectionProductsGridView(
     val colorTheme = MaterialTheme.kyobiTheme.colors
 
     LazyVerticalGrid(
+        modifier = modifier,
         columns = GridCells.Fixed(2),
         state = lazyGridState,
-        modifier = modifier
-            .background(colorTheme.background),
         contentPadding = PaddingValues(
             bottom = bottomPadding,
             start = spacing.dp12,

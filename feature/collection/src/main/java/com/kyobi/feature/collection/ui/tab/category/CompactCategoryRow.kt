@@ -56,8 +56,7 @@ fun CompactCategoryRow(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(MaterialTheme.kyobiTheme.height.dp84)
-            .background(colorTheme.background),
+            .height(MaterialTheme.kyobiTheme.height.dp84),
         contentAlignment = Alignment.Center
     ) {
         LazyRow(

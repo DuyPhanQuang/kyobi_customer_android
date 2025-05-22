@@ -53,8 +53,7 @@ fun CompactMenuRow(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(MaterialTheme.kyobiTheme.height.dp56)
-            .background(colorTheme.background),
+            .height(MaterialTheme.kyobiTheme.height.dp56),
         contentAlignment = Alignment.Center
     ) {
         LazyRow(
