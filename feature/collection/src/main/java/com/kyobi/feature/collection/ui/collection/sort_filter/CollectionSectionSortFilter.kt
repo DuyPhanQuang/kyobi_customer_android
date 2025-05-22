@@ -3,7 +3,6 @@ package com.kyobi.feature.collection.ui.collection.sort_filter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -16,7 +15,9 @@ fun CollectionSectionSortFilter(
     onSortClick: () -> Unit,
     onColorFilterClick: () -> Unit,
     onSizeFilterClick: () -> Unit,
-    onFilterAllClick: () -> Unit
+    onFilterAllClick: () -> Unit,
+    viewMode: GridViewModeType,
+    onViewModeClick: (GridViewModeType) -> Unit
 ) {
     val colorTheme = MaterialTheme.kyobiTheme.colors
 
@@ -43,6 +44,10 @@ fun CollectionSectionSortFilter(
         )
         CollectionFilterAllTile(
             onItemClick = onFilterAllClick
+        )
+        GridViewMode(
+            mode = viewMode,
+            onItemClick = onViewModeClick
         )
     }
 }

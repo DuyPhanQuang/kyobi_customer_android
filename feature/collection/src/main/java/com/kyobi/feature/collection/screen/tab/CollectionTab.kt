@@ -97,14 +97,14 @@ fun CollectionTab(
 
     // Track scroll direction
     LaunchedEffect(currentVisibleItemIndex) {
-        // scroll down
+        // scroll up behavior
         if (currentVisibleItemIndex > lastVisibleItemIndex) {
             showCategorySection = false
+            expandedCategorySection = false
         }
-        // scroll up
+        // scroll down behavior
         if (currentVisibleItemIndex < lastVisibleItemIndex || currentVisibleItemIndex == 0) {
             showCategorySection = true
-            expandedCategorySection = false
         }
         lastVisibleItemIndex = currentVisibleItemIndex
     }

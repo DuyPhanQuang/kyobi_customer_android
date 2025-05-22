@@ -43,6 +43,7 @@ import com.kyobi.feature.collection.screen.tab.CollectionTabViewModel
 import com.kyobi.feature.collection.ui.collection.menu.CollectionSectionMenu
 import com.kyobi.feature.collection.ui.collection.products.CollectionSectionProductsGridView
 import com.kyobi.feature.collection.ui.collection.sort_filter.CollectionSectionSortFilter
+import com.kyobi.feature.collection.ui.collection.sort_filter.GridViewModeType
 import com.kyobi.feature.collection.ui.common.CollectionCommonSectionHeader
 import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.theme.Colors
@@ -77,6 +78,8 @@ fun CollectionScreen(
     val currentVisibleItemIndex by remember { derivedStateOf { productLazyGridState.firstVisibleItemIndex } }
     var expandedMenuSection by remember { mutableStateOf(false) }
 
+    var gridViewMode by remember { mutableStateOf(GridViewModeType.COLUMNS_2) }
+
     val selectedCollectionId = uiState.selectedCollectionId
     val collectionMenus = uiState.collectionMenus
 
@@ -110,14 +113,14 @@ fun CollectionScreen(
 
     // Track scroll direction
     LaunchedEffect(currentVisibleItemIndex) {
-        // scroll down
+        // scroll up behavior
         if (currentVisibleItemIndex > lastVisibleItemIndex) {
             showCollectionSection = false
+            expandedMenuSection = false
         }
-        // scroll up
+        // scroll down
         if (currentVisibleItemIndex < lastVisibleItemIndex || currentVisibleItemIndex == 0) {
             showCollectionSection = true
-            expandedMenuSection = false
         }
         lastVisibleItemIndex = currentVisibleItemIndex
     }
@@ -222,7 +225,11 @@ fun CollectionScreen(
                     onSortClick = {},
                     onColorFilterClick = {},
                     onSizeFilterClick = {},
+                    viewMode = gridViewMode,
                     onFilterAllClick = {},
+                    onViewModeClick = { viewMode ->
+                        gridViewMode = viewMode
+                    }
                 )
             }
             item {

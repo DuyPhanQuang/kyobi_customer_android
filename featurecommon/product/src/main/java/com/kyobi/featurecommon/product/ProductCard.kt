@@ -45,20 +45,27 @@ fun ProductCard(
     val imageThumbnail = product.featuredImage
     val colorsOption = product.toColorsOption
 
+    val shapesTheme = MaterialTheme.kyobiTheme.shapes
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val width = MaterialTheme.kyobiTheme.width
+
     Column(
         modifier = modifier
+            .clip(shapesTheme.small)
             .clickable { onClick() }
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(MaterialTheme.kyobiTheme.shapes.small)
+                .clip(shapesTheme.small)
                 .aspectRatio(0.668f)
         ) {
             AppImage(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(MaterialTheme.kyobiTheme.shapes.small),
+                    .clip(shapesTheme.small),
                 imageUrl = imageThumbnail?.url,
                 contentDescription = imageThumbnail?.altText,
                 imageLoader = imageLoader,
@@ -68,22 +75,20 @@ fun ProductCard(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(
-                        vertical = MaterialTheme.kyobiTheme.spacing.dp8,
-                        horizontal = MaterialTheme.kyobiTheme.spacing.dp8
-                    )
+                        vertical = spacing.dp8,
+                        horizontal = spacing.dp8)
             ) {
                 Box(
                     modifier = Modifier
-                        .background(MaterialTheme.kyobiTheme.colors.bg.red700)
+                        .background(colorTheme.bg.red700)
                         .padding(
-                            vertical = MaterialTheme.kyobiTheme.spacing.dp4,
-                            horizontal = MaterialTheme.kyobiTheme.spacing.dp8
-                        )
+                            vertical = spacing.dp4,
+                            horizontal = spacing.dp8)
                 ) {
                     Text(
                         text = "-20%",
-                        style = MaterialTheme.typography.labelSmallXs,
-                        color = MaterialTheme.kyobiTheme.colors.text.white,
+                        style = typographyTheme.labelSmallXs,
+                        color = colorTheme.text.white,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -93,38 +98,37 @@ fun ProductCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    top = MaterialTheme.kyobiTheme.spacing.dp8,
-                    start = MaterialTheme.kyobiTheme.spacing.dp8,
-                    end = MaterialTheme.kyobiTheme.spacing.dp8,
-                )
+                    top = spacing.dp8,
+                    start = spacing.dp8,
+                    end = spacing.dp8)
         ) {
             Text(
                 modifier = Modifier
                     .fillMaxWidth(),
                 text = product.title,
-                style = MaterialTheme.typography.paragraphXs,
-                color = MaterialTheme.kyobiTheme.colors.onBackground,
+                style = typographyTheme.paragraphXs,
+                color = colorTheme.onBackground,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = MaterialTheme.kyobiTheme.spacing.dp4),
-                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp6),
+                    .padding(top = spacing.dp4),
+                horizontalArrangement = Arrangement.spacedBy(spacing.dp6),
             ) {
                 colorsOption.forEach { color ->
                     val colorValue = ColorUtils.getColorValue(color)
                     Box(
                         modifier = Modifier
-                            .size(MaterialTheme.kyobiTheme.width.dp16)
+                            .size(width.dp16)
                             .clip(CircleShape)
                             .border(
-                                width = MaterialTheme.kyobiTheme.width.dp1,
-                                color = MaterialTheme.kyobiTheme.colors.bg.stone300,
+                                width = width.dp1,
+                                color = colorTheme.bg.stone300,
                                 shape = CircleShape)
-                            .background(color = MaterialTheme.kyobiTheme.colors.bg.white)
-                            .padding(MaterialTheme.kyobiTheme.spacing.dp2),
+                            .background(color = colorTheme.bg.white)
+                            .padding(spacing.dp2),
                         contentAlignment = Alignment.Center
                     ) {
                         Box(
@@ -139,21 +143,20 @@ fun ProductCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(
-                        vertical = MaterialTheme.kyobiTheme.spacing.dp4),
+                    .padding(vertical = spacing.dp4),
             ) {
                 Text(
                     text = product.toFormattedSalePrice,
-                    style = MaterialTheme.typography.labelSmallXs,
-                    color = MaterialTheme.kyobiTheme.colors.text.red700,
+                    style = typographyTheme.labelSmallXs,
+                    color = colorTheme.text.red700,
                 )
                 XxsSpaceX()
                 Text(
                     text = product.toFormattedOriginalPrice,
-                    style = MaterialTheme.typography.labelSmallXs.copy(
+                    style = typographyTheme.labelSmallXs.copy(
                         textDecoration = TextDecoration.LineThrough
                     ),
-                    color = MaterialTheme.kyobiTheme.colors.text.neutral400,
+                    color = colorTheme.text.neutral400,
                 )
             }
         }

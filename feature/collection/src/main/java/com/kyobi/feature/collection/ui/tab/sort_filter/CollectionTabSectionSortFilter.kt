@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import com.kyobi.theme.kyobiTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.painterResource
@@ -33,6 +34,7 @@ fun CollectionTabSectionSortFilter(
     val spacing = MaterialTheme.kyobiTheme.spacing
     val iconTheme = MaterialTheme.kyobiTheme.icon
     val colorTheme = MaterialTheme.kyobiTheme.colors
+    val shapesTheme = MaterialTheme.kyobiTheme.shapes
 
     Row(
         modifier = modifier
@@ -52,6 +54,7 @@ fun CollectionTabSectionSortFilter(
     ) {
         Box(
             modifier = Modifier
+                .clip(shapesTheme.extraSmall)
                 .clickable { onSortClick() }
         ) {
             Row(
@@ -77,6 +80,7 @@ fun CollectionTabSectionSortFilter(
         }
         Box(
             modifier = Modifier
+                .clip(shapesTheme.extraSmall)
                 .clickable { onFilterClick() }
         ) {
             Row(
