@@ -1,11 +1,17 @@
 package com.kyobi.feature.collection.ui.collection.sort_filter
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,16 +53,24 @@ fun <T : Enum<T>> CustomDropdown(
     var dropdownOffsetY by remember { mutableStateOf(Dimension.dp0) }
     var dropdownWidth by remember { mutableStateOf(Dimension.dp0) }
     var dropdownHeight by remember { mutableStateOf(Dimension.dp0) }
+    var animationState by remember { mutableStateOf(isActive) }
 
     val density = LocalDensity.current
     val statusBarHeightDp = with(density) { WindowInsets.statusBars.getTop(density).toDp() }
     val navigationBarHeightDp = with(density) { WindowInsets.navigationBars.getBottom(density).toDp() }
-
     val calculateOffsetY = dropdownOffsetY + dropdownHeight + totalSpacing
     val topHeight = calculateOffsetY + statusBarHeightDp + navigationBarHeightDp
 
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val shapeTheme = MaterialTheme.kyobiTheme.shapes
+
+    LaunchedEffect(currentActive, isActive) {
+        if (isActive) {
+            animationState = true
+        } else if (currentActive != type) {
+            animationState = false
+        }
+    }
 
     Box(modifier = modifier) {
         Box(
@@ -70,7 +84,8 @@ fun <T : Enum<T>> CustomDropdown(
                 .clip(shapeForButton ?: shapeTheme.extraSmall)
                 .clickable {
                     if (currentActive != null && currentActive != type) {
-                        onSwitch(type) // move sang dropdown mới
+                        onToggle(false) // Đóng dropdown hiện tại
+                        onSwitch(type) // Chuyển sang dropdown mới
                     } else {
                         onToggle(!isActive) // Toggle nếu không có dropdown khác
                     }
@@ -79,7 +94,7 @@ fun <T : Enum<T>> CustomDropdown(
             child()
         }
 
-        if (isActive) {
+        if (animationState) {
             Popup(
                 alignment = Alignment.TopStart,
                 offset = IntOffset(
@@ -91,26 +106,35 @@ fun <T : Enum<T>> CustomDropdown(
             ) {
                 BoxWithConstraints {
                     val remainingHeight = (maxHeight - topHeight).coerceAtLeast(Dimension.dp0)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(remainingHeight)
-                            .background(colorTheme.bg.stone950.copy(alpha = 0.5f))
-                            .pointerInput(Unit) {
-                                detectTapGestures { offset ->
-                                    // click ngoài vùng nội dung, close dropdown
-                                    if (offset.y > height.value) {
-                                        onToggle(false)
-                                    }
-                                }
-                            }
+                    AnimatedVisibility(
+                        visible = isActive,
+                        enter = fadeIn() + slideInVertically(),
+                        exit = fadeOut() + slideOutVertically()
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(height)
+                                .height(remainingHeight)
+                                .background(colorTheme.bg.stone950.copy(alpha = 0.5f))
                         ) {
-                            popupContent()
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(height)
+                            ) {
+                                popupContent()
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .pointerInput(Unit) {
+                                        detectTapGestures { offset ->
+                                            if (offset.y > height.value) {
+                                                onToggle(false)
+                                            }
+                                        }
+                                    }
+                            )
                         }
                     }
                 }

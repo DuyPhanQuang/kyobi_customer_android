@@ -4,10 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.kyobi.feature.collection.ui.collection.sort_filter.content.CollectionColorFilterContent
@@ -23,6 +19,8 @@ enum class CollectionSectionSortFilterType { SORT, COLOR_FILTER, SIZE_FILTER }
 @Composable
 fun CollectionSectionSortFilter(
     modifier: Modifier = Modifier,
+    activeDropdown: CollectionSectionSortFilterType? = null,
+    updateActiveDropdown: (CollectionSectionSortFilterType?) -> Unit,
     onSortClick: () -> Unit,
     onColorFilterClick: () -> Unit,
     onSizeFilterClick: () -> Unit,
@@ -32,7 +30,6 @@ fun CollectionSectionSortFilter(
 ) {
     val height = MaterialTheme.kyobiTheme.height
     val spacing = MaterialTheme.kyobiTheme.spacing
-    var activeDropdown by remember { mutableStateOf<CollectionSectionSortFilterType?>(null) }
 
     Row(
         modifier = modifier,
@@ -48,15 +45,15 @@ fun CollectionSectionSortFilter(
             currentActive = activeDropdown,
             onToggle = { active ->
                 if (active && activeDropdown != CollectionSectionSortFilterType.SORT) {
-                    activeDropdown = CollectionSectionSortFilterType.SORT
+                    updateActiveDropdown(CollectionSectionSortFilterType.SORT)
                     onSortClick()
                 } else if (!active) {
-                    activeDropdown = null
+                    updateActiveDropdown(null)
                 }
             },
             onSwitch = { newType ->
                 if (activeDropdown != newType) {
-                    activeDropdown = newType
+                    updateActiveDropdown(newType)
                     when (newType) {
                         CollectionSectionSortFilterType.SORT -> onSortClick()
                         CollectionSectionSortFilterType.COLOR_FILTER -> onColorFilterClick()
@@ -84,15 +81,15 @@ fun CollectionSectionSortFilter(
             currentActive = activeDropdown,
             onToggle = { active ->
                 if (active && activeDropdown != CollectionSectionSortFilterType.COLOR_FILTER) {
-                    activeDropdown = CollectionSectionSortFilterType.COLOR_FILTER
+                    updateActiveDropdown(CollectionSectionSortFilterType.COLOR_FILTER)
                     onColorFilterClick()
                 } else if (!active) {
-                    activeDropdown = null
+                    updateActiveDropdown(null)
                 }
             },
             onSwitch = { newType ->
                 if (activeDropdown != newType) {
-                    activeDropdown = newType
+                    updateActiveDropdown(newType)
                     when (newType) {
                         CollectionSectionSortFilterType.SORT -> onSortClick()
                         CollectionSectionSortFilterType.COLOR_FILTER -> onColorFilterClick()
@@ -120,15 +117,15 @@ fun CollectionSectionSortFilter(
             currentActive = activeDropdown,
             onToggle = { active ->
                 if (active && activeDropdown != CollectionSectionSortFilterType.SIZE_FILTER) {
-                    activeDropdown = CollectionSectionSortFilterType.SIZE_FILTER
+                    updateActiveDropdown(CollectionSectionSortFilterType.SIZE_FILTER)
                     onSizeFilterClick()
                 } else if (!active) {
-                    activeDropdown = null
+                    updateActiveDropdown(null)
                 }
             },
             onSwitch = { newType ->
                 if (activeDropdown != newType) {
-                    activeDropdown = newType
+                    updateActiveDropdown(newType)
                     when (newType) {
                         CollectionSectionSortFilterType.SORT -> onSortClick()
                         CollectionSectionSortFilterType.COLOR_FILTER -> onColorFilterClick()
