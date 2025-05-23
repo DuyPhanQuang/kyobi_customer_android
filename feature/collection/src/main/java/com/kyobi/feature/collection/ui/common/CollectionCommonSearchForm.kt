@@ -31,11 +31,11 @@ fun CollectionCommonSearchForm(
         modifier = modifier
             .fillMaxWidth()
             .height(MaterialTheme.kyobiTheme.height.dp40)
-            .clip(MaterialTheme.kyobiTheme.shapes.extraLarge)
             .border(
                 MaterialTheme.kyobiTheme.width.dp1,
                 MaterialTheme.kyobiTheme.colors.bg.stone300,
                 MaterialTheme.kyobiTheme.shapes.extraLarge)
+            .clip(MaterialTheme.kyobiTheme.shapes.extraLarge)
             .background(MaterialTheme.kyobiTheme.colors.background)
             .clickable { onSearchClick() },
         contentAlignment = Alignment.CenterStart

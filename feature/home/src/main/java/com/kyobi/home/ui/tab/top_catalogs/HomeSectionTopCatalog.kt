@@ -81,12 +81,12 @@ fun TopCatalogTile(
         AppImage(
             imageUrl = imageData?.url,
             modifier = Modifier
-                .clip(CircleShape)
                 .border(
                     width = MaterialTheme.kyobiTheme.width.dp1,
                     color = MaterialTheme.kyobiTheme.colors.bg.stone100,
                     shape = CircleShape
                 )
+                .clip(CircleShape)
                 .aspectRatio(1f)
                 .background(
                     color = MaterialTheme.kyobiTheme.colors.background,

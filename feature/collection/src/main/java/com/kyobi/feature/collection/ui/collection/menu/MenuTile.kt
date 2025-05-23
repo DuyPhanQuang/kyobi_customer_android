@@ -62,11 +62,11 @@ fun CollectionMenuTile(
                 AppImage(
                     modifier = Modifier
                         .size(width.dp48)
-                        .clip(CircleShape)
                         .border(
                             width = width.dp1,
                             color = colorTheme.bg.stone100,
                             shape = CircleShape)
+                        .clip(CircleShape)
                         .aspectRatio(1f)
                         .background(
                             color = colorTheme.background,

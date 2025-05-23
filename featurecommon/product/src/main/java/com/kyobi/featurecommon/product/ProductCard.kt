@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import coil.ImageLoader
 import com.kyobi.composable.image.AppImage
+import com.kyobi.composable.product_option.ColorOption
 import com.kyobi.composable.space.XxsSpaceX
 import com.kyobi.composable.utils.ColorUtils
 import com.kyobi.domain.extension.toColorsOption
@@ -119,25 +120,10 @@ fun ProductCard(
             ) {
                 colorsOption.forEach { color ->
                     val colorValue = ColorUtils.getColorValue(color)
-                    Box(
-                        modifier = Modifier
-                            .size(width.dp16)
-                            .clip(CircleShape)
-                            .border(
-                                width = width.dp1,
-                                color = colorTheme.bg.stone300,
-                                shape = CircleShape)
-                            .background(color = colorTheme.bg.white)
-                            .padding(spacing.dp2),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
-                                .background(color = colorValue),
-                        )
-                    }
+                    ColorOption(
+                        color = colorValue,
+                        size = width.dp16,
+                    )
                 }
             }
             Row(
@@ -154,8 +140,7 @@ fun ProductCard(
                 Text(
                     text = product.toFormattedOriginalPrice,
                     style = typographyTheme.labelSmallXs.copy(
-                        textDecoration = TextDecoration.LineThrough
-                    ),
+                        textDecoration = TextDecoration.LineThrough),
                     color = colorTheme.text.neutral400,
                 )
             }

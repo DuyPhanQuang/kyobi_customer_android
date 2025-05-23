@@ -32,27 +32,31 @@ fun HomeSectionSaleProducts(
     imageLoader: ImageLoader,
 ) {
     val itemsPerRow = 2
-    val spacing = MaterialTheme.kyobiTheme.spacing.dp8
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+    val iconTheme = MaterialTheme.kyobiTheme.icon
+    val shapeTheme = MaterialTheme.kyobiTheme.shapes
 
     Column(
-        modifier = modifier.padding(
-            horizontal = MaterialTheme.kyobiTheme.spacing.dp12,
-            vertical = MaterialTheme.kyobiTheme.spacing.dp8
-        ),
-        verticalArrangement = Arrangement.spacedBy(spacing)
+        modifier = modifier
+            .padding(
+                horizontal = spacing.dp12,
+                vertical = spacing.dp8),
+        verticalArrangement = Arrangement.spacedBy(spacing.dp8)
     ) {
         saleProducts.chunked(itemsPerRow).forEach { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(spacing)
+                horizontalArrangement = Arrangement.spacedBy(spacing.dp8)
             ) {
                 rowItems.forEach { saleGroup ->
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(MaterialTheme.kyobiTheme.spacing.dp8)
-                            .clip(MaterialTheme.kyobiTheme.shapes.small)
-                            .background(MaterialTheme.kyobiTheme.colors.bg.stone100)
+                            .padding(spacing.dp8)
+                            .clip(shapeTheme.small)
+                            .background(colorTheme.bg.stone100)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -61,21 +65,21 @@ fun HomeSectionSaleProducts(
                         ) {
                             Text(
                                 text = saleGroup.catalog.toName,
-                                style = MaterialTheme.kyobiTheme.typography.smallHeader,
-                                color = MaterialTheme.kyobiTheme.colors.bg.logo,
+                                style = typographyTheme.smallHeader,
+                                color = colorTheme.bg.logo,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                             Icon(
-                                modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.sm),
+                                modifier = Modifier.size(iconTheme.sm),
                                 painter = painterResource(id = R.drawable.ic_arrow_right),
                                 contentDescription = "Arrow Right Icon",
-                                tint = MaterialTheme.kyobiTheme.colors.bg.stone400
+                                tint = colorTheme.bg.stone400
                             )
                         }
                         XsSpaceY()
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp4)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.dp4)
                         ) {
                             val productItems = saleGroup.products.take(itemsPerRow)
                             productItems.forEach { product ->

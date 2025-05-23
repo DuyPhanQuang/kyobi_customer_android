@@ -33,20 +33,24 @@ fun HomeSectionRecommendedProductsGridView(
     val productsResult by productListViewModel.products.collectAsStateWithLifecycle()
     val itemStates by productListViewModel.itemStates.collectAsStateWithLifecycle()
 
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(
-                start = MaterialTheme.kyobiTheme.spacing.dp12,
-                end = MaterialTheme.kyobiTheme.spacing.dp12,
-                top = MaterialTheme.kyobiTheme.spacing.dp16)
+                start = spacing.dp12,
+                end = spacing.dp12,
+                top = spacing.dp16)
     ) {
         XsSpaceY()
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = "For You",
-            style = MaterialTheme.kyobiTheme.typography.paragraphMd,
-            color = MaterialTheme.kyobiTheme.colors.onBackground
+            style = typographyTheme.paragraphMd,
+            color = colorTheme.onBackground
         )
         XsSpaceY()
 
@@ -62,13 +66,13 @@ fun HomeSectionRecommendedProductsGridView(
                     rows.forEach { rowItems ->
                         Row(
                             Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp8)
+                            horizontalArrangement = Arrangement.spacedBy(spacing.dp8)
                         ) {
                             rowItems.forEach { product ->
                                 ProductCard(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(bottom = MaterialTheme.kyobiTheme.spacing.dp16),
+                                        .padding(bottom = spacing.dp16),
                                     productUiState = itemStates[product.id] ?: product,
                                     imageLoader = imageLoader,
                                     onClick = {}
@@ -78,7 +82,7 @@ fun HomeSectionRecommendedProductsGridView(
                                 Column(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .padding(bottom = MaterialTheme.kyobiTheme.spacing.dp16)
+                                        .padding(bottom = spacing.dp16)
                                 ) {}
                             }
                         }

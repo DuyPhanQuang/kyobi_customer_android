@@ -1,6 +1,5 @@
 package com.kyobi.composable.utils
 
-import android.graphics.Color.parseColor
 import androidx.compose.ui.graphics.Color
 import androidx.core.graphics.toColorInt
 

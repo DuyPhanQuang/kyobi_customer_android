@@ -8,10 +8,11 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -32,7 +33,9 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Dp
+import com.kyobi.theme.Dimension
 import com.kyobi.theme.kyobiTheme
 import kotlinx.coroutines.launch
 
@@ -54,7 +57,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun OutlineButton(
     modifier: Modifier = Modifier,
+    buttonHeight: Dp? = null,
     text: String? = null,
+    textStyle: TextStyle,
+    borderColor: Color? = null,
+    buttonColor: ButtonColors? = null,
+    contentPadding: PaddingValues? = null,
     leadingIcon: Painter? = null,
     leadingIconColor: Color? = null,
     trailingIcon: Painter? = null,
@@ -78,23 +86,27 @@ fun OutlineButton(
         label = "Button Scale"
     )
 
+    val height = MaterialTheme.kyobiTheme.height
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val shapeTheme = MaterialTheme.kyobiTheme.shapes
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val iconTheme = MaterialTheme.kyobiTheme.icon
+
+    val borderShape = if (roundedType == ButtonRoundedType.LARGE) CircleShape else shapeTheme.extraSmall
+    val finalButtonHeight = buttonHeight ?: height.dp48
+    val finalContentPadding = contentPadding ?: ButtonDefaults.ContentPadding
+
     OutlinedButton(
-        onClick = {
-            val currentTime = System.currentTimeMillis()
-            if (currentTime - lastClickTime >= debounceTime) {
-                lastClickTime = currentTime
-                scope.launch { onClick() }
-            }
-        },
         modifier = modifier
-            .fillMaxWidth()
-            .height(MaterialTheme.kyobiTheme.height.dp48)
+            .height(finalButtonHeight)
             .then(if (enableScaleEffect) Modifier.scale(scale) else Modifier)
             .border(
-                1.dp,
-                MaterialTheme.kyobiTheme.colors.border.stone950,
-                MaterialTheme.kyobiTheme.shapes.extraSmall
-            ).pointerInput(Unit) {
+                Dimension.dp1,
+                borderColor ?: colorTheme.border.stone950,
+                borderShape
+            )
+            .padding(spacing.dp0)
+            .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
                         isPressed = true
@@ -106,70 +118,73 @@ fun OutlineButton(
             .then(
                 if (isPressed)
                     Modifier.background(
-                    color = Color.Black.copy(alpha = 0.5f),
-                    shape = if (roundedType == ButtonRoundedType.LARGE)
-                        MaterialTheme.kyobiTheme.shapes.extraLarge
-                    else MaterialTheme.kyobiTheme.shapes.extraSmall
-                ) else Modifier),
+                        color = colorTheme.bg.stone950.copy(alpha = 0.5f),
+                        shape = borderShape)
+                else Modifier),
+        onClick = {
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastClickTime >= debounceTime) {
+                lastClickTime = currentTime
+                scope.launch { onClick() }
+            }
+        },
         enabled = enabled && !isLoading,
-        shape = if (roundedType == ButtonRoundedType.LARGE)
-            MaterialTheme.kyobiTheme.shapes.extraLarge
-        else MaterialTheme.kyobiTheme.shapes.extraSmall,
-        colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.kyobiTheme.colors.outline,
-            contentColor = MaterialTheme.kyobiTheme.colors.onSecondary,
-            disabledContainerColor = MaterialTheme.kyobiTheme.colors.outline,
-            disabledContentColor = MaterialTheme.kyobiTheme.colors.onSecondary
+        shape = borderShape,
+        colors = buttonColor ?: ButtonDefaults.outlinedButtonColors(
+            containerColor = colorTheme.outline,
+            contentColor = colorTheme.onSecondary,
+            disabledContainerColor = colorTheme.outline,
+            disabledContentColor = colorTheme.onSecondary
         ),
-        contentPadding = if (text == null && !isLoading) PaddingValues(0.dp) else ButtonDefaults.ContentPadding
+        contentPadding =  if (text == null && !isLoading) PaddingValues(spacing.dp0)
+        else finalContentPadding
     ) {
         if (isLoading && isShowLoadingOnly) {
             CircularProgressIndicator(
-                color = MaterialTheme.kyobiTheme.colors.onSecondary,
-                modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg)
+                modifier = Modifier.size(iconTheme.lg),
+                color = colorTheme.onSecondary,
             )
         } else {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = if (text == null) Arrangement.Center else Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
             ) {
                 if (leadingIcon != null) {
                     Icon(
+                        modifier = Modifier
+                            .size(iconTheme.sm)
+                            .padding(
+                                end = if (text != null) spacing.dp8 else spacing.dp0
+                            ),
                         painter = leadingIcon,
                         contentDescription = "Leading Icon",
-                        modifier = Modifier
-                            .size(MaterialTheme.kyobiTheme.icon.sm)
-                            .padding(end = if (text != null) MaterialTheme.kyobiTheme.spacing.dp8
-                            else MaterialTheme.kyobiTheme.spacing.dp0),
                         tint = leadingIconColor ?: LocalContentColor.current
                     )
                 }
                 if (text != null) {
                     Text(
+                        modifier = Modifier.weight(1f, fill = false),
                         text = text,
-                        style = MaterialTheme.kyobiTheme.typography.labelLarge,
-                        color = MaterialTheme.kyobiTheme.colors.onSecondary,
-                        modifier = Modifier.weight(1f, fill = false)
+                        style = textStyle,
                     )
                 }
                 if (trailingIcon != null) {
                     Icon(
+                        modifier = Modifier
+                            .size(iconTheme.sm)
+                            .padding(
+                                start = if (text != null) spacing.dp8 else spacing.dp0
+                            ),
                         painter = trailingIcon,
                         contentDescription = "Trailing Icon",
-                        modifier = Modifier
-                            .size(MaterialTheme.kyobiTheme.icon.sm)
-                            .padding(
-                                start = if (text != null) MaterialTheme.kyobiTheme.spacing.dp8
-                                else MaterialTheme.kyobiTheme.spacing.dp0),
                         tint = trailingIconColor ?: LocalContentColor.current
                     )
                 }
             }
             if (isLoading) {
                 CircularProgressIndicator(
-                    color = MaterialTheme.kyobiTheme.colors.onSecondary,
-                    modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg)
+                    modifier = Modifier.size(iconTheme.lg),
+                    color = colorTheme.onSecondary,
                 )
             }
         }

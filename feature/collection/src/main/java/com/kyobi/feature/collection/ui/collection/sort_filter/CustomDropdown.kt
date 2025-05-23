@@ -87,7 +87,6 @@ fun CustomDropdown(
                             .fillMaxWidth()
                             .height(remainingHeight)
                             .background(colorTheme.bg.stone950.copy(alpha = 0.5f))
-                            .clickable { showDropdown = false }
                     ) {
                         Box(
                             modifier = Modifier

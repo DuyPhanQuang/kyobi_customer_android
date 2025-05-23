@@ -8,9 +8,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun Dp.SpaceY() = Spacer(
-    modifier = Modifier
-        .height(this)
+fun Dp.SpaceY() = Spacer(modifier = Modifier.height(this)
 )
 
 @Composable
