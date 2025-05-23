@@ -172,7 +172,7 @@ fun CollectionColorFilterContent(
                                     .weight(1f)
                                     .padding(bottom = spacing.dp8),
                                 data = colorFilter,
-                                isSelected = true,
+                                isSelected = false,
                                 onTileClick = {}
                             )
                         }
@@ -221,7 +221,7 @@ fun CollectionColorFilterContent(
 }
 
 @Composable
-fun ColorFilterTile(
+private fun ColorFilterTile(
     modifier: Modifier = Modifier,
     data: FilterOption,
     isSelected: Boolean = false,

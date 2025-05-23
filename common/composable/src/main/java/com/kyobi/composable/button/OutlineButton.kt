@@ -29,13 +29,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
-import com.kyobi.theme.Dimension
 import com.kyobi.theme.kyobiTheme
 import kotlinx.coroutines.launch
 
@@ -86,24 +86,33 @@ fun OutlineButton(
         label = "Button Scale"
     )
 
+    val width = MaterialTheme.kyobiTheme.width
     val height = MaterialTheme.kyobiTheme.height
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val shapeTheme = MaterialTheme.kyobiTheme.shapes
     val spacing = MaterialTheme.kyobiTheme.spacing
     val iconTheme = MaterialTheme.kyobiTheme.icon
 
-    val borderShape = if (roundedType == ButtonRoundedType.LARGE) CircleShape else shapeTheme.extraSmall
+    val buttonShape = if (roundedType == ButtonRoundedType.LARGE) CircleShape else shapeTheme.extraSmall
     val finalButtonHeight = buttonHeight ?: height.dp48
     val finalContentPadding = contentPadding ?: ButtonDefaults.ContentPadding
+    val finalBorderColor = borderColor ?: colorTheme.border.stone950
+    val finalButtonColors = buttonColor ?: ButtonDefaults.outlinedButtonColors(
+        containerColor = colorTheme.outline,
+        contentColor = colorTheme.onSecondary,
+        disabledContainerColor = colorTheme.outline,
+        disabledContentColor = colorTheme.onSecondary
+    )
 
     OutlinedButton(
         modifier = modifier
             .height(finalButtonHeight)
+            .clip(buttonShape)
             .then(if (enableScaleEffect) Modifier.scale(scale) else Modifier)
             .border(
-                Dimension.dp1,
-                borderColor ?: colorTheme.border.stone950,
-                borderShape
+                width.dp1,
+                finalBorderColor,
+                buttonShape
             )
             .padding(spacing.dp0)
             .pointerInput(Unit) {
@@ -119,7 +128,7 @@ fun OutlineButton(
                 if (isPressed)
                     Modifier.background(
                         color = colorTheme.bg.stone950.copy(alpha = 0.5f),
-                        shape = borderShape)
+                        shape = buttonShape)
                 else Modifier),
         onClick = {
             val currentTime = System.currentTimeMillis()
@@ -129,15 +138,9 @@ fun OutlineButton(
             }
         },
         enabled = enabled && !isLoading,
-        shape = borderShape,
-        colors = buttonColor ?: ButtonDefaults.outlinedButtonColors(
-            containerColor = colorTheme.outline,
-            contentColor = colorTheme.onSecondary,
-            disabledContainerColor = colorTheme.outline,
-            disabledContentColor = colorTheme.onSecondary
-        ),
-        contentPadding =  if (text == null && !isLoading) PaddingValues(spacing.dp0)
-        else finalContentPadding
+        shape = buttonShape,
+        colors = finalButtonColors,
+        contentPadding =  if (text == null && !isLoading) PaddingValues(spacing.dp0) else finalContentPadding
     ) {
         if (isLoading && isShowLoadingOnly) {
             CircularProgressIndicator(

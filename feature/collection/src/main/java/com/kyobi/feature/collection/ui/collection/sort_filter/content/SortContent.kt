@@ -69,27 +69,56 @@ fun CollectionSortContent(
                 horizontalArrangement = Arrangement.spacedBy(spacing.dp12),
                 verticalArrangement = Arrangement.spacedBy(spacing.dp12),
             ) {
-                sortOptions.forEach { option ->
-                    OutlineButton(
-                        modifier = Modifier
-                            .wrapContentWidth(),
-                        buttonHeight = MaterialTheme.kyobiTheme.height.dp32,
-                        text = option.label,
-                        textStyle = typographyTheme.paragraphRegularXs,
-                        borderColor = colorTheme.bg.stone200,
-                        buttonColor = ButtonDefaults.outlinedButtonColors(
-                            containerColor = colorTheme.outline,
-                            contentColor = colorTheme.onSecondary,
-                            disabledContainerColor = colorTheme.outline,
-                            disabledContentColor = colorTheme.onSecondary
-                        ),
-                        contentPadding = PaddingValues(horizontal = spacing.dp16),
-                        enableScaleEffect = false,
-                        roundedType = ButtonRoundedType.SMALL,
-                        onClick = {}
+                sortOptions.forEach { sortOption ->
+                    SortTile(
+                        data = sortOption,
+                        isSelected = true,
+                        onTileClick = {}
                     )
                 }
             }
         }
     }
+}
+
+@Composable
+private fun SortTile(
+    data: SortOption,
+    isSelected: Boolean = false,
+    enabled: Boolean = true,
+    onTileClick: () -> Unit
+) {
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val height = MaterialTheme.kyobiTheme.height
+
+    val basedSelectedColor = colorTheme.bg.stone950
+    val finalButtonColor = if (isSelected)
+        ButtonDefaults.outlinedButtonColors(
+            containerColor = basedSelectedColor,
+            contentColor = colorTheme.text.white,
+            disabledContainerColor = colorTheme.bg.stone200,
+            disabledContentColor = colorTheme.text.neutral950)
+        else ButtonDefaults.outlinedButtonColors(
+        containerColor = colorTheme.outline,
+        contentColor = colorTheme.onSecondary,
+        disabledContainerColor = colorTheme.outline,
+        disabledContentColor = colorTheme.onSecondary)
+    val finalBorderColor = if (isSelected) basedSelectedColor else colorTheme.bg.stone200
+
+    OutlineButton(
+        modifier = Modifier
+            .wrapContentWidth(),
+        enabled = enabled,
+        buttonHeight = height.dp32,
+        text = data.label,
+        textStyle = typographyTheme.paragraphRegularXs,
+        borderColor = finalBorderColor,
+        buttonColor = finalButtonColor,
+        contentPadding = PaddingValues(horizontal = spacing.dp16),
+        enableScaleEffect = false,
+        roundedType = ButtonRoundedType.SMALL,
+        onClick = { onTileClick() }
+    )
 }

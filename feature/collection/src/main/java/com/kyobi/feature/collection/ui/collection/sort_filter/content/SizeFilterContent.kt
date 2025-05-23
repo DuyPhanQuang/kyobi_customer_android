@@ -146,24 +146,11 @@ fun CollectionSizeFilterContent(
                     horizontalArrangement = Arrangement.spacedBy(spacing.dp12),
                     verticalArrangement = Arrangement.spacedBy(spacing.dp12),
                 ) {
-                    sizeFilters.forEach { option ->
-                        OutlineButton(
-                            modifier = Modifier
-                                .wrapContentWidth(),
-                            buttonHeight = height.dp32,
-                            text = option.label,
-                            textStyle = typographyTheme.paragraphRegularXs,
-                            borderColor = colorTheme.bg.stone200,
-                            buttonColor = ButtonDefaults.outlinedButtonColors(
-                                containerColor = colorTheme.outline,
-                                contentColor = colorTheme.onSecondary,
-                                disabledContainerColor = colorTheme.outline,
-                                disabledContentColor = colorTheme.onSecondary
-                            ),
-                            contentPadding = PaddingValues(horizontal = spacing.dp16),
-                            enableScaleEffect = false,
-                            roundedType = ButtonRoundedType.SMALL,
-                            onClick = {}
+                    sizeFilters.forEach { filterOption ->
+                        SizeTile(
+                            data = filterOption,
+                            isSelected = true,
+                            onTileClick = {}
                         )
                     }
                 }
@@ -200,4 +187,39 @@ fun CollectionSizeFilterContent(
             )
         }
     }
+}
+
+@Composable
+private fun SizeTile(
+    data: FilterOption,
+    isSelected: Boolean = false,
+    enabled: Boolean = true,
+    onTileClick: () -> Unit
+) {
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val height = MaterialTheme.kyobiTheme.height
+
+    val finalBorderColor = if (isSelected) colorTheme.bg.stone950 else colorTheme.bg.stone200
+
+    OutlineButton(
+        modifier = Modifier
+            .wrapContentWidth(),
+        enabled = enabled,
+        buttonHeight = height.dp32,
+        text = data.label,
+        textStyle = typographyTheme.paragraphRegularXs,
+        borderColor = finalBorderColor,
+        buttonColor = ButtonDefaults.outlinedButtonColors(
+            containerColor = colorTheme.outline,
+            contentColor = colorTheme.onSecondary,
+            disabledContainerColor = colorTheme.outline,
+            disabledContentColor = colorTheme.onSecondary
+        ),
+        contentPadding = PaddingValues(horizontal = spacing.dp16),
+        enableScaleEffect = false,
+        roundedType = ButtonRoundedType.SMALL,
+        onClick = { onTileClick() }
+    )
 }
