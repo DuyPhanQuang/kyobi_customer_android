@@ -5,7 +5,7 @@ import com.kyobi.domain.model.TopCatalog
 import com.kyobi.domain.model.TopCatalogStatus
 import com.kyobi.domain.model.ShopifyMedia
 
-fun mapTopCatalogs(
+fun mapToTopCatalogs(
     nodes: List<GetHomepageKeyDataQuery.Node>,
     imagesData: List<ShopifyMedia>
 ): List<TopCatalog> {

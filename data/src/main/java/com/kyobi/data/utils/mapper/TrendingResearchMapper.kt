@@ -6,7 +6,7 @@ import com.kyobi.domain.model.TrendingResearch
 import org.json.JSONArray
 import org.json.JSONException
 
-fun mapTrendingResearchs(
+fun mapToTrendingResearchs(
     nodes: List<GetHomepageKeyDataQuery.Node>,
     imagesData: List<ShopifyMedia>
 ): List<TrendingResearch> {

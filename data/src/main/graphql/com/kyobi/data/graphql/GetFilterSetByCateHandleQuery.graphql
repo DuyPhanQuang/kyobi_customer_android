@@ -1,0 +1,23 @@
+query getFilterSetByCateHandle($input: MetaobjectHandleInput!) {
+    metaobject(handle: $input) {
+        id
+        handle
+        fields {
+            key
+            value
+            type
+            references(first: 250) {
+                nodes {
+                    ... on Metaobject {
+                        id
+                        handle
+                        fields {
+                            key
+                            value
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

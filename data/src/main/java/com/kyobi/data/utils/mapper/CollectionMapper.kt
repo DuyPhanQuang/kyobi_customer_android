@@ -1,6 +1,8 @@
 package com.kyobi.data.utils.mapper
 
+import com.kyobi.data.graphql.GetCollectionProductsQuery
 import com.kyobi.data.graphql.GetCollectionsLargeQuery
+import com.kyobi.domain.model.PageInfo
 import com.kyobi.domain.model.SEO
 import com.kyobi.domain.model.ShopifyCollection
 import com.kyobi.domain.model.ShopifyMetafield
@@ -47,4 +49,31 @@ fun reshapeCollection(collection: GetCollectionsLargeQuery.Collection): ShopifyC
         products = emptyList(),
         pageInfo = null
     )
+}
+
+fun mapToCollectionProducts(collection: GetCollectionProductsQuery.Collection): ShopifyCollection {
+    return collection.metafields.mapNotNull { metafield ->
+        metafield?.let {
+            ShopifyMetafield(
+                id = it.id,
+                type = it.type,
+                key = it.key,
+                value = it.value,
+                references = null
+            )
+        }
+    }.let {
+        ShopifyCollection(
+            id = collection.id,
+            title = collection.title,
+            metafields = it,
+            products = collection.products.edges.mapNotNull { edge ->
+                reshapeProduct(edge.node)
+            },
+            pageInfo = PageInfo(
+                hasNextPage = collection.products.pageInfo.hasNextPage,
+                endCursor = collection.products.pageInfo.endCursor
+            )
+        )
+    }
 }

@@ -5,6 +5,7 @@ import com.kyobi.domain.usecase.AddToCartUseCase
 import com.kyobi.domain.usecase.AppVersionUseCase
 import com.kyobi.domain.usecase.AssetSourceUseCase
 import com.kyobi.domain.usecase.AssetUseCase
+import com.kyobi.domain.usecase.GetFilterSetUseCase
 import com.kyobi.domain.usecase.GetFlashSaleUseCase
 import com.kyobi.domain.usecase.GetHomePagesUseCase
 import com.kyobi.domain.usecase.GetProductRecommendationsUseCase
@@ -22,6 +23,7 @@ import com.kyobi.domain.usecase.impl.AddToCartUseCaseImpl
 import com.kyobi.domain.usecase.impl.AppVersionUseCaseImpl
 import com.kyobi.domain.usecase.impl.AssetSourceUseCaseImpl
 import com.kyobi.domain.usecase.impl.AssetUseCaseImpl
+import com.kyobi.domain.usecase.impl.GetFilterSetUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetFlashSaleUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetHomePagesUseCaseImpl
 import com.kyobi.domain.usecase.impl.GetProductRecommendationsUseCaseImpl
@@ -110,4 +112,8 @@ abstract class UseCaseModule {
     @Binds
     @Singleton
     abstract fun bindGetShopifyMediaUseCase(impl: GetShopifyMediaUseCaseImpl): GetShopifyMediaUseCase
+
+    @Binds
+    @Singleton
+    abstract fun bindGetFilterSetUseCase(impl: GetFilterSetUseCaseImpl): GetFilterSetUseCase
 }

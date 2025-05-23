@@ -1,6 +1,7 @@
 package com.kyobi.data.repository
 
 import com.kyobi.data.network.ShopifyApiService
+import com.kyobi.domain.model.CateFilter
 import com.kyobi.domain.model.FlashSaleInfo
 import com.kyobi.domain.model.ShopifyMetaobject
 import com.kyobi.domain.repository.MetaobjectRepository
@@ -23,6 +24,15 @@ class MetaobjectRepositoryImpl @Inject constructor(
     ): List<ShopifyMetaobject> {
         val response = shopifyApiService.getMetaobjectsByIds(
             metaobjectIds = metaobjectIds
+        )
+        return response
+    }
+
+    override suspend fun getFilterSetByCateHandle(
+        handle: String
+    ): CateFilter? {
+        val response = shopifyApiService.getFilterSetByCateHandle(
+            handle = handle
         )
         return response
     }

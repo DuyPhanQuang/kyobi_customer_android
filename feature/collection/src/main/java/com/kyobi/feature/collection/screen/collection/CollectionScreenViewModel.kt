@@ -8,6 +8,7 @@ import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.core.extensions.toFirstGid
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.ShopifyMedia
+import com.kyobi.domain.usecase.GetFilterSetUseCase
 import com.kyobi.domain.usecase.GetShopifyMediaUseCase
 import com.kyobi.feature.collection.screen.collection.model.CollectionMenu
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,10 +22,11 @@ import javax.inject.Inject
 class CollectionScreenViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val getShopifyMediaUseCase: GetShopifyMediaUseCase,
+    private val getFilterSetUseCase: GetFilterSetUseCase,
     private val imageLoader: ImageLoader,
 ): ViewModel() {
     private val tag = "CollectionViewModel"
-    private val _uiState = MutableStateFlow(CollectionScreenUiState(emptyList()))
+    private val _uiState = MutableStateFlow(CollectionScreenUiState(collectionMenus = emptyList()))
     val uiState = _uiState.asStateFlow()
     private lateinit var eventBus: CollectionScreenEventBus
 
@@ -76,6 +78,8 @@ class CollectionScreenViewModel @Inject constructor(
             eventBus.emitEvent(CollectionScreenEvent.CollectionSelected(itemSelected.filterHandle))
             Timber.tag(tag).d("Emitted CollectionSelected event with filterHandle: ${itemSelected.filterHandle}")
         }
+        val cateHandle = itemSelected.filterHandle
+        fetchCateFilterByCollection(cateHandle)
     }
 
     fun fetchProductByCollectionDefault() {
@@ -83,6 +87,51 @@ class CollectionScreenViewModel @Inject constructor(
         viewModelScope.launchOnIO {
             eventBus.emitEvent(CollectionScreenEvent.CollectionSelected(collectionDefaultConfig))
             Timber.tag(tag).d("Emitted CollectionSelected event with filterHandle: $collectionDefaultConfig")
+        }
+    }
+
+    fun fetchCateFilterByCollectionDefault() {
+        viewModelScope.launchOnIO {
+            try {
+                getFilterSetUseCase.getFilterSetByDefault().collect { result ->
+                    when (result) {
+                        is DomainNetworkResult.Success -> {
+                            _uiState.value = _uiState.value.copy(cateFilter = result.data)
+                        }
+                        is DomainNetworkResult.Error -> {
+                            _uiState.value = _uiState.value.copy(cateFilter = null)
+                        }
+                        is DomainNetworkResult.Loading -> {
+                            _uiState.value = _uiState.value.copy(cateFilter = null)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.tag(tag).e(e, "fetch filter set by collection default failed")
+            }
+        }
+    }
+
+    private fun fetchCateFilterByCollection(cateHandle: String) {
+        viewModelScope.launchOnIO {
+            try {
+                getFilterSetUseCase.getFilterSetByCateHandle(cateHandle).collect { result ->
+                    when (result) {
+                        is DomainNetworkResult.Success -> {
+                            _uiState.value = _uiState.value.copy(cateFilter = result.data)
+                        }
+                        is DomainNetworkResult.Error -> {
+                            // switch to fallback collection default
+                            fetchCateFilterByCollectionDefault()
+                        }
+                        is DomainNetworkResult.Loading -> {
+                            _uiState.value = _uiState.value.copy(cateFilter = null)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.tag(tag).e(e, "fetch filter set by collection $cateHandle failed")
+            }
         }
     }
 }

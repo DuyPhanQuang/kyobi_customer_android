@@ -9,6 +9,7 @@ import com.kyobi.core.exceptions.ShopifyErrorHandler
 import com.kyobi.data.graphql.GetCollectionProductsQuery
 import com.kyobi.data.graphql.GetCollectionsLargeQuery
 import com.kyobi.data.graphql.GetDynamicMediasByIdsQuery
+import com.kyobi.data.graphql.GetFilterSetByCateHandleQuery
 import com.kyobi.data.graphql.GetHomepageKeyDataQuery
 import com.kyobi.data.graphql.GetMediaImageByIdQuery
 import com.kyobi.data.graphql.GetMediaImagesByIdsQuery
@@ -18,28 +19,30 @@ import com.kyobi.data.graphql.GetProductRecommendationsQuery
 import com.kyobi.data.graphql.GetProductsByIdsQuery
 import com.kyobi.data.graphql.GetProductsQuery
 import com.kyobi.data.graphql.type.HasMetafieldsIdentifier
+import com.kyobi.data.graphql.type.MetaobjectHandleInput
 import com.kyobi.data.graphql.type.ProductCollectionSortKeys
 import com.kyobi.data.graphql.type.ProductSortKeys
 import com.kyobi.data.network.ShopifyApiService
-import com.kyobi.data.utils.mapper.mapBanners
+import com.kyobi.data.utils.mapper.mapToBanners
 import com.kyobi.data.utils.mapper.mapFlashSaleInfos
-import com.kyobi.data.utils.mapper.mapTopCatalogs
-import com.kyobi.data.utils.mapper.mapTrendingResearchs
+import com.kyobi.data.utils.mapper.mapToCateFilter
+import com.kyobi.data.utils.mapper.mapToCollectionProducts
+import com.kyobi.data.utils.mapper.mapToDynamicMedias
+import com.kyobi.data.utils.mapper.mapToMediaImage
+import com.kyobi.data.utils.mapper.mapToMediaImages
+import com.kyobi.data.utils.mapper.mapToMetaobjects
+import com.kyobi.data.utils.mapper.mapToTopCatalogs
+import com.kyobi.data.utils.mapper.mapToTrendingResearchs
 import com.kyobi.data.utils.mapper.removeEdgesAndNodes
 import com.kyobi.data.utils.mapper.reshapeCollection
 import com.kyobi.data.utils.mapper.reshapeProduct
 import com.kyobi.domain.model.Banner
+import com.kyobi.domain.model.CateFilter
 import com.kyobi.domain.model.FlashSaleInfo
-import com.kyobi.domain.model.PageInfo
 import com.kyobi.domain.model.Product
 import com.kyobi.domain.model.ShopifyCollection
-import com.kyobi.domain.model.ShopifyImage
 import com.kyobi.domain.model.ShopifyMedia
-import com.kyobi.domain.model.ShopifyMetafield
 import com.kyobi.domain.model.ShopifyMetaobject
-import com.kyobi.domain.model.ShopifyMetaobjectField
-import com.kyobi.domain.model.ShopifySource
-import com.kyobi.domain.model.ShopifyVideoPreviewImage
 import com.kyobi.domain.model.TopCatalog
 import com.kyobi.domain.model.TrendingResearch
 import com.kyobi.domain.model.request.MetafieldIdentifierRequest
@@ -171,7 +174,7 @@ class ShopifyApiServiceImpl @Inject constructor(
                     emptyList()
                 }
             } else { emptyList() }
-            return mapBanners(nodes, imagesData)
+            return mapToBanners(nodes, imagesData)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {
@@ -201,7 +204,7 @@ class ShopifyApiServiceImpl @Inject constructor(
                     emptyList()
                 }
             } else { emptyList() }
-            return mapTopCatalogs(nodes, imagesData)
+            return mapToTopCatalogs(nodes, imagesData)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {
@@ -231,7 +234,7 @@ class ShopifyApiServiceImpl @Inject constructor(
                     emptyList()
                 }
             } else { emptyList() }
-            return mapTrendingResearchs(nodes, imagesData)
+            return mapToTrendingResearchs(nodes, imagesData)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {
@@ -249,22 +252,8 @@ class ShopifyApiServiceImpl @Inject constructor(
                     message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
                     errorCode = null)
             }
-            val nodes = response.data?.nodes
-            return nodes?.mapNotNull { node ->
-                node?.onMediaImage?.let { media ->
-                    ShopifyMedia(
-                        id = media.id,
-                        image = media.image?.let {
-                            ShopifyImage(
-                                url = it.url.toString(),
-                                altText = it.altText,
-                                width = it.width?.toFloat(),
-                                height = it.height?.toFloat())
-                        },
-                        previewImage = null,
-                        sources = emptyList())
-                }
-            } ?: emptyList()
+            val nodes = response.data?.nodes ?: return emptyList()
+            return mapToMediaImages(nodes)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {
@@ -282,34 +271,8 @@ class ShopifyApiServiceImpl @Inject constructor(
                     message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
                     errorCode = null)
             }
-            return response.data?.nodes?.mapNotNull { node ->
-                when {
-                    node?.onMediaImage != null -> ShopifyMedia(
-                        id = node.onMediaImage.id,
-                        image = node.onMediaImage.image?.let {
-                            ShopifyImage(
-                                url = it.url.toString(),
-                                altText = it.altText,
-                                width = it.width?.toFloat(),
-                                height = it.height?.toFloat())
-                        },
-                        previewImage = null,
-                        sources = emptyList())
-                    node?.onVideo != null -> ShopifyMedia(
-                        id = node.onVideo.id,
-                        image = null,
-                        previewImage = node.onVideo.previewImage?.let {
-                            ShopifyVideoPreviewImage(
-                                url = it.url.toString())
-                        },
-                        sources = node.onVideo.sources.map { source ->
-                            ShopifySource(
-                                url = source.url,
-                                format = source.format)
-                        })
-                    else -> null
-                }
-            } ?: emptyList()
+            val nodes = response.data?.nodes ?: return emptyList()
+            return mapToDynamicMedias(nodes)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {
@@ -327,19 +290,8 @@ class ShopifyApiServiceImpl @Inject constructor(
                     message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
                     errorCode = null)
             }
-            return response.data?.node?.onMediaImage?.let { media ->
-                ShopifyMedia(
-                    id = media.id,
-                    image = media.image?.let {
-                        ShopifyImage(
-                            url = it.url.toString(),
-                            altText = it.altText,
-                            width = it.width?.toFloat(),
-                            height = it.height?.toFloat())
-                    },
-                    previewImage = null,
-                    sources = emptyList())
-            }
+            val node = response.data?.node ?: return null
+            return mapToMediaImage(node.onMediaImage)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {
@@ -376,23 +328,8 @@ class ShopifyApiServiceImpl @Inject constructor(
                     message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
                     errorCode = null)
             }
-            return response.data?.nodes?.mapNotNull { node ->
-                node?.onMetaobject?.let { metaobject ->
-                    ShopifyMetaobject(
-                        id = metaobject.id,
-                        handle = metaobject.handle,
-                        type = metaobject.type,
-                        fields = metaobject.fields.map { field ->
-                            field.let {
-                                ShopifyMetaobjectField(
-                                    key = it.key,
-                                    value = it.value
-                                )
-                            }
-                        }
-                    )
-                }
-            } ?: emptyList()
+            val nodes = response.data?.nodes ?: return emptyList()
+            return mapToMetaobjects(nodes)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {
@@ -410,28 +347,22 @@ class ShopifyApiServiceImpl @Inject constructor(
                 identifiers!!.map {
                     HasMetafieldsIdentifier(
                         namespace = Optional.present(it.namespace),
-                        key = it.key
-                    )
+                        key = it.key)
                 }
-            } else {
-                emptyList()
-            }
+            } else { emptyList() }
             val response: ApolloResponse<GetCollectionsLargeQuery.Data> = apolloClient
-                .query(
-                    GetCollectionsLargeQuery(
-                        handle = handle,
-                        identifiers = metafieldIdentifiers))
+                .query(GetCollectionsLargeQuery(handle = handle, identifiers = metafieldIdentifiers))
                 .execute()
             if (response.hasErrors()) {
                 throw ShopifyApiException(
                     message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
                     errorCode = null)
             }
-            return response.data?.collection?.let { collection ->
-                reshapeCollection(collection)
-            } ?: throw ShopifyApiException(
-                message = "Collection not found for handle: $handle",
-                errorCode = null)
+            val collection = response.data?.collection
+                ?: throw ShopifyApiException(
+                    message = "Collection not found for handle: $handle",
+                    errorCode = null)
+            return reshapeCollection(collection)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {
@@ -456,12 +387,9 @@ class ShopifyApiServiceImpl @Inject constructor(
                 identifiers!!.map {
                     HasMetafieldsIdentifier(
                         namespace = Optional.present(it.namespace),
-                        key = it.key
-                    )
+                        key = it.key)
                 }
-            } else {
-                emptyList()
-            }
+            } else { emptyList() }
             val response: ApolloResponse<GetCollectionProductsQuery.Data> = apolloClient
                 .query(
                     GetCollectionProductsQuery(
@@ -476,33 +404,32 @@ class ShopifyApiServiceImpl @Inject constructor(
                     message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
                     errorCode = null)
             }
-            return response.data?.collection?.let { collection ->
-                collection.metafields.mapNotNull { metafield ->
-                    metafield?.let {
-                        ShopifyMetafield(
-                            id = it.id,
-                            type = it.type,
-                            key = it.key,
-                            value = it.value,
-                            references = null)
-                    }
-                }.let {
-                    ShopifyCollection(
-                        id = collection.id,
-                        title = collection.title,
-                        metafields = it,
-                        products = collection.products.edges.mapNotNull { edge ->
-                            reshapeProduct(edge.node)
-                        },
-                        pageInfo = PageInfo(
-                            hasNextPage = collection.products.pageInfo.hasNextPage,
-                            endCursor = collection.products.pageInfo.endCursor
-                        )
-                    )
-                }
-            } ?: throw ShopifyApiException(
-                message = "Collection not found for handle: $handle",
-                errorCode = null)
+            val collection = response.data?.collection
+                ?: throw ShopifyApiException(
+                    message = "Collection not found for handle: $handle",
+                    errorCode = null)
+            return mapToCollectionProducts(collection)
+        } catch (e: ApolloException) {
+            throw errorHandler.handleError(e)
+        } catch (e: Exception) {
+            throw errorHandler.handleError(e)
+        }
+    }
+
+    override suspend fun getFilterSetByCateHandle(handle: String): CateFilter? {
+        try {
+            val configFilterType = "filter_set"
+            val response: ApolloResponse<GetFilterSetByCateHandleQuery.Data> = apolloClient
+                .query(GetFilterSetByCateHandleQuery(
+                    MetaobjectHandleInput(handle = handle, type = configFilterType)))
+                .execute()
+            if (response.hasErrors()) {
+                throw ShopifyApiException(
+                    message = response.errors?.joinToString { it.message } ?: "Unknown GraphQL error",
+                    errorCode = null)
+            }
+            val metaobject = response.data?.metaobject ?: return null
+            return mapToCateFilter(metaobject)
         } catch (e: ApolloException) {
             throw errorHandler.handleError(e)
         } catch (e: Exception) {

@@ -32,6 +32,21 @@ fun String?.toFirstGid(): String? {
     }
 }
 
+fun String?.toGids(): List<String> {
+    if (this == null) return emptyList()
+    return try {
+        Json.decodeFromString<List<String>>(this)
+    } catch (e: Exception) {
+        emptyList()
+    }
+}
+
 fun String?.toNullIfStringNull(): String? {
     return if (this == "null") null else this
+}
+
+fun String.getCollectionNameFromHandle(): String {
+    return this
+        .split("-")
+        .joinToString(" ") { word -> word[0].uppercaseChar() + word.substring(1) }
 }

@@ -5,7 +5,7 @@ import com.kyobi.domain.model.Banner
 import com.kyobi.domain.model.BannerStatus
 import com.kyobi.domain.model.ShopifyMedia
 
-fun mapBanners(
+fun mapToBanners(
     nodes: List<GetHomepageKeyDataQuery.Node>,
     imagesData: List<ShopifyMedia>
 ): List<Banner> {

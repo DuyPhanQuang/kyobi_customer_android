@@ -1,6 +1,7 @@
 package com.kyobi.data.network
 
 import com.kyobi.domain.model.Banner
+import com.kyobi.domain.model.CateFilter
 import com.kyobi.domain.model.ShopifyCollection
 import com.kyobi.domain.model.FlashSaleInfo
 import com.kyobi.domain.model.Product
@@ -75,4 +76,8 @@ interface ShopifyApiService {
     suspend fun getMediaImage(
         imageId: String
     ): ShopifyMedia?
+
+    suspend fun getFilterSetByCateHandle(
+        handle: String
+    ): CateFilter?
 }
