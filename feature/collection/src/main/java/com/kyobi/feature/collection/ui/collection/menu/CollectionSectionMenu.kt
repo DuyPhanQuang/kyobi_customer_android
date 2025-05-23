@@ -16,6 +16,7 @@ fun CollectionSectionMenu(
     modifier: Modifier = Modifier,
     imageLoader: ImageLoader,
     collectionMenus: List<CollectionMenu>,
+    enabledAll: Boolean,
     selectedCollectionId: String?,
     expanded: Boolean = false,
     onAllClick: () -> Unit,
@@ -34,6 +35,7 @@ fun CollectionSectionMenu(
                 modifier = modifier,
                 imageLoader = imageLoader,
                 collectionMenus = collectionMenus,
+                enabledAll = enabledAll,
                 onAllClick = onAllClick,
                 selectedCollectionId = selectedCollectionId,
                 onItemClick = onMenuItemClick

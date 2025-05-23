@@ -40,6 +40,7 @@ fun CompactMenuRow(
     modifier: Modifier,
     imageLoader: ImageLoader,
     collectionMenus: List<CollectionMenu>,
+    enabledAll: Boolean = true,
     onAllClick: () -> Unit,
     selectedCollectionId: String?,
     onItemClick: (CollectionMenu) -> Unit
@@ -86,7 +87,11 @@ fun CompactMenuRow(
                 .fillMaxHeight()
                 .padding(vertical = spacing.dp1)
                 .align(Alignment.TopEnd)
-                .clickable { onAllClick() }
+                .clickable {
+                    if (enabledAll) {
+                        onAllClick()
+                    }
+                }
                 .drawBehind {
                     val paint = Paint().asFrameworkPaint().apply {
                         isAntiAlias = true

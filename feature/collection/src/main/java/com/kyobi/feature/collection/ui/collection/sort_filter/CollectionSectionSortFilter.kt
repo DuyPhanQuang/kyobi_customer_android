@@ -19,8 +19,8 @@ enum class CollectionSectionSortFilterType { SORT, COLOR_FILTER, SIZE_FILTER }
 @Composable
 fun CollectionSectionSortFilter(
     modifier: Modifier = Modifier,
-    activeDropdown: CollectionSectionSortFilterType? = null,
-    updateActiveDropdown: (CollectionSectionSortFilterType?) -> Unit,
+    showDropdown: CollectionSectionSortFilterType? = null,
+    updateShowDropdown: (CollectionSectionSortFilterType?) -> Unit,
     onSortClick: () -> Unit,
     onColorFilterClick: () -> Unit,
     onSizeFilterClick: () -> Unit,
@@ -40,20 +40,20 @@ fun CollectionSectionSortFilter(
             height = height.dp120,
             totalSpacing = spacing.dp24 + spacing.dp8,
             focusable = false,
-            isActive = activeDropdown == CollectionSectionSortFilterType.SORT,
+            isActive = showDropdown == CollectionSectionSortFilterType.SORT,
             type = CollectionSectionSortFilterType.SORT,
-            currentActive = activeDropdown,
+            currentActive = showDropdown,
             onToggle = { active ->
-                if (active && activeDropdown != CollectionSectionSortFilterType.SORT) {
-                    updateActiveDropdown(CollectionSectionSortFilterType.SORT)
+                if (active && showDropdown != CollectionSectionSortFilterType.SORT) {
+                    updateShowDropdown(CollectionSectionSortFilterType.SORT)
                     onSortClick()
                 } else if (!active) {
-                    updateActiveDropdown(null)
+                    updateShowDropdown(null)
                 }
             },
             onSwitch = { newType ->
-                if (activeDropdown != newType) {
-                    updateActiveDropdown(newType)
+                if (showDropdown != newType) {
+                    updateShowDropdown(newType)
                     when (newType) {
                         CollectionSectionSortFilterType.SORT -> onSortClick()
                         CollectionSectionSortFilterType.COLOR_FILTER -> onColorFilterClick()
@@ -76,20 +76,20 @@ fun CollectionSectionSortFilter(
             height = height.dp244,
             totalSpacing = spacing.dp24 + spacing.dp8,
             focusable = false,
-            isActive = activeDropdown == CollectionSectionSortFilterType.COLOR_FILTER,
+            isActive = showDropdown == CollectionSectionSortFilterType.COLOR_FILTER,
             type = CollectionSectionSortFilterType.COLOR_FILTER,
-            currentActive = activeDropdown,
+            currentActive = showDropdown,
             onToggle = { active ->
-                if (active && activeDropdown != CollectionSectionSortFilterType.COLOR_FILTER) {
-                    updateActiveDropdown(CollectionSectionSortFilterType.COLOR_FILTER)
+                if (active && showDropdown != CollectionSectionSortFilterType.COLOR_FILTER) {
+                    updateShowDropdown(CollectionSectionSortFilterType.COLOR_FILTER)
                     onColorFilterClick()
                 } else if (!active) {
-                    updateActiveDropdown(null)
+                    updateShowDropdown(null)
                 }
             },
             onSwitch = { newType ->
-                if (activeDropdown != newType) {
-                    updateActiveDropdown(newType)
+                if (showDropdown != newType) {
+                    updateShowDropdown(newType)
                     when (newType) {
                         CollectionSectionSortFilterType.SORT -> onSortClick()
                         CollectionSectionSortFilterType.COLOR_FILTER -> onColorFilterClick()
@@ -112,20 +112,20 @@ fun CollectionSectionSortFilter(
             height = height.dp244,
             totalSpacing = spacing.dp24 + spacing.dp8,
             focusable = false,
-            isActive = activeDropdown == CollectionSectionSortFilterType.SIZE_FILTER,
+            isActive = showDropdown == CollectionSectionSortFilterType.SIZE_FILTER,
             type = CollectionSectionSortFilterType.SIZE_FILTER,
-            currentActive = activeDropdown,
+            currentActive = showDropdown,
             onToggle = { active ->
-                if (active && activeDropdown != CollectionSectionSortFilterType.SIZE_FILTER) {
-                    updateActiveDropdown(CollectionSectionSortFilterType.SIZE_FILTER)
+                if (active && showDropdown != CollectionSectionSortFilterType.SIZE_FILTER) {
+                    updateShowDropdown(CollectionSectionSortFilterType.SIZE_FILTER)
                     onSizeFilterClick()
                 } else if (!active) {
-                    updateActiveDropdown(null)
+                    updateShowDropdown(null)
                 }
             },
             onSwitch = { newType ->
-                if (activeDropdown != newType) {
-                    updateActiveDropdown(newType)
+                if (showDropdown != newType) {
+                    updateShowDropdown(newType)
                     when (newType) {
                         CollectionSectionSortFilterType.SORT -> onSortClick()
                         CollectionSectionSortFilterType.COLOR_FILTER -> onColorFilterClick()

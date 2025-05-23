@@ -82,7 +82,7 @@ fun CollectionScreen(
     val currentVisibleItemIndex by remember { derivedStateOf { productLazyGridState.firstVisibleItemIndex } }
     var expandedMenuSection by remember { mutableStateOf(false) }
 
-    var activeDropdown by remember { mutableStateOf<CollectionSectionSortFilterType?>(null) }
+    var showDropdown by remember { mutableStateOf<CollectionSectionSortFilterType?>(null) }
     var gridViewMode by remember { mutableStateOf(GridViewModeType.COLUMNS_2) }
 
     val selectedCollectionId = uiState.selectedCollectionId
@@ -219,6 +219,7 @@ fun CollectionScreen(
                             collectionMenus = collectionMenus,
                             imageLoader = imageLoader,
                             expanded = expandedMenuSection,
+                            enabledAll = showDropdown == null,
                             onAllClick = { expandedMenuSection = true },
                             onCollapseClick = { expandedMenuSection = false },
                             selectedCollectionId = selectedCollectionId,
@@ -246,9 +247,9 @@ fun CollectionScreen(
                         .padding(
                             vertical = spacing.dp12,
                             horizontal = spacing.dp12),
-                    activeDropdown = activeDropdown,
-                    updateActiveDropdown = { newType ->
-                        activeDropdown = newType
+                    showDropdown = showDropdown,
+                    updateShowDropdown = { newType ->
+                        showDropdown = newType
                     },
                     onSortClick = {
                         Timber.tag(tag).d("onSortClick")
