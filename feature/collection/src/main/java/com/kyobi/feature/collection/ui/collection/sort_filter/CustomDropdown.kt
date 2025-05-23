@@ -2,11 +2,11 @@ package com.kyobi.feature.collection.ui.collection.sort_filter
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
@@ -27,18 +28,23 @@ import com.kyobi.theme.kyobiTheme
 import kotlin.math.roundToInt
 
 @Composable
-fun CustomDropdown(
+fun <T : Enum<T>> CustomDropdown(
     modifier: Modifier = Modifier,
     height: Dp,
     totalSpacing: Dp = Dimension.dp0,
     shapeForButton: Shape? = null,
-    onClick: () -> Unit,
-    content: @Composable () -> Unit,
-    contentForButton: @Composable () -> Unit
+    focusable: Boolean = true,
+    isActive: Boolean,
+    onToggle: (Boolean) -> Unit,
+    onSwitch: (T) -> Unit,
+    type: T,
+    currentActive: T?,
+    onDismissRequest: (() -> Unit)? = {},
+    popupContent: @Composable () -> Unit,
+    child: @Composable () -> Unit
 ) {
-    var showDropdown by remember { mutableStateOf(false) }
-    var dropdownOffsetX by remember { mutableFloatStateOf(0f) }
-    var dropdownOffsetY by remember { mutableFloatStateOf(0f) }
+    var dropdownOffsetX by remember { mutableStateOf(Dimension.dp0) }
+    var dropdownOffsetY by remember { mutableStateOf(Dimension.dp0) }
     var dropdownWidth by remember { mutableStateOf(Dimension.dp0) }
     var dropdownHeight by remember { mutableStateOf(Dimension.dp0) }
 
@@ -46,7 +52,7 @@ fun CustomDropdown(
     val statusBarHeightDp = with(density) { WindowInsets.statusBars.getTop(density).toDp() }
     val navigationBarHeightDp = with(density) { WindowInsets.navigationBars.getBottom(density).toDp() }
 
-    val calculateOffsetY = dropdownOffsetY.dp + dropdownHeight + totalSpacing
+    val calculateOffsetY = dropdownOffsetY + dropdownHeight + totalSpacing
     val topHeight = calculateOffsetY + statusBarHeightDp + navigationBarHeightDp
 
     val colorTheme = MaterialTheme.kyobiTheme.colors
@@ -56,29 +62,32 @@ fun CustomDropdown(
         Box(
             modifier = Modifier
                 .onGloballyPositioned { coordinates ->
-                    dropdownOffsetX = coordinates.positionInParent().x
-                    dropdownOffsetY = coordinates.positionInParent().y
+                    dropdownOffsetX = coordinates.positionInParent().x.dp
+                    dropdownOffsetY = coordinates.positionInParent().y.dp
                     dropdownWidth = coordinates.size.width.dp
                     dropdownHeight = coordinates.size.height.dp
                 }
                 .clip(shapeForButton ?: shapeTheme.extraSmall)
                 .clickable {
-                    onClick()
-                    showDropdown = !showDropdown
+                    if (currentActive != null && currentActive != type) {
+                        onSwitch(type) // move sang dropdown mới
+                    } else {
+                        onToggle(!isActive) // Toggle nếu không có dropdown khác
+                    }
                 }
         ) {
-            contentForButton()
+            child()
         }
 
-        if (showDropdown) {
+        if (isActive) {
             Popup(
                 alignment = Alignment.TopStart,
                 offset = IntOffset(
-                    x = dropdownOffsetX.roundToInt(),
+                    x = dropdownOffsetX.value.roundToInt(),
                     y = calculateOffsetY.value.roundToInt()
                 ),
-                properties = PopupProperties(focusable = true),
-                onDismissRequest = { showDropdown = false }
+                properties = PopupProperties(focusable = focusable),
+                onDismissRequest = onDismissRequest,
             ) {
                 BoxWithConstraints {
                     val remainingHeight = (maxHeight - topHeight).coerceAtLeast(Dimension.dp0)
@@ -87,13 +96,21 @@ fun CustomDropdown(
                             .fillMaxWidth()
                             .height(remainingHeight)
                             .background(colorTheme.bg.stone950.copy(alpha = 0.5f))
+                            .pointerInput(Unit) {
+                                detectTapGestures { offset ->
+                                    // click ngoài vùng nội dung, close dropdown
+                                    if (offset.y > height.value) {
+                                        onToggle(false)
+                                    }
+                                }
+                            }
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(height)
                         ) {
-                            content()
+                            popupContent()
                         }
                     }
                 }

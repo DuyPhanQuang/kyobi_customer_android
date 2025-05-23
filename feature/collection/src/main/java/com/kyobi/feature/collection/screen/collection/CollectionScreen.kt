@@ -51,6 +51,7 @@ import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.theme.Colors
 import com.kyobi.theme.Dimension
 import com.kyobi.theme.kyobiTheme
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -243,9 +244,15 @@ fun CollectionScreen(
                         .padding(
                             vertical = spacing.dp12,
                             horizontal = spacing.dp12),
-                    onSortClick = {},
-                    onColorFilterClick = {},
-                    onSizeFilterClick = {},
+                    onSortClick = {
+                        Timber.tag(tag).d("onSortClick")
+                    },
+                    onColorFilterClick = {
+                        Timber.tag(tag).d("onColorFilterClick")
+                    },
+                    onSizeFilterClick = {
+                        Timber.tag(tag).d("onSizeFilterClick")
+                    },
                     viewMode = gridViewMode,
                     onFilterAllClick = {},
                     onViewModeClick = { viewMode ->

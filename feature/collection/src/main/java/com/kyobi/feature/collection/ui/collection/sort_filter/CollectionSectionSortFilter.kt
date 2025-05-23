@@ -4,6 +4,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.kyobi.feature.collection.ui.collection.sort_filter.content.CollectionColorFilterContent
@@ -13,6 +17,8 @@ import com.kyobi.feature.collection.ui.collection.sort_filter.content.mockColorF
 import com.kyobi.feature.collection.ui.collection.sort_filter.content.mockSizeFilters
 import com.kyobi.feature.collection.ui.collection.sort_filter.content.mockSorts
 import com.kyobi.theme.kyobiTheme
+
+enum class CollectionSectionSortFilterType { SORT, COLOR_FILTER, SIZE_FILTER }
 
 @Composable
 fun CollectionSectionSortFilter(
@@ -26,6 +32,7 @@ fun CollectionSectionSortFilter(
 ) {
     val height = MaterialTheme.kyobiTheme.height
     val spacing = MaterialTheme.kyobiTheme.spacing
+    var activeDropdown by remember { mutableStateOf<CollectionSectionSortFilterType?>(null) }
 
     Row(
         modifier = modifier,
@@ -35,12 +42,33 @@ fun CollectionSectionSortFilter(
         CustomDropdown(
             height = height.dp120,
             totalSpacing = spacing.dp24 + spacing.dp8,
-            content = {
+            focusable = false,
+            isActive = activeDropdown == CollectionSectionSortFilterType.SORT,
+            type = CollectionSectionSortFilterType.SORT,
+            currentActive = activeDropdown,
+            onToggle = { active ->
+                if (active && activeDropdown != CollectionSectionSortFilterType.SORT) {
+                    activeDropdown = CollectionSectionSortFilterType.SORT
+                    onSortClick()
+                } else if (!active) {
+                    activeDropdown = null
+                }
+            },
+            onSwitch = { newType ->
+                if (activeDropdown != newType) {
+                    activeDropdown = newType
+                    when (newType) {
+                        CollectionSectionSortFilterType.SORT -> onSortClick()
+                        CollectionSectionSortFilterType.COLOR_FILTER -> onColorFilterClick()
+                        CollectionSectionSortFilterType.SIZE_FILTER -> onSizeFilterClick()
+                    }
+                }
+            },
+            popupContent = {
                 CollectionSortContent(
                     sortOptions = mockSorts
                 )
             },
-            onClick = onSortClick,
         ) {
             CollectionSortFilterTile(
                 label = "Sort",
@@ -50,12 +78,33 @@ fun CollectionSectionSortFilter(
         CustomDropdown(
             height = height.dp244,
             totalSpacing = spacing.dp24 + spacing.dp8,
-            content = {
+            focusable = false,
+            isActive = activeDropdown == CollectionSectionSortFilterType.COLOR_FILTER,
+            type = CollectionSectionSortFilterType.COLOR_FILTER,
+            currentActive = activeDropdown,
+            onToggle = { active ->
+                if (active && activeDropdown != CollectionSectionSortFilterType.COLOR_FILTER) {
+                    activeDropdown = CollectionSectionSortFilterType.COLOR_FILTER
+                    onColorFilterClick()
+                } else if (!active) {
+                    activeDropdown = null
+                }
+            },
+            onSwitch = { newType ->
+                if (activeDropdown != newType) {
+                    activeDropdown = newType
+                    when (newType) {
+                        CollectionSectionSortFilterType.SORT -> onSortClick()
+                        CollectionSectionSortFilterType.COLOR_FILTER -> onColorFilterClick()
+                        CollectionSectionSortFilterType.SIZE_FILTER -> onSizeFilterClick()
+                    }
+                }
+            },
+            popupContent = {
                 CollectionColorFilterContent(
                     colorFilters = mockColorFilters
                 )
             },
-            onClick = onColorFilterClick,
         ) {
             CollectionSortFilterTile(
                 label = "Color",
@@ -65,12 +114,33 @@ fun CollectionSectionSortFilter(
         CustomDropdown(
             height = height.dp244,
             totalSpacing = spacing.dp24 + spacing.dp8,
-            content = {
+            focusable = false,
+            isActive = activeDropdown == CollectionSectionSortFilterType.SIZE_FILTER,
+            type = CollectionSectionSortFilterType.SIZE_FILTER,
+            currentActive = activeDropdown,
+            onToggle = { active ->
+                if (active && activeDropdown != CollectionSectionSortFilterType.SIZE_FILTER) {
+                    activeDropdown = CollectionSectionSortFilterType.SIZE_FILTER
+                    onSizeFilterClick()
+                } else if (!active) {
+                    activeDropdown = null
+                }
+            },
+            onSwitch = { newType ->
+                if (activeDropdown != newType) {
+                    activeDropdown = newType
+                    when (newType) {
+                        CollectionSectionSortFilterType.SORT -> onSortClick()
+                        CollectionSectionSortFilterType.COLOR_FILTER -> onColorFilterClick()
+                        CollectionSectionSortFilterType.SIZE_FILTER -> onSizeFilterClick()
+                    }
+                }
+            },
+            popupContent = {
                 CollectionSizeFilterContent(
                     sizeFilters = mockSizeFilters
                 )
             },
-            onClick = onSizeFilterClick,
         ) {
             CollectionSortFilterTile(
                 label = "Size",
