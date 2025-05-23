@@ -71,6 +71,10 @@ class CollectionScreenViewModel @Inject constructor(
         }
     }
 
+    /** Step1: update collection selected
+     * Step2: fetch list product theo collection selected
+     * Step3: fetch filter set theo collection selected
+     * */
     fun updateCollectionSelected(itemSelected: CollectionMenu) {
         if (itemSelected.id == _uiState.value.selectedCollectionId) return
         _uiState.value = _uiState.value.copy(selectedCollectionId = itemSelected.id)
@@ -82,7 +86,15 @@ class CollectionScreenViewModel @Inject constructor(
         fetchCateFilterByCollection(cateHandle)
     }
 
-    fun fetchProductByCollectionDefault() {
+    /** Step1: fetch list product theo collection default
+     * Step3: fetch filter set theo collection default
+     * */
+    fun updateNonCollectionSelect() {
+        fetchProductByCollectionDefault()
+        fetchCateFilterByCollectionDefault()
+    }
+
+    private fun fetchProductByCollectionDefault() {
         val collectionDefaultConfig = "women"
         viewModelScope.launchOnIO {
             eventBus.emitEvent(CollectionScreenEvent.CollectionSelected(collectionDefaultConfig))
@@ -90,7 +102,7 @@ class CollectionScreenViewModel @Inject constructor(
         }
     }
 
-    fun fetchCateFilterByCollectionDefault() {
+    private fun fetchCateFilterByCollectionDefault() {
         viewModelScope.launchOnIO {
             try {
                 getFilterSetUseCase.getFilterSetByDefault().collect { result ->

@@ -99,8 +99,7 @@ fun CollectionScreen(
             if (!categories.isNullOrEmpty()) {
                 val categoriesAsCollectionMenus = categories.toCollectionMenus()
                 viewModel.setCollectionMenus(categoriesAsCollectionMenus)
-                viewModel.fetchProductByCollectionDefault()
-                viewModel.fetchCateFilterByCollectionDefault()
+                viewModel.updateNonCollectionSelect()
             }
         } else {
             val categorySelected = collectionTabViewModel.getCategorySelected(categoryId) ?: return@LaunchedEffect
