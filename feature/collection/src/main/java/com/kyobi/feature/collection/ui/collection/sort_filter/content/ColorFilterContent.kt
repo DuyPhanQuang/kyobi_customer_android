@@ -20,124 +20,35 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import com.kyobi.composable.button.ButtonRoundedType
 import com.kyobi.composable.button.OutlineButton
 import com.kyobi.composable.product_option.ColorOption
 import com.kyobi.composable.space.SpaceY
 import com.kyobi.composable.space.XsSpaceX
-import com.kyobi.composable.utils.ColorUtils
+import com.kyobi.domain.model.CateFilter
+import com.kyobi.feature.collection.extension.isMatchedColorKey
+import com.kyobi.feature.collection.extension.toColorFilterOptions
+import com.kyobi.feature.collection.model.FilterOption
 import com.kyobi.theme.Colors
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallSm
 import com.kyobi.theme.paragraphRegularXs
 import com.kyobi.theme.paragraphXs
-
-val mockColorFilters = listOf(
-    FilterOption(
-        label = "Black",
-        value = "black",
-        code = "black",
-    ),
-    FilterOption(
-        label = "Black",
-        value = "black",
-        code = "black",
-    ),
-    FilterOption(
-        label = "Black",
-        value = "black",
-        code = "black",
-    ),
-    FilterOption(
-        label = "Black",
-        value = "black",
-        code = "black",
-    ),
-    FilterOption(
-        label = "Gold",
-        value = "gold",
-        code = "gold",
-    ),
-    FilterOption(
-        label = "Gold",
-        value = "gold",
-        code = "gold",
-    ),
-    FilterOption(
-        label = "Gold",
-        value = "gold",
-        code = "gold",
-    ),
-    FilterOption(
-        label = "Gold",
-        value = "gold",
-        code = "gold",
-    ),
-    FilterOption(
-        label = "Sliver",
-        value = "sliver",
-        code = "sliver",
-    ),
-    FilterOption(
-        label = "Sliver",
-        value = "sliver",
-        code = "sliver",
-    ),
-    FilterOption(
-        label = "Sliver",
-        value = "sliver",
-        code = "sliver",
-    ),
-    FilterOption(
-        label = "Sliver",
-        value = "sliver",
-        code = "sliver",
-    ),
-    FilterOption(
-        label = "Orange",
-        value = "orange",
-        code = "orange",
-    ),
-    FilterOption(
-        label = "Orange",
-        value = "orange",
-        code = "orange",
-    ),
-    FilterOption(
-        label = "Orange",
-        value = "orange",
-        code = "orange",
-    ),
-    FilterOption(
-        label = "Orange",
-        value = "orange",
-        code = "orange",
-    ),
-    FilterOption(
-        label = "White",
-        value = "white",
-        code = "white",
-    ),
-    FilterOption(
-        label = "White",
-        value = "white",
-        code = "white",
-    ),
-    FilterOption(
-        label = "White",
-        value = "white",
-        code = "white",
-    ),
-)
+import androidx.core.graphics.toColorInt
 
 @Composable
 fun CollectionColorFilterContent(
-    colorFilters: List<FilterOption>
+    cateFilter: CateFilter? = null
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
     val typographyTheme = MaterialTheme.kyobiTheme.typography
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val height = MaterialTheme.kyobiTheme.height
+
+    val colorFilters = cateFilter?.fields
+        ?.filter { it.isMatchedColorKey() }
+        ?.toColorFilterOptions() ?: emptyList()
 
     Column(
         modifier = Modifier
@@ -162,10 +73,7 @@ fun CollectionColorFilterContent(
                     .verticalScroll(rememberScrollState())
             ) {
                 rows.forEach { rowItems ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(spacing.dp16)
-                    ) {
+                    Row(modifier = Modifier.fillMaxWidth()) {
                         rowItems.forEach { colorFilter ->
                             ColorFilterTile(
                                 modifier = Modifier
@@ -233,7 +141,7 @@ private fun ColorFilterTile(
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val spacing = MaterialTheme.kyobiTheme.spacing
 
-    val colorValue = if (data.code != null) ColorUtils.getColorValue(data.code) else Colors().black
+    val colorValue = data.code?.let { hexColor -> Color(hexColor.toColorInt()) } ?: Colors().black
     val textStyle = if (isSelected) typographyTheme.paragraphXs else typographyTheme.paragraphRegularXs
 
     Row(

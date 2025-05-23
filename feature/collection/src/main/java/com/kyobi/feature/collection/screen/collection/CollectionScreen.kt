@@ -87,13 +87,14 @@ fun CollectionScreen(
 
     val selectedCollectionId = uiState.selectedCollectionId
     val collectionMenus = uiState.collectionMenus
+    val cateFilter = uiState.cateFilter
 
     LaunchedEffect(eventBus) {
         viewModel.initWithEventBus(eventBus)
         productListViewModel.initWithEventBus(eventBus)
     }
 
-    LaunchedEffect(categoryId, subCategoryId) {
+    LaunchedEffect(Unit) {
         if (categoryId == null) {
             val categories = collectionTabViewModel.getCategories()
             if (!categories.isNullOrEmpty()) {
@@ -247,6 +248,7 @@ fun CollectionScreen(
                         .padding(
                             vertical = spacing.dp12,
                             horizontal = spacing.dp12),
+                    cateFilter = cateFilter,
                     showDropdown = showDropdown,
                     updateShowDropdown = { newType ->
                         showDropdown = newType

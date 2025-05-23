@@ -116,6 +116,13 @@ fun <T : Enum<T>> CustomDropdown(
                                 .fillMaxWidth()
                                 .height(remainingHeight)
                                 .background(colorTheme.bg.stone950.copy(alpha = 0.5f))
+                                .pointerInput(Unit) {
+                                    detectTapGestures { offset ->
+                                        if (offset.y > height.value) {
+                                            onToggle(false)
+                                        }
+                                    }
+                                }
                         ) {
                             Box(
                                 modifier = Modifier
@@ -124,17 +131,6 @@ fun <T : Enum<T>> CustomDropdown(
                             ) {
                                 popupContent()
                             }
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .pointerInput(Unit) {
-                                        detectTapGestures { offset ->
-                                            if (offset.y > height.value) {
-                                                onToggle(false)
-                                            }
-                                        }
-                                    }
-                            )
                         }
                     }
                 }

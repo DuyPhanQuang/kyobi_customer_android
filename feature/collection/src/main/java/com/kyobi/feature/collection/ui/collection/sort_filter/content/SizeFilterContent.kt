@@ -24,99 +24,26 @@ import com.kyobi.composable.button.ButtonRoundedType
 import com.kyobi.composable.button.OutlineButton
 import com.kyobi.composable.space.SpaceY
 import com.kyobi.composable.space.XsSpaceX
+import com.kyobi.domain.model.CateFilter
+import com.kyobi.feature.collection.extension.isMatchedSizeKey
+import com.kyobi.feature.collection.extension.toFilterOptions
+import com.kyobi.feature.collection.model.FilterOption
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallSm
 import com.kyobi.theme.paragraphRegularXs
 
-data class FilterOption(
-    val label: String,
-    val value: String,
-    val code: String? = null
-)
-
-val mockSizeFilters = listOf(
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "One size",
-        value = "oversize"
-    ),
-    FilterOption(
-        label = "XXS",
-        value = "xxs"
-    ),
-    FilterOption(
-        label = "XS",
-        value = "xs"
-    ),
-    FilterOption(
-        label = "S",
-        value = "s"
-    ),
-    FilterOption(
-        label = "M",
-        value = "m"
-    ),
-    FilterOption(
-        label = "L",
-        value = "l"
-    ),
-)
-
 @Composable
 fun CollectionSizeFilterContent(
-    sizeFilters: List<FilterOption>
+    cateFilter: CateFilter? = null
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
     val typographyTheme = MaterialTheme.kyobiTheme.typography
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val height = MaterialTheme.kyobiTheme.height
+
+    val sizeFilters = cateFilter?.fields
+        ?.filter { it.isMatchedSizeKey() }
+        ?.toFilterOptions() ?: emptyList()
 
     Column(
         modifier = Modifier

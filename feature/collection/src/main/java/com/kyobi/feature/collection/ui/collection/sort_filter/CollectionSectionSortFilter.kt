@@ -6,11 +6,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.kyobi.domain.model.CateFilter
 import com.kyobi.feature.collection.ui.collection.sort_filter.content.CollectionColorFilterContent
 import com.kyobi.feature.collection.ui.collection.sort_filter.content.CollectionSizeFilterContent
 import com.kyobi.feature.collection.ui.collection.sort_filter.content.CollectionSortContent
-import com.kyobi.feature.collection.ui.collection.sort_filter.content.mockColorFilters
-import com.kyobi.feature.collection.ui.collection.sort_filter.content.mockSizeFilters
 import com.kyobi.feature.collection.ui.collection.sort_filter.content.mockSorts
 import com.kyobi.theme.kyobiTheme
 
@@ -19,6 +18,7 @@ enum class CollectionSectionSortFilterType { SORT, COLOR_FILTER, SIZE_FILTER }
 @Composable
 fun CollectionSectionSortFilter(
     modifier: Modifier = Modifier,
+    cateFilter: CateFilter? = null,
     showDropdown: CollectionSectionSortFilterType? = null,
     updateShowDropdown: (CollectionSectionSortFilterType?) -> Unit,
     onSortClick: () -> Unit,
@@ -99,7 +99,7 @@ fun CollectionSectionSortFilter(
             },
             popupContent = {
                 CollectionColorFilterContent(
-                    colorFilters = mockColorFilters
+                    cateFilter = cateFilter
                 )
             },
         ) {
@@ -135,7 +135,7 @@ fun CollectionSectionSortFilter(
             },
             popupContent = {
                 CollectionSizeFilterContent(
-                    sizeFilters = mockSizeFilters
+                    cateFilter = cateFilter
                 )
             },
         ) {
