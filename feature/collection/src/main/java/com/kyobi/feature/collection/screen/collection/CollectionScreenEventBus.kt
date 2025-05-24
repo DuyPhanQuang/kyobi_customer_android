@@ -13,7 +13,7 @@ sealed class CollectionScreenEvent {
 }
 
 class CollectionScreenEventBus {
-    private val _events = MutableSharedFlow<CollectionScreenEvent>(replay = 1)
+    private val _events = MutableSharedFlow<CollectionScreenEvent>(replay = 0)
     val events: SharedFlow<CollectionScreenEvent> = _events
 
     suspend fun emitEvent(event: CollectionScreenEvent) {

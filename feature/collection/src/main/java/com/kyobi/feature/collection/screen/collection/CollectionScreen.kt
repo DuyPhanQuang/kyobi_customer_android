@@ -95,13 +95,11 @@ fun CollectionScreen(
     val cateFilter = uiState.cateFilter
     val selectedFilterOptions = sortFilterUiState.selectedFilterOptions
 
-    LaunchedEffect(eventBus) {
+    LaunchedEffect(Unit) {
         viewModel.initWithEventBus(eventBus)
         productListViewModel.initWithEventBus(eventBus)
         sortFilterViewModel.initWithEventBus(eventBus)
-    }
 
-    LaunchedEffect(Unit) {
         if (categoryId == null) {
             val categories = collectionTabViewModel.getCategories()
             if (!categories.isNullOrEmpty()) {

@@ -37,7 +37,6 @@ class SignupViewModel @Inject constructor(
             signUpUiState = signUpUiState.copy(error = "Vui lòng nhập đầy đủ thông tin")
             return
         }
-
         viewModelScope.launchOnIO {
             signUpUseCase.signUp(
                 signUpUiState.email,

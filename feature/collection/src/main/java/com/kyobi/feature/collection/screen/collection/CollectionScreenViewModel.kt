@@ -1,10 +1,10 @@
 package com.kyobi.feature.collection.screen.collection
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
 import com.kyobi.core.coroutines.launchOnIO
+import com.kyobi.core.coroutines.launchOnMain
 import com.kyobi.core.extensions.toFirstGid
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.ShopifyMedia
@@ -12,15 +12,14 @@ import com.kyobi.domain.usecase.GetFilterSetUseCase
 import com.kyobi.domain.usecase.GetShopifyMediaUseCase
 import com.kyobi.feature.collection.screen.collection.model.CollectionMenu
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class CollectionScreenViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val getShopifyMediaUseCase: GetShopifyMediaUseCase,
     private val getFilterSetUseCase: GetFilterSetUseCase,
     private val imageLoader: ImageLoader,
@@ -72,12 +71,11 @@ class CollectionScreenViewModel @Inject constructor(
      * Step3: fetch filter set theo collection selected
      * */
     fun updateCollectionSelected(itemSelected: CollectionMenu) {
-        if (itemSelected.id == _uiState.value.selectedCollectionId) return
         _uiState.value = _uiState.value.copy(
             selectedCollectionId = itemSelected.id,
             selectedFilterHandle = itemSelected.filterHandle
         )
-        viewModelScope.launchOnIO {
+        viewModelScope.launch {
             eventBus.emitEvent(CollectionScreenEvent.CollectionSelected(itemSelected.filterHandle))
             Timber.tag(tag).d("Emitted CollectionSelected event with filterHandle: ${itemSelected.filterHandle}")
         }
@@ -95,7 +93,7 @@ class CollectionScreenViewModel @Inject constructor(
 
     private fun fetchProductByCollectionDefault() {
         val collectionDefaultConfig = "women"
-        viewModelScope.launchOnIO {
+        viewModelScope.launch {
             eventBus.emitEvent(CollectionScreenEvent.CollectionSelected(collectionDefaultConfig))
             Timber.tag(tag).d("Emitted CollectionSelected event with filterHandle: $collectionDefaultConfig")
         }

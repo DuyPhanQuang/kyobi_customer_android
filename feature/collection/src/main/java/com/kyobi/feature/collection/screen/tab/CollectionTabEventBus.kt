@@ -12,7 +12,7 @@ sealed class CollectionTabEvent {
 
 @ViewModelScoped
 class CollectionTabEventBus @Inject constructor() {
-    private val _events = MutableSharedFlow<CollectionTabEvent>(replay = 1)
+    private val _events = MutableSharedFlow<CollectionTabEvent>(replay = 0)
     val events: SharedFlow<CollectionTabEvent> = _events
 
     suspend fun emitEvent(event: CollectionTabEvent) {

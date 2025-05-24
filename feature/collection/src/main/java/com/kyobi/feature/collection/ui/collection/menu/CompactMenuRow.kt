@@ -16,10 +16,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -51,6 +53,20 @@ fun CompactMenuRow(
     val typographyTheme = MaterialTheme.kyobiTheme.typography
     val allContainerWidth = spacing.dp48
 
+    val lazyListState = rememberLazyListState()
+
+    LaunchedEffect(selectedCollectionId) {
+        if (selectedCollectionId != null) {
+            val selectedIndex = collectionMenus.indexOfFirst { it.id == selectedCollectionId }
+            if (selectedIndex >= 0) {
+                lazyListState.animateScrollToItem(
+                    index = selectedIndex,
+                    scrollOffset = -spacing.dp16.value.toInt() // Offset để item không sát mép
+                )
+            }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -59,6 +75,7 @@ fun CompactMenuRow(
     ) {
         LazyRow(
             modifier = Modifier.fillMaxSize(),
+            state = lazyListState,
             horizontalArrangement = Arrangement.spacedBy(spacing.dp16),
             contentPadding = PaddingValues(
                 start = spacing.dp12,

@@ -2,6 +2,7 @@ package com.kyobi.feature.collection.screen.collection
 
 import androidx.lifecycle.viewModelScope
 import com.kyobi.core.coroutines.launchOnIO
+import com.kyobi.core.coroutines.launchOnMain
 import com.kyobi.core.extensions.toQueryBySingleTag
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.Product
@@ -16,7 +17,7 @@ import com.kyobi.feature.collection.model.FilterOption
 import com.kyobi.featurecommon.product.BaseProductListViewModel
 import com.kyobi.featurecommon.product.ProductUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -34,7 +35,7 @@ class CollectionScreenProductListViewModel @Inject constructor(
 
     fun initWithEventBus(initEventBus: CollectionScreenEventBus) {
         this.eventBus = initEventBus
-        viewModelScope.launchOnIO {
+        viewModelScope.launch {
             eventBus.events.collect { event ->
                 Timber.tag(tag).d("***CollectionScreenEventBus*** subscribed event: $event")
                 when (event) {
@@ -73,7 +74,8 @@ class CollectionScreenProductListViewModel @Inject constructor(
                 sortKey = null,
                 identifiers = null,
                 first = 250
-            ).collectLatest { result ->
+            ).collect { result ->
+                Timber.tag(tag).d("Processing fetchProductsByCollection result: $result")
                 when (result) {
                     is DomainNetworkResult.Success -> {
                         productsResult.value = DomainNetworkResult.Success(
@@ -112,7 +114,8 @@ class CollectionScreenProductListViewModel @Inject constructor(
                 sortKey = null,
                 identifiers = identifiers,
                 first = 250
-            ).collectLatest { result ->
+            ).collect { result ->
+                Timber.tag(tag).d("Processing fetchProductsByCollectionWithFilterKeys result: $result")
                 when (result) {
                     is DomainNetworkResult.Success -> {
                         val filteredProducts = filterProductsByCondition(result.data, options)

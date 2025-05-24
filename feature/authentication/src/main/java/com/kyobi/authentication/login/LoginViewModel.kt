@@ -7,10 +7,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.domain.model.DomainNetworkResult
+import com.kyobi.domain.model.LoggedInUser
 import com.kyobi.domain.usecase.LoginUseCase
 import com.kyobi.featurecommon.auth.AuthEvent
 import com.kyobi.featurecommon.auth.AuthEventBus
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -44,9 +46,7 @@ class LoginViewModel @Inject constructor(
                     when (result) {
                         is DomainNetworkResult.Success -> {
                             loginUiState = loginUiState.copy(isLoading = false, error = null)
-                            // Sau khi login thành công, update user data lấy từ response login đồng thời lấy thông tin user
-                            // bằng cách emit để auth viewmodel xử lý 2 nhiệm vụ này
-                            authEventBus.emitEvent(AuthEvent.LoginSuccess(result.data, isAnonymous = false))
+                            requestAfterLoginSuccess(result.data)
                         }
                         is DomainNetworkResult.Error -> {
                             loginUiState = loginUiState.copy(
@@ -59,6 +59,14 @@ class LoginViewModel @Inject constructor(
                         }
                     }
                 }
+        }
+    }
+
+    // Sau khi login thành công, update user data lấy từ response login đồng thời lấy thông tin user
+    // bằng cách emit để auth viewmodel xử lý 2 nhiệm vụ này
+    private fun requestAfterLoginSuccess(loggedInUser: LoggedInUser) {
+        viewModelScope.launch {
+            authEventBus.emitEvent(AuthEvent.LoginSuccess(loggedInUser, isAnonymous = false))
         }
     }
 }

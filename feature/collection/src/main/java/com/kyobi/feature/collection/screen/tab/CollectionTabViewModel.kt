@@ -1,6 +1,5 @@
 package com.kyobi.feature.collection.screen.tab
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil.ImageLoader
@@ -10,15 +9,14 @@ import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.SubcategoryMenu
 import com.kyobi.domain.usecase.GetSubMenusUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class CollectionTabViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val getSubMenusUseCase: GetSubMenusUseCase,
     private val imageLoader: ImageLoader,
     private val collectionTabEventBus: CollectionTabEventBus
@@ -59,8 +57,9 @@ class CollectionTabViewModel @Inject constructor(
     }
 
     private fun fetchSubMenus() {
+        val collectionHandle = "women"
         viewModelScope.launchOnIO {
-            getSubMenusUseCase.getSubMenus(handle = "women").collect { result ->
+            getSubMenusUseCase.getSubMenus(handle = collectionHandle).collect { result ->
                 _uiState.value = _uiState.value.copy(subMenusResult = result)
             }
         }
@@ -74,27 +73,43 @@ class CollectionTabViewModel @Inject constructor(
             selectedSubCategory = null,
             selectedSubCategoryId = null
         )
-        viewModelScope.launchOnIO {
+        requestAfterCategorySelected(category)
+    }
+
+    fun updateSubCategorySelected(subCategory: SubcategoryMenu, categoryMenus: List<CategoryMenu>) {
+        if (subCategory.id == _uiState.value.selectedSubCategoryId) {
+            _uiState.value = _uiState.value.copy(
+                selectedSubCategory = null,
+                selectedSubCategoryId = null
+            )
+            val currentCategory = _uiState.value.selectedCategory!!
+            requestAfterCategorySelected(currentCategory)
+        } else {
+            val parentCategory = categoryMenus.find { category ->
+                category.groups?.any { group ->
+                    group.subcategories?.any { sub -> sub.id == subCategory.id } == true
+                } == true
+            }
+            if (parentCategory == null) throw Exception()
+            _uiState.value = _uiState.value.copy(
+                selectedCategory = parentCategory,
+                selectedCategoryId = parentCategory.id,
+                selectedSubCategory = subCategory,
+                selectedSubCategoryId = subCategory.id
+            )
+            requestAfterSubCategorySelected(subCategory)
+        }
+    }
+
+    private fun requestAfterCategorySelected(category: CategoryMenu) {
+        viewModelScope.launch {
             collectionTabEventBus.emitEvent(CollectionTabEvent.CategorySelected(category.filterHandle))
             Timber.tag(tag).d("Emitted CategorySelected event with filterHandle: ${category.filterHandle}")
         }
     }
 
-    fun updateSubCategorySelected(subCategory: SubcategoryMenu, categoryMenus: List<CategoryMenu>) {
-        if (subCategory.id == _uiState.value.selectedSubCategoryId) return
-        val parentCategory = categoryMenus.find { category ->
-            category.groups?.any { group ->
-                group.subcategories?.any { sub -> sub.id == subCategory.id } == true
-            } == true
-        }
-        if (parentCategory == null) return
-        _uiState.value = _uiState.value.copy(
-            selectedCategory = parentCategory,
-            selectedCategoryId = parentCategory.id,
-            selectedSubCategory = subCategory,
-            selectedSubCategoryId = subCategory.id
-        )
-        viewModelScope.launchOnIO {
+    private fun requestAfterSubCategorySelected(subCategory: SubcategoryMenu) {
+        viewModelScope.launch {
             collectionTabEventBus.emitEvent(CollectionTabEvent.SubCategorySelected(subCategory.filterHandle))
             Timber.tag(tag).d("Emitted SubCategorySelected event with filterHandle: ${subCategory.filterHandle}")
         }

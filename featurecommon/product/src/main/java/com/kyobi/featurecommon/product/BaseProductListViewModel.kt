@@ -1,7 +1,6 @@
 package com.kyobi.featurecommon.product
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.Product
 import com.kyobi.domain.usecase.AddRemoveProductToFavoriteUseCase

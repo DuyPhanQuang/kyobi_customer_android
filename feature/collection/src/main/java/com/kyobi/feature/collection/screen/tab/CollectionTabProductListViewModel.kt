@@ -10,7 +10,7 @@ import com.kyobi.domain.usecase.GetProductsUseCase
 import com.kyobi.featurecommon.product.BaseProductListViewModel
 import com.kyobi.featurecommon.product.ProductUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -32,8 +32,9 @@ class CollectionTabProductListViewModel @Inject constructor(
 
     fun initWithEventBus(initEventBus: CollectionTabEventBus) {
         this.eventBus = initEventBus
-        viewModelScope.launchOnIO {
+        viewModelScope.launch {
             eventBus.events.collect { event ->
+                Timber.tag(tag).d("***CollectionTabEventBus*** subscribed event: $event")
                 when (event) {
                     is CollectionTabEvent.CategorySelected -> {
                         processingRequestCategorySelected(event)
@@ -66,14 +67,15 @@ class CollectionTabProductListViewModel @Inject constructor(
 
     private fun fetchProductsByCollection(filterHandle: String?) {
         viewModelScope.launchOnIO {
-            val tag = filterHandle ?: "women"
+            val queryTag = filterHandle ?: "women"
             getProductsUseCase.invoke(
-                query = tag.toQueryBySingleTag(),
+                query = queryTag.toQueryBySingleTag(),
                 reverse = null,
                 sortKey = null,
                 identifiers = null,
                 first = 250
-            ).collectLatest { result ->
+            ).collect { result ->
+                Timber.tag(tag).d("Processing fetchProductsByCollection result: $result")
                 when (result) {
                     is DomainNetworkResult.Success -> {
                         productsResult.value = DomainNetworkResult.Success(

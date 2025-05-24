@@ -2,11 +2,11 @@ package com.kyobi.feature.collection.screen.collection
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.feature.collection.model.FilterOption
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -53,7 +53,7 @@ class CollectionSortFilterViewModel @Inject constructor(): ViewModel() {
     }
 
     private fun requestFetchProductsWithFilterKeys(options: List<FilterOption>, filterHandle: String?) {
-        viewModelScope.launchOnIO {
+        viewModelScope.launch {
             eventBus.emitEvent(CollectionScreenEvent.FilterOptionsSelected(options, filterHandle))
             Timber.tag(tag).d("Emitted FilterOptionsSelected event with options: $options")
         }

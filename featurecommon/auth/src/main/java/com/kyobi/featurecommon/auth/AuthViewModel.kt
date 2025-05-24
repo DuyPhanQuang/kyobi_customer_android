@@ -12,6 +12,7 @@ import com.kyobi.domain.usecase.LogoutUseCase
 import com.kyobi.featurecommon.auth.session.Session
 import com.kyobi.featurecommon.auth.session.SessionEventBus
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -29,7 +30,7 @@ class AuthViewModel @Inject constructor(
 
     init {
         initializeSession()
-        viewModelScope.launchOnIO {
+        viewModelScope.launch {
             authEventBus.events.collect { event ->
                 Timber.tag(tag).d("***AuthEventBus*** subscribed event: $event")
                 when (event) {
