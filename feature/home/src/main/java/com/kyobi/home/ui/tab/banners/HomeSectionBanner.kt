@@ -60,10 +60,15 @@ fun HomeSectionBanner(
         }
     }
 
+    val width = MaterialTheme.kyobiTheme.width
+    val height = MaterialTheme.kyobiTheme.height
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(MaterialTheme.kyobiTheme.height.dp356)
+            .height(height.dp356)
     ) {
         Box(
             modifier = Modifier.fillMaxSize()
@@ -91,37 +96,26 @@ fun HomeSectionBanner(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .padding(
-                        bottom = MaterialTheme.kyobiTheme.spacing.dp36 +
-                            MaterialTheme.kyobiTheme.spacing.dp8
-                    ),
+                    .padding(bottom = spacing.dp36 + spacing.dp8),
                 horizontalArrangement = Arrangement.Center
             ) {
                 banners.forEachIndexed { index, _ ->
                     val isSelected = index == pagerState.currentPage
                     val targetWidth by animateDpAsState(
-                        targetValue = if (isSelected)
-                            MaterialTheme.kyobiTheme.width.dp24 else
-                            MaterialTheme.kyobiTheme.width.dp8,
+                        targetValue = if (isSelected) width.dp24 else width.dp8,
                         animationSpec = tween(durationMillis = 300),
                         label = "DotWidthAnimation"
                     )
                     Box(
                         modifier = Modifier
-                            .size(
-                                width = targetWidth,
-                                height = MaterialTheme.kyobiTheme.width.dp8
-                            )
+                            .size(width = targetWidth, height = width.dp8)
                             .clip(CircleShape)
-                            .background(MaterialTheme.kyobiTheme.colors.bg.stone100)
+                            .background(colorTheme.bg.stone100)
                             .clickable {
                                 isUserInteracting = true
                                 coroutineScope.launch {
-                                    val targetPage = if (pagerState.currentPage == banners.size - 1 && index == 0) {
-                                        0
-                                    } else {
-                                        index
-                                    }
+                                    val isLast = pagerState.currentPage == banners.size - 1 && index == 0
+                                    val targetPage = if (isLast) 0 else index
                                     pagerState.animateScrollToPage(targetPage)
                                     isUserInteracting = false
                                 }

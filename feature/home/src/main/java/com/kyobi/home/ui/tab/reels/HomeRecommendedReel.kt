@@ -25,14 +25,19 @@ fun HomeRecommendedReel(
     items: List<LookbookItem>,
     imageLoader: ImageLoader
 ) {
+    val spacing = MaterialTheme.kyobiTheme.spacing
+
     LazyRow(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = MaterialTheme.kyobiTheme.spacing.dp12),
-        horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp8),
-        contentPadding = PaddingValues(horizontal = MaterialTheme.kyobiTheme.spacing.dp12),
+            .padding(vertical = spacing.dp12),
+        horizontalArrangement = Arrangement.spacedBy(spacing.dp8),
+        contentPadding = PaddingValues(horizontal = spacing.dp12),
         content = {
-            itemsIndexed(items, key = { _, item -> item.id }) { _, item ->
+            itemsIndexed(
+                items,
+                key = { index, _ -> "recommended_reel_$index" }
+            ) { _, item ->
                 ReelItemView(
                     item = item,
                     imageLoader = imageLoader
@@ -48,18 +53,22 @@ fun ReelItemView(
     modifier: Modifier = Modifier,
     imageLoader: ImageLoader
 ) {
+    val width = MaterialTheme.kyobiTheme.width
+    val height = MaterialTheme.kyobiTheme.height
+    val shapeTheme = MaterialTheme.kyobiTheme.shapes
+
     Box(
         modifier = modifier
-            .width(MaterialTheme.kyobiTheme.width.dp135)
-            .height(MaterialTheme.kyobiTheme.width.dp195)
-            .clip(MaterialTheme.kyobiTheme.shapes.medium)
+            .width(width.dp135)
+            .height(height.dp195)
+            .clip(shapeTheme.medium)
     ) {
         AppImage(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(MaterialTheme.kyobiTheme.shapes.medium),
+                .clip(shapeTheme.medium),
             imageUrl = item.imageUrl,
-            contentDescription = "Reel item image ${item.id}",
+            contentDescription = "Recommended reel image ${item.id}",
             imageLoader = imageLoader
         )
     }

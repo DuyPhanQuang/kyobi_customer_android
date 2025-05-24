@@ -32,27 +32,27 @@ fun HomeSectionTopCatalog(
     val itemsPerRow = 5
     val rows = items.chunked(itemsPerRow)
 
+    val spacing = MaterialTheme.kyobiTheme.spacing
+
     Column(
-        modifier = Modifier.padding(
-            bottom = MaterialTheme.kyobiTheme.spacing.dp8,
-        )
+        modifier = Modifier
+            .padding(bottom = spacing.dp8)
     ) {
         rows.forEach { rowItems ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = MaterialTheme.kyobiTheme.spacing.dp8),
-                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp12)
+                    .padding(horizontal = spacing.dp8),
+                horizontalArrangement = Arrangement.spacedBy(spacing.dp12)
             ) {
                 rowItems.forEach { catalog ->
                     TopCatalogTile(
-                        modifier = Modifier.weight(1f), // Chia đều chiều rộng cho mỗi item
+                        modifier = Modifier.weight(1f),
                         catalog = catalog,
                         imageLoader = imageLoader,
                         onItemClick = {  },
                     )
                 }
-                // Nếu hàng không đủ 5 item, thêm khoảng trống để giữ layout đồng đều
                 repeat(itemsPerRow - rowItems.size) {
                     Column(modifier = Modifier.weight(1f)) {}
                 }
@@ -69,27 +69,31 @@ fun TopCatalogTile(
     onItemClick: () -> Unit,
 ) {
     val imageData = catalog.image?.image
+
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+    val width = MaterialTheme.kyobiTheme.width
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top,
         modifier = modifier
-            .padding(
-                top = MaterialTheme.kyobiTheme.spacing.dp8
-            )
+            .padding(top = spacing.dp8)
             .clickable { onItemClick() }
     ) {
         AppImage(
             imageUrl = imageData?.url,
             modifier = Modifier
                 .border(
-                    width = MaterialTheme.kyobiTheme.width.dp1,
-                    color = MaterialTheme.kyobiTheme.colors.bg.stone100,
+                    width = width.dp1,
+                    color = colorTheme.bg.stone100,
                     shape = CircleShape
                 )
                 .clip(CircleShape)
                 .aspectRatio(1f)
                 .background(
-                    color = MaterialTheme.kyobiTheme.colors.background,
+                    color = colorTheme.background,
                     shape = CircleShape
                 ),
             contentScale = ContentScale.Fit,
@@ -97,12 +101,11 @@ fun TopCatalogTile(
             imageLoader = imageLoader
         )
         Text(
-            modifier = Modifier.padding(top = MaterialTheme.kyobiTheme.spacing.dp8),
+            modifier = Modifier.padding(top = spacing.dp8),
             text = catalog.title,
-            style = MaterialTheme.kyobiTheme.typography.labelSmallXs,
+            style = typographyTheme.labelSmallXs,
             color = if (catalog.title == "New Arrivals")
-                MaterialTheme.kyobiTheme.colors.text.red700 else
-                MaterialTheme.kyobiTheme.colors.onBackground,
+                colorTheme.text.red700 else colorTheme.onBackground,
             textAlign = TextAlign.Center,
         )
     }

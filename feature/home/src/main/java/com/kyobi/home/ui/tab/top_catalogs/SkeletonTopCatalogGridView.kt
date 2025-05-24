@@ -19,18 +19,17 @@ fun SkeletonTopCatalogGridView(
     modifier: Modifier = Modifier
 ) {
     val itemsPerRow = 5
+    val spacing = MaterialTheme.kyobiTheme.spacing
 
     Column(
         modifier = modifier
-            .padding(
-                vertical = MaterialTheme.kyobiTheme.spacing.dp16
-            )
+            .padding(vertical = spacing.dp16)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = MaterialTheme.kyobiTheme.spacing.dp8),
-            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp12)
+                .padding(horizontal = spacing.dp8),
+            horizontalArrangement = Arrangement.spacedBy(spacing.dp12)
         ) {
             repeat(itemsPerRow) {
                 SkeletonContainer(

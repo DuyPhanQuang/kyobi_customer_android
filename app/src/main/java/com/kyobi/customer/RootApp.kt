@@ -36,14 +36,22 @@ import com.kyobi.featurecommon.routes.Routes
 import com.kyobi.featurecommon.routes.getDecodedByKey
 import com.kyobi.featurecommon.routes.getDecodedUserId
 import com.kyobi.featurecommon.routes.getParcelable
+import com.kyobi.home.HomeTabViewModel
+import com.kyobi.trend.TrendTabViewModel
 import com.kyobi.trend.ui.ReelPlaybackViewModel
 import ly.img.camera.core.CameraResult
 
 // Tạo CompositionLocal để provide AuthViewModel
 val LocalAuthViewModel = compositionLocalOf<AuthViewModel> { error("No AuthViewModel provided") }
 
+// Tạo CompositionLocal để provide HomeTabViewModel
+val LocalHomeTabViewModel = compositionLocalOf<HomeTabViewModel> { error("No HomeTabViewModel provided") }
+
 // Tạo CompositionLocal để provide CollectionTabViewModel
 val LocalCollectionTabViewModel = compositionLocalOf<CollectionTabViewModel> { error("No CollectionTabViewModel provided") }
+
+// Tạo CompositionLocal để provide TrendTabViewModel
+val LocalTrendTabViewModel = compositionLocalOf<TrendTabViewModel> { error("No TrendTabViewModel provided") }
 
 // Tạo CompositionLocal để provide ReelPlaybackViewModel
 val LocalReelPlaybackViewModel = compositionLocalOf<ReelPlaybackViewModel> { error("No ReelPlaybackViewModel provided") }
@@ -53,7 +61,9 @@ fun RootApp(
     navController: NavHostController,
     deepLinkState: State<Uri?>,
     authViewModel: AuthViewModel = hiltViewModel(),
+    homeTabViewModel: HomeTabViewModel = hiltViewModel(),
     collectionTabViewModel: CollectionTabViewModel = hiltViewModel(),
+    trendTabViewModel: TrendTabViewModel = hiltViewModel(),
     editorVideoViewModel: EditorVideoViewModel = hiltViewModel(),
     reelPlaybackViewModel: ReelPlaybackViewModel = hiltViewModel(),
 ) {
@@ -130,7 +140,9 @@ fun RootApp(
 
     CompositionLocalProvider(
         LocalAuthViewModel provides authViewModel,
+        LocalHomeTabViewModel provides homeTabViewModel,
         LocalCollectionTabViewModel provides collectionTabViewModel,
+        LocalTrendTabViewModel provides trendTabViewModel,
         LocalReelPlaybackViewModel provides reelPlaybackViewModel
     ) {
         AppTheme {
@@ -151,6 +163,8 @@ fun RootApp(
                     composable(routes = Routes.HomeTab) {
                         HomeTab(
                             navController = navController,
+                            authViewModel = LocalAuthViewModel.current,
+                            viewModel = LocalHomeTabViewModel.current,
                             topPadding = innerPadding.calculateTopPadding(),
                             bottomPadding = innerPadding.calculateBottomPadding()
                         )
@@ -167,6 +181,7 @@ fun RootApp(
                         TrendTab(
                             navController = navController,
                             authViewModel = LocalAuthViewModel.current,
+                            viewModel = LocalTrendTabViewModel.current,
                             reelPlaybackViewModel = LocalReelPlaybackViewModel.current,
                             topPadding = innerPadding.calculateTopPadding(),
                             bottomPadding = innerPadding.calculateBottomPadding()

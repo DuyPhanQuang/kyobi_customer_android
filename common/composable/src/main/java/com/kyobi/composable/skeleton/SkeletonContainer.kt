@@ -19,13 +19,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
+import com.kyobi.theme.Dimension
 
 @Composable
 fun SkeletonContainer(
     modifier: Modifier = Modifier,
-    width: Dp = 0.dp,
-    height: Dp = 0.dp,
+    width: Dp = Dimension.dp0,
+    height: Dp = Dimension.dp0,
     border: Shape? = null
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "SkeletonContainerAnimation")

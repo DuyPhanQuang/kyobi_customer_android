@@ -59,6 +59,7 @@ fun Flipper(
     }
 
     FlipClock(
+        modifier = modifier,
         seconds = remainingSeconds,
         endMillis = endTimeMillis,
     )

@@ -3,9 +3,7 @@ package com.kyobi.feature.collection.ui.tab.products
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -19,6 +17,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.kyobi.composable.skeleton.SkeletonProductCard
+import com.kyobi.composable.space.SpaceY
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.feature.collection.screen.tab.CollectionTabProductListViewModel
 import com.kyobi.feature.collection.ui.tab.sort_filter.CollectionTabSectionSortFilter
@@ -50,8 +49,7 @@ fun CollectionTabSectionProductsGridView(
         contentPadding = PaddingValues(
             bottom = bottomPadding,
             start = spacing.dp12,
-            end = spacing.dp12
-        ),
+            end = spacing.dp12),
         horizontalArrangement = Arrangement.spacedBy(spacing.dp8)
     ) {
         stickyHeader {
@@ -89,7 +87,7 @@ fun CollectionTabSectionProductsGridView(
             }
             is DomainNetworkResult.Error -> {
                 item {
-                    Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                    spacing.dp0.SpaceY()
                 }
             }
         }

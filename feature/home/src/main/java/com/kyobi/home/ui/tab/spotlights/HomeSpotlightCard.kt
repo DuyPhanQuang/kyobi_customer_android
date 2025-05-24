@@ -79,6 +79,8 @@ fun HomeSpotlightCard(
         }
     }
 
+    val shapeTheme = MaterialTheme.kyobiTheme.shapes
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -86,7 +88,7 @@ fun HomeSpotlightCard(
                 scaleX = scale.value
                 scaleY = scale.value
             }
-            .clip(MaterialTheme.kyobiTheme.shapes.medium)
+            .clip(shapeTheme.medium)
             .clickable(
                 interactionSource = interactionSource,
                 indication = LocalIndication.current,
@@ -96,7 +98,7 @@ fun HomeSpotlightCard(
         AppImage(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(MaterialTheme.kyobiTheme.shapes.medium),
+                .clip(shapeTheme.medium),
             imageUrl = imageData?.url,
             contentDescription = imageData?.altText,
             imageLoader = imageLoader,

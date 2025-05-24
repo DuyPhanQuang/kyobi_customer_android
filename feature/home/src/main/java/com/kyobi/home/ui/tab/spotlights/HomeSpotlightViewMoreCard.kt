@@ -28,10 +28,16 @@ import com.kyobi.theme.labelSmallXs
 fun HomeSpotlightViewMoreCard(
     onClick: () -> Unit
 ) {
+    val shapeTheme = MaterialTheme.kyobiTheme.shapes
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val iconTheme = MaterialTheme.kyobiTheme.icon
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.kyobiTheme.shapes.medium)
+            .clip(shapeTheme.medium)
             .clickable(
                 onClick = onClick,
                 indication = LocalIndication.current,
@@ -45,24 +51,23 @@ fun HomeSpotlightViewMoreCard(
                 .size(MaterialTheme.kyobiTheme.width.dp48)
                 .clip(CircleShape)
                 .background(
-                    MaterialTheme.kyobiTheme.colors.bg.white,
-                    shape = CircleShape
-                ),
+                    colorTheme.bg.white,
+                    shape = CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_arrow_right),
                 contentDescription = "View More Icon",
-                modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.xl),
-                tint = MaterialTheme.kyobiTheme.colors.bg.stone950
+                modifier = Modifier.size(iconTheme.xl),
+                tint = colorTheme.bg.stone950
             )
         }
         Text(
             modifier = Modifier
-                .padding(top = MaterialTheme.kyobiTheme.spacing.dp4),
+                .padding(top = spacing.dp4),
             text = "View More",
-            color = MaterialTheme.kyobiTheme.colors.text.neutral950,
-            style = MaterialTheme.kyobiTheme.typography.labelSmallXs,
+            color = colorTheme.text.neutral950,
+            style = typographyTheme.labelSmallXs,
         )
     }
 }

@@ -18,43 +18,46 @@ import com.kyobi.theme.kyobiTheme
 fun SkeletonSpotlightGridView(
     modifier: Modifier = Modifier
 ) {
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val shapeTheme = MaterialTheme.kyobiTheme.shapes
+    val height = MaterialTheme.kyobiTheme.height
+
     Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(
-                start = MaterialTheme.kyobiTheme.spacing.dp12,
-                end = MaterialTheme.kyobiTheme.spacing.dp12,
-                top = MaterialTheme.kyobiTheme.spacing.dp16
-            )
+                start = spacing.dp12,
+                end = spacing.dp12,
+                top = spacing.dp16)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp16)
+            horizontalArrangement = Arrangement.spacedBy(spacing.dp16)
         ) {
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .wrapContentHeight(),
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp16)
+                verticalArrangement = Arrangement.spacedBy(spacing.dp16)
             ) {
                 SkeletonContainer(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(MaterialTheme.kyobiTheme.height.dp220)
-                        .clip(MaterialTheme.kyobiTheme.shapes.medium)
+                        .height(height.dp220)
+                        .clip(shapeTheme.medium)
                 )
             }
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .wrapContentHeight(),
-                verticalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp16)
+                verticalArrangement = Arrangement.spacedBy(spacing.dp16)
             ) {
                 SkeletonContainer(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(MaterialTheme.kyobiTheme.height.dp330)
-                        .clip(MaterialTheme.kyobiTheme.shapes.medium)
+                        .height(height.dp330)
+                        .clip(shapeTheme.medium)
                 )
             }
         }

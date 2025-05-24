@@ -28,38 +28,46 @@ fun HomeSearchForm(
     modifier: Modifier,
     onSearchClick: () -> Unit,
 ) {
+    val width = MaterialTheme.kyobiTheme.width
+    val height = MaterialTheme.kyobiTheme.height
+    val shapeTheme = MaterialTheme.kyobiTheme.shapes
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val iconTheme = MaterialTheme.kyobiTheme.icon
+
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(MaterialTheme.kyobiTheme.height.dp40)
+            .height(height.dp40)
             .border(
-                MaterialTheme.kyobiTheme.width.dp1,
+                width.dp1,
                 Color.Transparent,
-                MaterialTheme.kyobiTheme.shapes.extraLarge)
-            .clip(MaterialTheme.kyobiTheme.shapes.extraLarge)
-            .background(MaterialTheme.kyobiTheme.colors.background)
+                shapeTheme.extraLarge)
+            .clip(shapeTheme.extraLarge)
+            .background(colorTheme.background)
             .clickable { onSearchClick() },
         contentAlignment = Alignment.CenterStart
     ) {
         Row(
-            modifier = Modifier.padding(
-                horizontal = MaterialTheme.kyobiTheme.spacing.dp8,
-                vertical = MaterialTheme.kyobiTheme.spacing.dp8
-            ),
+            modifier = Modifier
+                .padding(
+                    horizontal = spacing.dp8,
+                    vertical = spacing.dp8),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_search_normal),
                 contentDescription = "Manual search",
-                modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg),
-                tint = MaterialTheme.kyobiTheme.colors.bg.stone500
+                modifier = Modifier.size(iconTheme.lg),
+                tint = colorTheme.bg.stone500
             )
             SmSpaceX()
             Text(
                 modifier = Modifier.weight(1f),
                 text = "Search",
-                color = MaterialTheme.kyobiTheme.colors.text.neutral500,
-                style = MaterialTheme.kyobiTheme.typography.paragraphXs,
+                color = colorTheme.text.neutral500,
+                style = typographyTheme.paragraphXs,
             )
         }
     }

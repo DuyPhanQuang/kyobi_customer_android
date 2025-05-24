@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import com.kyobi.composable.space.XsSpaceX
 import com.kyobi.composable.space.XxsSpaceX
 import com.kyobi.composable.space.XxsSpaceY
@@ -18,6 +19,7 @@ import kotlin.math.ceil
 
 @Composable
 fun FlipClock(
+    modifier: Modifier = Modifier,
     seconds: Int,
     endMillis: Long,
 ) {
@@ -29,14 +31,18 @@ fun FlipClock(
     val currentParts = getTimeParts(currentSeconds)
     val nextParts = getTimeParts(nextSeconds)
 
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+
     Column(
+        modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(
             text = "Ends in",
-            color = MaterialTheme.kyobiTheme.colors.onPrimary,
-            style = MaterialTheme.kyobiTheme.typography.paragraphMd,
+            color = colorTheme.onPrimary,
+            style = typographyTheme.paragraphMd,
         )
         XxsSpaceY()
         Row(

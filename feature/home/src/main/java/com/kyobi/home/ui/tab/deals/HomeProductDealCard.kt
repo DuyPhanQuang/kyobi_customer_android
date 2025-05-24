@@ -28,11 +28,17 @@ fun HomeProductDealCard(
     product: Product,
     imageLoader: ImageLoader
 ) {
+    val width = MaterialTheme.kyobiTheme.width
+    val shapeTheme = MaterialTheme.kyobiTheme.shapes
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .width(MaterialTheme.kyobiTheme.width.dp120)
-            .clip(MaterialTheme.kyobiTheme.shapes.extraSmall)
+            .width(width.dp120)
+            .clip(shapeTheme.extraSmall)
     ) {
         Box(
             modifier = Modifier
@@ -54,14 +60,14 @@ fun HomeProductDealCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.kyobiTheme.colors.bg.white)
-                    .padding(vertical = MaterialTheme.kyobiTheme.spacing.dp4)
+                    .background(colorTheme.bg.white)
+                    .padding(vertical = spacing.dp4)
             ) {
                 Text(
                     modifier = Modifier.fillMaxWidth(),
                     text = product.toFormattedSalePrice,
-                    color = MaterialTheme.kyobiTheme.colors.bg.red600,
-                    style = MaterialTheme.kyobiTheme.typography.labelXs,
+                    color = colorTheme.bg.red600,
+                    style = typographyTheme.labelXs,
                     textAlign = TextAlign.Center,
                 )
             }

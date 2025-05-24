@@ -19,6 +19,8 @@ fun HomeSectionHeader(
     onFavouritesClick: () -> Unit,
     onCartClick: () -> Unit
 ) {
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -32,13 +34,13 @@ fun HomeSectionHeader(
         AppIconButton(
             icon = painterResource(id = R.drawable.ic_favorite),
             onClick = onFavouritesClick,
-            iconColor = MaterialTheme.kyobiTheme.colors.bg.white
+            iconColor = colorTheme.bg.white
         )
         XsSpaceX()
         AppIconButton(
             icon = painterResource(id = R.drawable.ic_shopping_bag),
             onClick = onCartClick,
-            iconColor = MaterialTheme.kyobiTheme.colors.bg.white
+            iconColor = colorTheme.bg.white
         )
     }
 }

@@ -2,7 +2,6 @@ package com.kyobi.home
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,7 +21,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kyobi.composable.skeleton.SkeletonContainer
+import com.kyobi.composable.space.SpaceY
 import com.kyobi.domain.model.DomainNetworkResult
+import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.home.ui.tab.reels.HomeRecommendedReel
 import com.kyobi.home.ui.tab.banners.HomeSectionBanner
 import com.kyobi.home.ui.tab.deals.HomeSectionDeals
@@ -35,7 +36,6 @@ import com.kyobi.home.ui.tab.spotlights.SkeletonSpotlightGridView
 import com.kyobi.home.ui.tab.top_catalogs.HomeSectionTopCatalog
 import com.kyobi.home.ui.tab.top_catalogs.SkeletonTopCatalogGridView
 import com.kyobi.theme.kyobiTheme
-import timber.log.Timber
 
 data class LookbookItem(
     val id: String,
@@ -46,11 +46,13 @@ data class LookbookItem(
 @Composable
 fun HomeTab(
     navController: NavHostController,
-    viewModel: HomeTabViewModel = hiltViewModel(),
+    viewModel: HomeTabViewModel,
+    authViewModel: AuthViewModel,
     topPadding: Dp,
     bottomPadding: Dp,
 ) {
     val tag = "HomeTab"
+    val productListViewModel: HomeRecommendedProductListViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lazyListState = rememberLazyListState()
     val imageLoader = viewModel.getImageLoader()
@@ -87,9 +89,13 @@ fun HomeTab(
         is DomainNetworkResult.Error -> emptyList()
     }
 
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val height = MaterialTheme.kyobiTheme.height
+    val spacing = MaterialTheme.kyobiTheme.spacing
+
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.onPrimary
+        color = colorTheme.onPrimary
     ) {
         Box(
             modifier = Modifier
@@ -109,7 +115,7 @@ fun HomeTab(
                         is DomainNetworkResult.Loading -> {
                             SkeletonContainer(
                                 modifier = Modifier.fillMaxWidth(),
-                                height = MaterialTheme.kyobiTheme.height.dp356,
+                                height = height.dp356,
                             )
                         }
                         is DomainNetworkResult.Success -> {
@@ -119,16 +125,19 @@ fun HomeTab(
                                     imageLoader = imageLoader
                                 )
                             } else {
-                                Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                                spacing.dp0.SpaceY()
                             }
                         }
                         is DomainNetworkResult.Error -> {
-                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                            spacing.dp0.SpaceY()
                         }
                     }
                 }
                 item {
-                    Box(modifier = Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
                         HomeRecommendedReel(
                             items = mockReels,
                             imageLoader = imageLoader
@@ -141,33 +150,38 @@ fun HomeTab(
                             SkeletonTopCatalogGridView(modifier = Modifier.fillMaxWidth())
                         }
                         is DomainNetworkResult.Success -> {
-                            Timber.tag(tag).d("Check catalogs: $topCatalogs")
                             if (topCatalogs.isNotEmpty()) {
-                                Box(modifier = Modifier.fillMaxWidth()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                ) {
                                     HomeSectionTopCatalog(
                                         items = topCatalogs,
                                         imageLoader = imageLoader
                                     )
                                 }
                             } else {
-                                Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                                spacing.dp0.SpaceY()
                             }
                         }
                         is DomainNetworkResult.Error -> {
-                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                            spacing.dp0.SpaceY()
                         }
                     }
                 }
                 item {
                     if (flashSaleData != null) {
-                        Box(modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        ) {
                             HomeSectionDeals(
                                 flashSaleData = flashSaleData,
                                 imageLoader = imageLoader
                             )
                         }
                     } else {
-                        Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                        spacing.dp0.SpaceY()
                     }
                 }
                 item {
@@ -178,16 +192,17 @@ fun HomeTab(
                         is DomainNetworkResult.Success -> {
                             if (saleProducts.isNotEmpty()) {
                                 HomeSectionSaleProducts(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
                                     saleProducts = saleProducts,
                                     imageLoader = imageLoader,
                                 )
                             } else {
-                                Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                                spacing.dp0.SpaceY()
                             }
                         }
                         is DomainNetworkResult.Error -> {
-                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                            spacing.dp0.SpaceY()
                         }
                     }
                 }
@@ -203,17 +218,19 @@ fun HomeTab(
                                     imageLoader = imageLoader,
                                 )
                             } else {
-                                Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                                spacing.dp0.SpaceY()
                             }
                         }
                         is DomainNetworkResult.Error -> {
-                            Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                            spacing.dp0.SpaceY()
                         }
                     }
                 }
                 item {
                     HomeSectionRecommendedProductsGridView(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        productListViewModel = productListViewModel,
                         imageLoader = imageLoader
                     )
                 }
@@ -223,13 +240,12 @@ fun HomeTab(
                     .statusBarsPadding()
                     .zIndex(1f)
                     .fillMaxWidth()
-                    .height(MaterialTheme.kyobiTheme.height.dp88)
+                    .height(height.dp88)
                     .align(Alignment.TopStart)
                     .padding(
-                        start = MaterialTheme.kyobiTheme.spacing.dp12,
-                        end = MaterialTheme.kyobiTheme.spacing.dp12,
-                        bottom = MaterialTheme.kyobiTheme.spacing.dp8,
-                    ),
+                        start = spacing.dp12,
+                        end = spacing.dp12,
+                        bottom = spacing.dp8),
                 onSearchClick = {
                 },
                 onFavouritesClick = {

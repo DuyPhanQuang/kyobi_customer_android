@@ -3,9 +3,7 @@ package com.kyobi.home.ui.tab.recommended_products
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -16,6 +14,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.kyobi.composable.skeleton.SkeletonProductGridView
+import com.kyobi.composable.space.SpaceY
 import com.kyobi.composable.space.XsSpaceY
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.featurecommon.product.ProductCard
@@ -28,7 +27,7 @@ import com.kyobi.theme.paragraphMd
 fun HomeSectionRecommendedProductsGridView(
     modifier: Modifier = Modifier,
     imageLoader: ImageLoader,
-    productListViewModel: HomeRecommendedProductListViewModel = hiltViewModel()
+    productListViewModel: HomeRecommendedProductListViewModel
 ) {
     val productsResult by productListViewModel.products.collectAsStateWithLifecycle()
     val itemStates by productListViewModel.itemStates.collectAsStateWithLifecycle()
@@ -56,7 +55,10 @@ fun HomeSectionRecommendedProductsGridView(
 
         when (productsResult) {
             is DomainNetworkResult.Loading -> {
-                SkeletonProductGridView(modifier = Modifier.fillMaxWidth())
+                SkeletonProductGridView(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
             }
             is DomainNetworkResult.Success -> {
                 val products = (productsResult as DomainNetworkResult.Success<List<ProductUiState>>).data
@@ -65,7 +67,8 @@ fun HomeSectionRecommendedProductsGridView(
                     val rows = products.chunked(itemsPerRow)
                     rows.forEach { rowItems ->
                         Row(
-                            Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(spacing.dp8)
                         ) {
                             rowItems.forEach { product ->
@@ -90,7 +93,7 @@ fun HomeSectionRecommendedProductsGridView(
                 }
             }
             is DomainNetworkResult.Error -> {
-                Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                spacing.dp0.SpaceY()
             }
         }
     }

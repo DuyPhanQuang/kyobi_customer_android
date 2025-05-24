@@ -6,18 +6,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.paragraphRegularXs
 
 @Composable
 fun FlapSection(
+    modifier: Modifier = Modifier,
     currentValue: Int,
     nextValue: Int,
     factor: Float,
     label: String
 ) {
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+
     Column(
+        modifier = modifier,
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -28,8 +34,8 @@ fun FlapSection(
         )
         Text(
             text = label,
-            style = MaterialTheme.kyobiTheme.typography.paragraphRegularXs,
-            color = MaterialTheme.kyobiTheme.colors.onPrimary,
+            style = typographyTheme.paragraphRegularXs,
+            color = colorTheme.onPrimary,
             textAlign = TextAlign.Center
         )
     }

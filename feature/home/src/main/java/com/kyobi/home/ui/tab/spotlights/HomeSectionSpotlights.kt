@@ -21,17 +21,21 @@ fun HomeSectionSpotlights(
     items: List<TrendingResearch>,
     imageLoader: ImageLoader
 ) {
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = MaterialTheme.kyobiTheme.spacing.dp12)
+            .padding(horizontal = spacing.dp12)
     ) {
         XsSpaceY()
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = "Spotlight",
-            style = MaterialTheme.kyobiTheme.typography.paragraphMd,
-            color = MaterialTheme.kyobiTheme.colors.onBackground
+            style = typographyTheme.paragraphMd,
+            color = colorTheme.onBackground
         )
         XsSpaceY()
 
@@ -49,18 +53,19 @@ fun HomeSectionSpotlights(
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp16)
+            horizontalArrangement = Arrangement.spacedBy(spacing.dp16)
         ) {
             columns.forEach { columnItems ->
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .wrapContentHeight(),
-                    verticalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp16)
+                    verticalArrangement = Arrangement.spacedBy(spacing.dp16)
                 ) {
                     columnItems.forEach { item ->
-                        if (item.title.isEmpty() && showViewMore && columnItems.indexOf(item) == columnItems.lastIndex) {
-                            // ở vị trí cuối cùng của cột 2
+                        // ở vị trí cuối cùng của cột 2
+                        val isViewMoreCard = item.title.isEmpty() && showViewMore && columnItems.indexOf(item) == columnItems.lastIndex
+                        if (isViewMoreCard) {
                             HomeSpotlightViewMoreCard(
                                 onClick = {}
                             )

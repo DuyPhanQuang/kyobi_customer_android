@@ -20,6 +20,7 @@ fun SkeletonProductGridView(
     itemCount: Int = 4
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing.dp8
+    val shape = MaterialTheme.kyobiTheme.shapes
     val aspectRatio = 0.668f
 
     Column(modifier = modifier) {
@@ -36,7 +37,7 @@ fun SkeletonProductGridView(
                         SkeletonContainer(
                             modifier = Modifier
                                 .weight(1f)
-                                .clip(MaterialTheme.kyobiTheme.shapes.small)
+                                .clip(shape.small)
                                 .aspectRatio(aspectRatio)
                         )
                     } else {

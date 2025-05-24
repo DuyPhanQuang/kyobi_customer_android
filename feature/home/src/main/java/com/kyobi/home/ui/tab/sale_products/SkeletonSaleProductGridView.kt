@@ -9,12 +9,13 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import com.kyobi.composable.skeleton.SkeletonContainer
+import com.kyobi.composable.space.XsSpaceX
+import com.kyobi.composable.space.XsSpaceY
 import com.kyobi.theme.kyobiTheme
 
 @Composable
@@ -22,19 +23,22 @@ fun SkeletonSaleProductGridView(
     modifier: Modifier = Modifier,
     itemCount: Int = 4
 ) {
-    val spacing = MaterialTheme.kyobiTheme.spacing.dp8
-    val horizontalPadding = MaterialTheme.kyobiTheme.spacing.dp12
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val shapeTheme = MaterialTheme.kyobiTheme.shapes
+    val height = MaterialTheme.kyobiTheme.height
+
+    val horizontalPadding = spacing.dp12
     val imageAspectRatio = 0.8324f
 
     Column(
         modifier = modifier.padding(horizontal = horizontalPadding),
-        verticalArrangement = Arrangement.spacedBy(spacing)
+        verticalArrangement = Arrangement.spacedBy(spacing.dp8)
     ) {
         val rows = (itemCount + 1) / 2
         repeat(rows) { rowIndex ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(spacing)
+                horizontalArrangement = Arrangement.spacedBy(spacing.dp8)
             ) {
                 repeat(2) { columnIndex ->
                     val index = rowIndex * 2 + columnIndex
@@ -42,11 +46,10 @@ fun SkeletonSaleProductGridView(
                         Column(
                             modifier = Modifier
                                 .weight(1f)
-                                .padding(spacing)
-                                .clip(MaterialTheme.kyobiTheme.shapes.small)
+                                .padding(spacing.dp8)
+                                .clip(shapeTheme.small)
                                 .background(MaterialTheme.kyobiTheme.colors.bg.stone100)
                         ) {
-                            // Header Skeleton
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -54,13 +57,13 @@ fun SkeletonSaleProductGridView(
                                 SkeletonContainer(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(MaterialTheme.kyobiTheme.height.dp16)
+                                        .height(height.dp16)
                                 )
-                                Spacer(modifier = Modifier.width(spacing))
+                                XsSpaceX()
                             }
-                            Spacer(modifier = Modifier.height(spacing))
+                            XsSpaceY()
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.kyobiTheme.spacing.dp4)
+                                horizontalArrangement = Arrangement.spacedBy(spacing.dp4)
                             ) {
                                 repeat(2) {
                                     Column(modifier = Modifier.weight(1f)) {
@@ -68,13 +71,13 @@ fun SkeletonSaleProductGridView(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .aspectRatio(imageAspectRatio)
-                                                .clip(MaterialTheme.kyobiTheme.shapes.extraSmall)
+                                                .clip(shapeTheme.extraSmall)
                                         )
-                                        Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp4))
+                                        Spacer(modifier = Modifier.height(height.dp4))
                                         SkeletonContainer(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .height(MaterialTheme.kyobiTheme.height.dp10)
+                                                .height(height.dp10)
                                         )
                                     }
                                 }

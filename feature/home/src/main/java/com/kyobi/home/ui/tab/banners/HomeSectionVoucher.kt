@@ -30,21 +30,25 @@ import com.kyobi.theme.labelXs
 @Composable
 fun HomeSectionVoucher() {
     val appOnlyWidth = MaterialTheme.kyobiTheme.width.dp100
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val width = MaterialTheme.kyobiTheme.width
+    val height = MaterialTheme.kyobiTheme.height
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val iconTheme = MaterialTheme.kyobiTheme.icon
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(MaterialTheme.kyobiTheme.height.dp36)
+            .height(height.dp36)
             .background(
-                MaterialTheme.kyobiTheme.colors.bg.red700,
-                RoundedCornerShape(
-                    topStart = MaterialTheme.kyobiTheme.width.dp8,
-                    topEnd = MaterialTheme.kyobiTheme.width.dp8))
+                colorTheme.bg.red700,
+                RoundedCornerShape(topStart = width.dp8, topEnd = width.dp8))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = MaterialTheme.kyobiTheme.spacing.dp12),
+                .padding(horizontal = spacing.dp12),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(
@@ -53,22 +57,20 @@ fun HomeSectionVoucher() {
                     .fillMaxHeight()
                     .background(
                         Color.Transparent,
-                        RoundedCornerShape(
-                            topStart = MaterialTheme.kyobiTheme.width.dp8,
-                            topEnd = MaterialTheme.kyobiTheme.width.dp8)),
+                        RoundedCornerShape(topStart = width.dp8, topEnd = width.dp8)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_crown),
                     contentDescription = "Crown",
-                    modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.md),
+                    modifier = Modifier.size(iconTheme.md),
                     tint = Color.Unspecified
                 )
                 XxsSpaceX()
                 Text(
                     text = "APP ONLY",
-                    color = MaterialTheme.kyobiTheme.colors.text.white,
-                    style = MaterialTheme.kyobiTheme.typography.labelXs.copy(
+                    color = colorTheme.text.white,
+                    style = typographyTheme.labelXs.copy(
                         lineHeight = 20.sp
                     )
                 )
@@ -86,8 +88,8 @@ fun HomeSectionVoucher() {
                 Text(
                     modifier = Modifier.weight(1f),
                     text = "FREE SHIPPING OVER $50",
-                    color = MaterialTheme.kyobiTheme.colors.text.white,
-                    style = MaterialTheme.kyobiTheme.typography.labelXs.copy(
+                    color = colorTheme.text.white,
+                    style = typographyTheme.labelXs.copy(
                         fontWeight = FontWeight.Bold,
                         lineHeight = 20.sp
                     ),
@@ -96,7 +98,7 @@ fun HomeSectionVoucher() {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_3_arrow_right),
                     contentDescription = "Arrow right",
-                    modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.md),
+                    modifier = Modifier.size(iconTheme.md),
                     tint = Color.Unspecified
                 )
             }
