@@ -3,7 +3,6 @@ package com.kyobi.customer.global.version
 import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kyobi.core.coroutines.handleErrors
 import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.usecase.AppVersionUseCase
@@ -11,7 +10,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
-import com.kyobi.core.coroutines.withLoading
 import kotlinx.coroutines.delay
 import androidx.core.content.edit
 import com.kyobi.customer.constants.KeyConstant
@@ -43,14 +41,7 @@ class AppVersionViewModel @Inject constructor(
     private fun checkAppVersion() {
         viewModelScope.launchOnIO {
             while (true) {
-                appVersionUseCase.getAppVersion()
-                    .withLoading {
-                        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-                    }
-                    .handleErrors { throwable ->
-                        Timber.tag(tag).e("Failed to get app version error: ${throwable.message}")
-                    }
-                    .collect { result ->
+                appVersionUseCase.getAppVersion().collect { result ->
                         when (result) {
                             is DomainNetworkResult.Success -> {
                                 val data = result.data

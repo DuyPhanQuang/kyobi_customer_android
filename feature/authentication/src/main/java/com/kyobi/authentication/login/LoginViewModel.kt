@@ -5,9 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kyobi.core.coroutines.handleErrors
 import com.kyobi.core.coroutines.launchOnIO
-import com.kyobi.core.coroutines.withLoading
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.usecase.LoginUseCase
 import com.kyobi.featurecommon.auth.AuthEvent
@@ -39,12 +37,10 @@ class LoginViewModel @Inject constructor(
             return
         }
         viewModelScope.launchOnIO {
-            loginUseCase(loginUiState.email, loginUiState.password)
-                .withLoading {
-                    loginUiState = loginUiState.copy(isLoading = true, error = null)
-                }.handleErrors {
-                    loginUiState = loginUiState.copy(isLoading = false, error = it.message ?: "Something went wrong")
-                }.collect { result ->
+            loginUseCase.invoke(
+                loginUiState.email,
+                loginUiState.password
+            ).collect { result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
                             loginUiState = loginUiState.copy(

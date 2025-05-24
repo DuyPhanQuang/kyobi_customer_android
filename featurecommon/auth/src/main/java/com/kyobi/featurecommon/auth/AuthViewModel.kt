@@ -2,7 +2,6 @@ package com.kyobi.featurecommon.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kyobi.core.coroutines.handleErrors
 import com.kyobi.core.coroutines.launchOnIO
 import com.kyobi.core.storage.TokenStorage
 import com.kyobi.domain.model.DomainNetworkResult
@@ -70,10 +69,7 @@ class AuthViewModel @Inject constructor(
 
     private fun performAnonymousLogin() {
         viewModelScope.launchOnIO {
-            loginUseCase.loginAnonymously()
-                .handleErrors {
-                    authStateProvider.setError(it.message)
-                }.collect { result ->
+            loginUseCase.loginAnonymously().collect { result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
                             // Emit Session
@@ -105,10 +101,7 @@ class AuthViewModel @Inject constructor(
 
     private fun getLatestCurrentUser() {
         viewModelScope.launchOnIO {
-            getUserUsecase()
-                .handleErrors {
-                    authStateProvider.setError(it.message)
-                }.collect { result ->
+            getUserUsecase.invoke().collect { result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
                             val isAnonymous = result.data.userType == com.kyobi.domain.model.UserType.ANONYMOUS
@@ -140,10 +133,7 @@ class AuthViewModel @Inject constructor(
 
     override fun logout() {
         viewModelScope.launchOnIO {
-            logoutUseCase.logout()
-                .handleErrors {
-                    authStateProvider.setError(it.message)
-                }.collect{ result ->
+            logoutUseCase.logout().collect{ result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
                             authStateProvider.logout()

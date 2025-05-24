@@ -1,11 +1,8 @@
 package com.kyobi.feature.collection.ui.collection.products
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -19,10 +16,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.kyobi.composable.skeleton.SkeletonProductCard
+import com.kyobi.composable.space.SpaceY
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.feature.collection.screen.collection.CollectionScreenProductListViewModel
 import com.kyobi.featurecommon.product.ProductCard
-import com.kyobi.featurecommon.product.ProductUiState
 import com.kyobi.theme.kyobiTheme
 
 @Composable
@@ -37,7 +34,6 @@ fun CollectionSectionProductsGridView(
     val itemStates by productListViewModel.itemStates.collectAsStateWithLifecycle()
 
     val spacing = MaterialTheme.kyobiTheme.spacing
-    val colorTheme = MaterialTheme.kyobiTheme.colors
 
     LazyVerticalGrid(
         modifier = modifier,
@@ -61,16 +57,16 @@ fun CollectionSectionProductsGridView(
                 }
             }
             is DomainNetworkResult.Success -> {
-                val products = (productsResult as DomainNetworkResult.Success<List<ProductUiState>>).data
+                val productUiStates = (productsResult as DomainNetworkResult.Success).data
                 items(
-                    products,
+                    productUiStates,
                     key = { "product_${it.id}" }
-                ) { product ->
+                ) { productUiState ->
                     ProductCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = spacing.dp12),
-                        productUiState = itemStates[product.id] ?: product,
+                        productUiState = itemStates[productUiState.id] ?: productUiState,
                         imageLoader = imageLoader,
                         onClick = {}
                     )
@@ -78,7 +74,7 @@ fun CollectionSectionProductsGridView(
             }
             is DomainNetworkResult.Error -> {
                 item {
-                    Spacer(modifier = Modifier.height(MaterialTheme.kyobiTheme.height.dp0))
+                    spacing.dp0.SpaceY()
                 }
             }
         }

@@ -5,9 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kyobi.core.coroutines.handleErrors
 import com.kyobi.core.coroutines.launchOnIO
-import com.kyobi.core.coroutines.withLoading
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.usecase.SignUpUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,16 +39,11 @@ class SignupViewModel @Inject constructor(
         }
 
         viewModelScope.launchOnIO {
-            signUpUseCase.signUp(signUpUiState.email, signUpUiState.password, signUpUiState.phone)
-                .withLoading {
-                    signUpUiState = signUpUiState.copy(
-                        isLoading = false,
-                        error = null)
-                }.handleErrors {
-                    signUpUiState = signUpUiState.copy(
-                        isLoading = false,
-                        error = it.message ?: "Something went wrong")
-                }.collect { result ->
+            signUpUseCase.signUp(
+                signUpUiState.email,
+                signUpUiState.password,
+                signUpUiState.phone
+            ).collect { result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
                             signUpUiState = signUpUiState.copy(

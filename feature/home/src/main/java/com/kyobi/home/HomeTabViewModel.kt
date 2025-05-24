@@ -58,26 +58,16 @@ class HomeTabViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(bannersResult = result)
                     if (result is DomainNetworkResult.Success) {
                         val banners = result.data
-                        val startTime = System.currentTimeMillis()
                         val deferredList = banners.mapNotNull { banner ->
                             val imageData = banner.image?.image
-                            imageData?.let { url ->
+                            imageData?.let {
                                 async {
-                                    val request = ImageRequest.Builder(context)
-                                        .data(url)
-                                        .crossfade(false)
-                                        .memoryCachePolicy(CachePolicy.ENABLED)
-                                        .diskCachePolicy(CachePolicy.ENABLED)
-                                        .allowHardware(true)
-                                        .build()
-                                    Timber.tag(tag).d("Preloading image: $url")
-                                    imageLoader.execute(request)
+                                    processingPreloadImage(it.url)
                                 }
                             }
                         }
                         deferredList.awaitAll() // parallel
-                        val duration = System.currentTimeMillis() - startTime
-                        Timber.tag(tag).d("Preload banner images completed in $duration ms")
+                        Timber.tag(tag).d("Preload banner images completed")
                     }
                 }
             } catch (e: Exception) {
@@ -90,25 +80,14 @@ class HomeTabViewModel @Inject constructor(
 
     private fun fetchRecommendedReels() {
         viewModelScope.launchOnIO {
-            val startTime = System.currentTimeMillis()
             try {
                 val deferredList = recommendedReels.take(3).map { reel ->
                     async {
-                        val request = ImageRequest.Builder(context)
-                            .data(reel.imageUrl)
-                            .crossfade(false)
-                            .memoryCachePolicy(CachePolicy.ENABLED)
-                            .diskCachePolicy(CachePolicy.ENABLED)
-                            .allowHardware(true)
-                            .build()
-                        val result = imageLoader.execute(request)
-                        Timber.tag(tag).d("Preload reel: ${reel.imageUrl}, success: ${result is coil.request.SuccessResult}")
-                        result
+                        processingPreloadImage(reel.imageUrl)
                     }
                 }
                 deferredList.awaitAll() // parallel
-                val duration = System.currentTimeMillis() - startTime
-                Timber.tag(tag).d("Preload recommended reel images completed in $duration ms")
+                Timber.tag(tag).d("Preload recommended reel images completed")
             } catch (e: Exception) {
                 Timber.tag(tag).e(e, "Preload recommended reel images failed")
             }
@@ -117,57 +96,42 @@ class HomeTabViewModel @Inject constructor(
 
     private fun fetchTopCatalog() {
         viewModelScope.launchOnIO {
-            getHomePagesUseCase.getHomeTopCatalogs().collect { result ->
-                _uiState.value = _uiState.value.copy(topCatalogsResult = result)
-                if (result is DomainNetworkResult.Success) {
-                    val topCatalogs = result.data
-                    val startTime = System.currentTimeMillis()
-                    val deferredList = topCatalogs.mapNotNull { topCatalog ->
-                        val imageData = topCatalog.image?.image
-                        imageData?.let { url ->
-                            async {
-                                val request = ImageRequest.Builder(context)
-                                    .data(url)
-                                    .crossfade(false)
-                                    .memoryCachePolicy(CachePolicy.ENABLED)
-                                    .diskCachePolicy(CachePolicy.ENABLED)
-                                    .allowHardware(true)
-                                    .build()
-                                Timber.tag(tag).d("Preloading image: $url")
-                                imageLoader.execute(request)
+            try {
+                getHomePagesUseCase.getHomeTopCatalogs().collect { result ->
+                    _uiState.value = _uiState.value.copy(topCatalogsResult = result)
+                    if (result is DomainNetworkResult.Success) {
+                        val topCatalogs = result.data
+                        val deferredList = topCatalogs.mapNotNull { topCatalog ->
+                            val imageData = topCatalog.image?.image
+                            imageData?.let {
+                                async {
+                                    processingPreloadImage(it.url)
+                                }
                             }
                         }
+                        deferredList.awaitAll() // parallel
+                        Timber.tag(tag).d("Preload top catalog images completed")
                     }
-                    deferredList.awaitAll() // parallel
-                    val duration = System.currentTimeMillis() - startTime
-                    Timber.tag(tag).d("Preload top catalog images completed in $duration ms")
                 }
+            } catch (e: Exception) {
+                Timber.tag(tag).e(e, "Preload top catalog images failed")
             }
         }
     }
 
     private fun fetchProductDeals() {
+        val dummyHandle = "flash-sale-disco"
         viewModelScope.launchOnIO {
             getFlashSaleUseCase.getFlashSale(
-                handle = "flash-sale-disco"
+                handle = dummyHandle
             ).collect { result ->
                 _uiState.value = _uiState.value.copy(flashSaleResult = result)
                 if (result is DomainNetworkResult.Success) {
                     val flashSaleData = result.data
                     val imageData = flashSaleData.flashSaleInfo.background?.image
-                    val startTime = System.currentTimeMillis()
-                    imageData?.let { url ->
-                        val request = ImageRequest.Builder(context)
-                            .data(url)
-                            .crossfade(false)
-                            .memoryCachePolicy(CachePolicy.ENABLED)
-                            .diskCachePolicy(CachePolicy.ENABLED)
-                            .build()
-                        Timber.tag(tag).d("Preloading image: $url")
-                        imageLoader.execute(request)
+                    imageData?.let {
+                        processingPreloadImage(it.url)
                     }
-                    val duration = System.currentTimeMillis() - startTime
-                    Timber.tag(tag).d("Preload flashsale background image completed in $duration ms")
                 }
             }
         }
@@ -186,6 +150,23 @@ class HomeTabViewModel @Inject constructor(
             getHomePagesUseCase.getHomeTrendingResearchs().collect { result ->
                 _uiState.value = _uiState.value.copy(trendingResearchResult = result)
             }
+        }
+    }
+
+    private suspend fun processingPreloadImage(imageUrl: String) {
+        try {
+            val request = ImageRequest.Builder(context)
+                .data(imageUrl)
+                .crossfade(false)
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .allowHardware(true)
+                .build()
+            Timber.tag(tag).d("Preloading image: $imageUrl")
+            imageLoader.execute(request)
+            Timber.tag(tag).d("Preload image completed")
+        } catch (e: Exception) {
+            Timber.tag(tag).e(e, "Preload image failed")
         }
     }
 }

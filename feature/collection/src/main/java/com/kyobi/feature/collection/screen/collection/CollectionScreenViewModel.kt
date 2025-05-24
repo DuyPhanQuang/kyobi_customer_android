@@ -47,26 +47,22 @@ class CollectionScreenViewModel @Inject constructor(
             val idsToFetch = currentCollectionMenus
                 .mapNotNull { item -> item.thumbnail?.toFirstGid() }
                 .filter { id -> id !in thumbnailInfoCache }
-            try {
-                getShopifyMediaUseCase.getImagesByIds(idsToFetch).collect { result ->
-                    when (result) {
-                        is DomainNetworkResult.Success -> {
-                            val mediaImages = result.data
-                            mediaImages.forEach { mediaImage -> thumbnailInfoCache[mediaImage.id] = mediaImage }
-                            val updatedCollectionMenus = _uiState.value.collectionMenus.map { collectionMenu ->
-                                val imageId = collectionMenu.thumbnail?.toFirstGid()
-                                if (imageId != null && thumbnailInfoCache.containsKey(imageId)) {
-                                    collectionMenu.copy(thumbnailInfo = thumbnailInfoCache[imageId])
-                                } else { collectionMenu }
-                            }
-                            _uiState.value = _uiState.value.copy(collectionMenus = updatedCollectionMenus)
+            getShopifyMediaUseCase.getImagesByIds(idsToFetch).collect { result ->
+                when (result) {
+                    is DomainNetworkResult.Success -> {
+                        val mediaImages = result.data
+                        mediaImages.forEach { mediaImage -> thumbnailInfoCache[mediaImage.id] = mediaImage }
+                        val updatedCollectionMenus = _uiState.value.collectionMenus.map { collectionMenu ->
+                            val imageId = collectionMenu.thumbnail?.toFirstGid()
+                            if (imageId != null && thumbnailInfoCache.containsKey(imageId)) {
+                                collectionMenu.copy(thumbnailInfo = thumbnailInfoCache[imageId])
+                            } else { collectionMenu }
                         }
-                        is DomainNetworkResult.Error -> {}
-                        is DomainNetworkResult.Loading -> {}
+                        _uiState.value = _uiState.value.copy(collectionMenus = updatedCollectionMenus)
                     }
+                    is DomainNetworkResult.Error -> {}
+                    is DomainNetworkResult.Loading -> {}
                 }
-            } catch (e: Exception) {
-                Timber.tag(tag).e(e, "fetch images and update collection menus failed")
             }
         }
     }
@@ -104,45 +100,37 @@ class CollectionScreenViewModel @Inject constructor(
 
     private fun fetchCateFilterByCollectionDefault() {
         viewModelScope.launchOnIO {
-            try {
-                getFilterSetUseCase.getFilterSetByDefault().collect { result ->
-                    when (result) {
-                        is DomainNetworkResult.Success -> {
-                            _uiState.value = _uiState.value.copy(cateFilter = result.data)
-                        }
-                        is DomainNetworkResult.Error -> {
-                            _uiState.value = _uiState.value.copy(cateFilter = null)
-                        }
-                        is DomainNetworkResult.Loading -> {
-                            _uiState.value = _uiState.value.copy(cateFilter = null)
-                        }
+            getFilterSetUseCase.getFilterSetByDefault().collect { result ->
+                when (result) {
+                    is DomainNetworkResult.Success -> {
+                        _uiState.value = _uiState.value.copy(cateFilter = result.data)
+                    }
+                    is DomainNetworkResult.Error -> {
+                        _uiState.value = _uiState.value.copy(cateFilter = null)
+                    }
+                    is DomainNetworkResult.Loading -> {
+                        _uiState.value = _uiState.value.copy(cateFilter = null)
                     }
                 }
-            } catch (e: Exception) {
-                Timber.tag(tag).e(e, "fetch filter set by collection default failed")
             }
         }
     }
 
     private fun fetchCateFilterByCollection(cateHandle: String) {
         viewModelScope.launchOnIO {
-            try {
-                getFilterSetUseCase.getFilterSetByCateHandle(cateHandle).collect { result ->
-                    when (result) {
-                        is DomainNetworkResult.Success -> {
-                            _uiState.value = _uiState.value.copy(cateFilter = result.data)
-                        }
-                        is DomainNetworkResult.Error -> {
-                            // switch to fallback collection default
-                            fetchCateFilterByCollectionDefault()
-                        }
-                        is DomainNetworkResult.Loading -> {
-                            _uiState.value = _uiState.value.copy(cateFilter = null)
-                        }
+            getFilterSetUseCase.getFilterSetByCateHandle(cateHandle).collect { result ->
+                when (result) {
+                    is DomainNetworkResult.Success -> {
+                        _uiState.value = _uiState.value.copy(cateFilter = result.data)
+                    }
+                    is DomainNetworkResult.Error -> {
+                        // switch to fallback collection default
+                        fetchCateFilterByCollectionDefault()
+                    }
+                    is DomainNetworkResult.Loading -> {
+                        _uiState.value = _uiState.value.copy(cateFilter = null)
                     }
                 }
-            } catch (e: Exception) {
-                Timber.tag(tag).e(e, "fetch filter set by collection $cateHandle failed")
             }
         }
     }

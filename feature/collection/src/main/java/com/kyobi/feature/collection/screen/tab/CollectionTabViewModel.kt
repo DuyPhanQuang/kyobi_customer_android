@@ -60,12 +60,8 @@ class CollectionTabViewModel @Inject constructor(
 
     private fun fetchSubMenus() {
         viewModelScope.launchOnIO {
-            try {
-                getSubMenusUseCase.getSubMenus(handle = "women").collect { result ->
-                    _uiState.value = _uiState.value.copy(subMenusResult = result)
-                }
-            } catch (e: Exception) {
-                Timber.tag(tag).e(e, "Fetch submenus failed")
+            getSubMenusUseCase.getSubMenus(handle = "women").collect { result ->
+                _uiState.value = _uiState.value.copy(subMenusResult = result)
             }
         }
     }

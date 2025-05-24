@@ -35,7 +35,6 @@ class HomeRecommendedProductListViewModel @Inject constructor(
         recentlyViewedProductIds: List<String>
     ) {
         viewModelScope.launchOnIO {
-            productsResult.value = DomainNetworkResult.Loading
             try {
                 val allProductIds = (cartProductIds + recentlyViewedProductIds).distinct()
                 val recommendedProducts = mutableListOf<Product>()
@@ -65,7 +64,7 @@ class HomeRecommendedProductListViewModel @Inject constructor(
                                 )
                             }
                             is DomainNetworkResult.Loading -> {
-                                productsResult.value = DomainNetworkResult.Loading
+                                productsResult.value = result
                             }
                             is DomainNetworkResult.Error -> {
                                 productsResult.value = result
