@@ -17,7 +17,7 @@ fun SkeletonProductCard(
     modifier: Modifier = Modifier
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
-    val shape = MaterialTheme.kyobiTheme.shapes
+    val shapeTheme = MaterialTheme.kyobiTheme.shapes
     val aspectRatio = 0.668f
 
     Column(
@@ -28,7 +28,7 @@ fun SkeletonProductCard(
         SkeletonContainer(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(shape.small)
+                .clip(shapeTheme.small)
                 .aspectRatio(aspectRatio)
         )
         Spacer(modifier = Modifier.height(spacing.dp8))
@@ -36,14 +36,14 @@ fun SkeletonProductCard(
             modifier = Modifier
                 .fillMaxWidth(0.8f)
                 .height(spacing.dp12)
-                .clip(shape.small)
+                .clip(shapeTheme.small)
         )
         Spacer(modifier = Modifier.height(spacing.dp4))
         SkeletonContainer(
             modifier = Modifier
                 .fillMaxWidth(0.6f)
                 .height(spacing.dp10)
-                .clip(shape.small)
+                .clip(shapeTheme.small)
         )
     }
 }

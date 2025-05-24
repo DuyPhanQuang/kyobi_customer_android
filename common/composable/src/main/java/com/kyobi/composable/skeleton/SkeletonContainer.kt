@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -20,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import com.kyobi.theme.Dimension
+import com.kyobi.theme.kyobiTheme
 
 @Composable
 fun SkeletonContainer(
@@ -38,6 +40,8 @@ fun SkeletonContainer(
         ),
         label = "SkeletonContainerAlpha"
     )
+
+    val colorTheme = MaterialTheme.kyobiTheme.colors
 
     val gradientBrush = Brush.linearGradient(
         colors = listOf(
@@ -59,7 +63,7 @@ fun SkeletonContainer(
             modifier = Modifier
                 .fillMaxSize()
                 .then(border?.let { Modifier.clip(it) } ?: Modifier)
-                .background(Color.White.copy(alpha = alpha))
+                .background(colorTheme.bg.white.copy(alpha = alpha))
         )
     }
 }

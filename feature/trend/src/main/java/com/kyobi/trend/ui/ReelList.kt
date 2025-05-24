@@ -29,13 +29,14 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.kyobi.feature.trend.R
+import com.kyobi.theme.Dimension
 import com.kyobi.theme.kyobiTheme
 
 @OptIn(UnstableApi::class)
 @Composable
 fun ReelList(
-    topSystemBarHeight: Dp = 0.dp,
-    bottomNavBarHeight: Dp = 0.dp,
+    topSystemBarHeight: Dp = Dimension.dp0,
+    bottomNavBarHeight: Dp = Dimension.dp0,
     viewModel: ReelPlaybackViewModel,
     imageLoader: ImageLoader
 ) {
@@ -55,6 +56,8 @@ fun ReelList(
         snapPositionalThreshold = 0.35f
     )
     val lottieComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.reel_loading_spinner))
+
+    val width = MaterialTheme.kyobiTheme.width
 
     Surface(
         modifier = Modifier
@@ -90,9 +93,9 @@ fun ReelList(
                     contentAlignment = Alignment.Center
                 ) {
                     LottieAnimation(
-                        composition = lottieComposition,
                         modifier = Modifier
-                            .size(MaterialTheme.kyobiTheme.width.dp68),
+                            .size(width.dp68),
+                        composition = lottieComposition,
                         iterations = LottieConstants.IterateForever
                     )
                 }

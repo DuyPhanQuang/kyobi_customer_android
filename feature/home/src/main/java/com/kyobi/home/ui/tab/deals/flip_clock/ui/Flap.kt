@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
@@ -27,11 +26,18 @@ fun Flap(
     text: String,
     position: FlapPosition,
 ) {
-    val flapWidth = MaterialTheme.kyobiTheme.width.dp36
-    val flapHeight = MaterialTheme.kyobiTheme.height.dp18
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val spacing = MaterialTheme.kyobiTheme.spacing
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+    val width = MaterialTheme.kyobiTheme.width
+    val height = MaterialTheme.kyobiTheme.height
+
+    val flapWidth = width.dp36
+    val flapHeight = height.dp18
+
     val backgroundGradient = Brush.linearGradient(
         colors = listOf(
-            MaterialTheme.kyobiTheme.colors.primary,
+            colorTheme.primary,
             Color.DarkGray
         )
     )
@@ -39,12 +45,12 @@ fun Flap(
         FlapPosition.TOP -> RoundedCornerShape(
             topStart = Dimension.dp4,
             topEnd = Dimension.dp4,
-            bottomStart = 0.dp,
-            bottomEnd = 0.dp
+            bottomStart = Dimension.dp0,
+            bottomEnd = Dimension.dp0
         )
         FlapPosition.BOTTOM -> RoundedCornerShape(
-            topStart = 0.dp,
-            topEnd = 0.dp,
+            topStart = Dimension.dp0,
+            topEnd = Dimension.dp0,
             bottomStart = Dimension.dp4,
             bottomEnd = Dimension.dp4,
         )
@@ -59,10 +65,10 @@ fun Flap(
             modifier = Modifier
                 .background(backgroundGradient)
                 .shadow(
-                    elevation = MaterialTheme.kyobiTheme.spacing.dp4,
+                    elevation = spacing.dp4,
                     shape = shape,
-                    ambientColor = MaterialTheme.kyobiTheme.colors.primary.copy(alpha = 0.5f),
-                    spotColor = MaterialTheme.kyobiTheme.colors.primary.copy(alpha = 0.3f)
+                    ambientColor = colorTheme.primary.copy(alpha = 0.5f),
+                    spotColor = colorTheme.primary.copy(alpha = 0.3f)
                 ),
             contentAlignment = Alignment.Center
         ) {
@@ -73,8 +79,8 @@ fun Flap(
                         y = if (position == FlapPosition.TOP) flapHeight / 2 else -flapHeight / 2
                     ),
                 text = text,
-                style = MaterialTheme.kyobiTheme.typography.headingLg,
-                color = MaterialTheme.kyobiTheme.colors.onPrimary,
+                style = typographyTheme.headingLg,
+                color = colorTheme.onPrimary,
                 textAlign = TextAlign.Center
             )
         }

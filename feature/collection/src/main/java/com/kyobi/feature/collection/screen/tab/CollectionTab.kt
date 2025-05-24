@@ -129,6 +129,8 @@ fun CollectionTab(
 
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val spacing = MaterialTheme.kyobiTheme.spacing
+    val width = MaterialTheme.kyobiTheme.width
+    val height = MaterialTheme.kyobiTheme.height
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
@@ -137,7 +139,7 @@ fun CollectionTab(
                 modifier = Modifier
                     .fillMaxWidth(),
                 scrollBehavior = scrollBehavior,
-                windowInsets = WindowInsets(MaterialTheme.kyobiTheme.width.dp0),
+                windowInsets = WindowInsets(spacing.dp0),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = colorTheme.background,
                     titleContentColor = colorTheme.background,
@@ -147,7 +149,7 @@ fun CollectionTab(
                     CollectionCommonSectionHeader(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(MaterialTheme.kyobiTheme.height.dp88)
+                            .height(height.dp88)
                             .background(colorTheme.background)
                             .padding(
                                 start = spacing.dp0,
