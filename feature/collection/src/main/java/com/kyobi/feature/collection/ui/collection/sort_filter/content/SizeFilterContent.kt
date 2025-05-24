@@ -39,7 +39,7 @@ fun CollectionSizeFilterContent(
     selectedFilterOptions: List<FilterOption>,
     toggleSizeFilterOption: (FilterOption) -> Unit,
     onClearClick: () -> Unit,
-    onApplyClick: () -> Unit,
+    onSeeClick: () -> Unit,
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
     val typographyTheme = MaterialTheme.kyobiTheme.typography
@@ -112,12 +112,12 @@ fun CollectionSizeFilterContent(
                     modifier = Modifier
                         .wrapContentWidth(),
                     buttonHeight = height.dp36,
-                    text = "Apply",
+                    text = "See",
                     textStyle = typographyTheme.paragraphRegularXs,
                     borderColor = colorTheme.bg.stone200,
                     contentPadding = PaddingValues(horizontal = spacing.dp24),
                     roundedType = ButtonRoundedType.LARGE,
-                    onClick = { onApplyClick() }
+                    onClick = { onSeeClick() }
                 )
             }
         }

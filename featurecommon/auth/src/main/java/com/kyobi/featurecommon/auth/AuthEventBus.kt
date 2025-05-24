@@ -16,10 +16,10 @@ sealed class AuthEvent {
 
 @Singleton
 class AuthEventBus @Inject constructor() {
-    private val _authEvents = MutableSharedFlow<AuthEvent>(replay = 0)
-    val authEvents: SharedFlow<AuthEvent> = _authEvents
+    private val _events = MutableSharedFlow<AuthEvent>(replay = 0)
+    val events: SharedFlow<AuthEvent> = _events
 
-    suspend fun emitAuthEvent(event: AuthEvent) {
-        _authEvents.emit(event)
+    suspend fun emitEvent(event: AuthEvent) {
+        _events.emit(event)
     }
 }

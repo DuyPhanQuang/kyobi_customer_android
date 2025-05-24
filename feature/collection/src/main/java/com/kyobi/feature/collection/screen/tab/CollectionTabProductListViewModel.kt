@@ -36,18 +36,28 @@ class CollectionTabProductListViewModel @Inject constructor(
             eventBus.events.collect { event ->
                 when (event) {
                     is CollectionTabEvent.CategorySelected -> {
-                        val filterHandle = event.filterHandle
-                        Timber.tag(tag).d("Received CategorySelected event with filterHandle: $filterHandle")
-                        fetchProductsByCollection(filterHandle)
+                        processingRequestCategorySelected(event)
+                        return@collect
                     }
                     is CollectionTabEvent.SubCategorySelected -> {
-                        val filterHandle = event.filterHandle
-                        Timber.tag(tag).d("Received SubCategorySelected event with filterHandle: $filterHandle")
-                        fetchProductsByCollection(filterHandle)
+                        processingRequestSubCategorySelected(event)
+                        return@collect
                     }
                 }
             }
         }
+    }
+
+    private fun processingRequestCategorySelected(event: CollectionTabEvent.CategorySelected) {
+        val filterHandle = event.filterHandle
+        Timber.tag(tag).d("Received CategorySelected event with filterHandle: $filterHandle")
+        fetchProductsByCollection(filterHandle)
+    }
+
+    private fun processingRequestSubCategorySelected(event: CollectionTabEvent.SubCategorySelected) {
+        val filterHandle = event.filterHandle
+        Timber.tag(tag).d("Received SubCategorySelected event with filterHandle: $filterHandle")
+        fetchProductsByCollection(filterHandle)
     }
 
     private fun fetchAllProducts() {

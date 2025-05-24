@@ -32,11 +32,11 @@ fun CollectionSectionSortFilter(
     onColorFilterClick: () -> Unit,
     toggleColorFilterOption: (FilterOption) -> Unit,
     onColorClearClick: () -> Unit,
-    onColorApplyClick: () -> Unit,
+    onColorSeeClick: () -> Unit,
     onSizeFilterClick: () -> Unit,
     toggleSizeFilterOption: (FilterOption) -> Unit,
     onSizeClearClick: () -> Unit,
-    onSizeApplyClick: () -> Unit,
+    onSizeSeeClick: () -> Unit,
     onFilterAllClick: () -> Unit,
     viewMode: GridViewModeType,
     onViewModeClick: (GridViewModeType) -> Unit
@@ -129,7 +129,7 @@ fun CollectionSectionSortFilter(
                     selectedFilterOptions = selectedFilterOptions,
                     toggleColorFilterOption = toggleColorFilterOption,
                     onClearClick = onColorClearClick,
-                    onApplyClick = onColorApplyClick,
+                    onSeeClick = onColorSeeClick,
                 )
             },
         ) {
@@ -169,7 +169,7 @@ fun CollectionSectionSortFilter(
                     selectedFilterOptions = selectedFilterOptions,
                     toggleSizeFilterOption = toggleSizeFilterOption,
                     onClearClick = onSizeClearClick,
-                    onApplyClick = onSizeApplyClick,
+                    onSeeClick = onSizeSeeClick,
                 )
             },
         ) {

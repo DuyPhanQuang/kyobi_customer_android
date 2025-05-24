@@ -43,14 +43,10 @@ class LoginViewModel @Inject constructor(
             ).collect { result ->
                     when (result) {
                         is DomainNetworkResult.Success -> {
-                            loginUiState = loginUiState.copy(
-                                isLoading = false,
-                                error = null)
+                            loginUiState = loginUiState.copy(isLoading = false, error = null)
                             // Sau khi login thành công, update user data lấy từ response login đồng thời lấy thông tin user
                             // bằng cách emit để auth viewmodel xử lý 2 nhiệm vụ này
-                            authEventBus.emitAuthEvent(
-                                AuthEvent.LoginSuccess(result.data, isAnonymous = false)
-                            )
+                            authEventBus.emitEvent(AuthEvent.LoginSuccess(result.data, isAnonymous = false))
                         }
                         is DomainNetworkResult.Error -> {
                             loginUiState = loginUiState.copy(

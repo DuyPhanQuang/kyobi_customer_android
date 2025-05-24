@@ -16,17 +16,13 @@ class SessionEventBus @Inject constructor() {
     private val _notificationPermissionGranted = MutableSharedFlow<Boolean?>(replay = 1)
     val notificationPermissionGranted: SharedFlow<Boolean?> = _notificationPermissionGranted.asSharedFlow()
 
-    init {
-        Timber.tag(tag).d("instance created: $this")
-    }
-
     suspend fun emitSession(session: Session?) {
-        Timber.tag(tag).d("Emitting session to SharedFlow: $session")
+        Timber.tag(tag).d("Emitting session: $session")
         _sessionEvents.emit(session)
     }
 
     suspend fun emitNotificationPermissionGranted(isGranted: Boolean?) {
-        Timber.tag(tag).d("Emitting notification permission granted to SharedFlow: $isGranted")
+        Timber.tag(tag).d("Emitting notification permission granted: $isGranted")
         _notificationPermissionGranted.emit(isGranted)
     }
 }

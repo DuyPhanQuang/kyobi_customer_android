@@ -90,6 +90,7 @@ fun CollectionScreen(
     var gridViewMode by remember { mutableStateOf(GridViewModeType.COLUMNS_2) }
 
     val selectedCollectionId = uiState.selectedCollectionId
+    val selectedFilterHandle = uiState.selectedFilterHandle
     val collectionMenus = uiState.collectionMenus
     val cateFilter = uiState.cateFilter
     val selectedFilterOptions = sortFilterUiState.selectedFilterOptions
@@ -255,19 +256,21 @@ fun CollectionScreen(
                         Timber.tag(tag).d("onSizeFilterClick")
                     },
                     toggleColorFilterOption = { selectedOption ->
-                        sortFilterViewModel.toggleFilterOption(selectedOption)
+                        sortFilterViewModel.toggleFilterOption(selectedOption, selectedFilterHandle)
                     },
                     onColorClearClick = {
-                        sortFilterViewModel.clearFilterOptions(colorFilterKey)
+                        sortFilterViewModel.clearFilterOptions(colorFilterKey, selectedFilterHandle)
+                        showDropdown = null
                     },
-                    onColorApplyClick = { showDropdown = null },
+                    onColorSeeClick = { showDropdown = null },
                     toggleSizeFilterOption = { selectedOption ->
-                        sortFilterViewModel.toggleFilterOption(selectedOption)
+                        sortFilterViewModel.toggleFilterOption(selectedOption, selectedFilterHandle)
                     },
                     onSizeClearClick = {
-                        sortFilterViewModel.clearFilterOptions(sizeFilterKey)
+                        sortFilterViewModel.clearFilterOptions(sizeFilterKey, selectedFilterHandle)
+                        showDropdown = null
                     },
-                    onSizeApplyClick = { showDropdown = null },
+                    onSizeSeeClick = { showDropdown = null },
                     viewMode = gridViewMode,
                     onViewModeClick = { viewMode ->
                         gridViewMode = viewMode

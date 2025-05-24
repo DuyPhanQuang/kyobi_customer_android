@@ -29,18 +29,12 @@ class AuthViewModel @Inject constructor(
 
     init {
         initializeSession()
-        // Subscriber auth eventbus
         viewModelScope.launchOnIO {
-            authEventBus.authEvents.collect { event ->
-                Timber.tag(tag).d("***authEventBus*** subscribed event: $event")
+            authEventBus.events.collect { event ->
+                Timber.tag(tag).d("***AuthEventBus*** subscribed event: $event")
                 when (event) {
-                    // sau khi bên login manual viewmodel xử lý submit login success thì sẽ emit
-                    // để auth viewmodel xử lý fetch và update user
                     is AuthEvent.LoginSuccess -> {
-                        if (event.shouldFetchLatestUser) {
-                            getLatestCurrentUser()
-                        }
-                        updateAuthState(event.user, event.isAnonymous)
+                        processingRequestLoginSuccess(event)
                         return@collect
                     }
                 }
@@ -48,23 +42,31 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    // thực hiện login anonymously user
+    // login anonymously user
     private fun initializeSession() {
         viewModelScope.launchOnIO {
-            // Kiểm tra access token và refresh token
             val accessToken = tokenStorage.getAccessToken()
             val refreshToken = tokenStorage.getRefreshToken()
-
             if (accessToken != null && refreshToken != null) {
                 // Có token, thử lấy user hiện tại
                 Timber.tag(tag).d("Found access token, attempting to get current user")
                 getLatestCurrentUser()
             } else {
-                // Không có token, gọi login anonymously ngay
+                // Không có token, call login anonymously
                 Timber.tag(tag).d("No access token found, proceeding with anonymous login")
                 performAnonymousLogin()
             }
         }
+    }
+
+    /** sau khi bên login manual viewmodel xử lý submit login success thì sẽ emit
+     * để auth viewmodel xử lý fetch và update user
+     */
+    private suspend fun processingRequestLoginSuccess(event: AuthEvent.LoginSuccess) {
+        if (event.shouldFetchLatestUser) {
+            getLatestCurrentUser()
+        }
+        updateAuthState(event.user, event.isAnonymous)
     }
 
     private fun performAnonymousLogin() {

@@ -4,15 +4,18 @@ import com.kyobi.domain.model.CateFilterMetaobjectField
 import com.kyobi.feature.collection.model.FilterOption
 
 const val prefixFilterKey = "filter_set"
-const val colorFilterKey = "$prefixFilterKey.color-pattern"
-const val sizeFilterKey = "$prefixFilterKey.size"
+const val colorDefaultKey = "color"
+const val colorPattenKey = "color-pattern"
+const val colorFilterKey = "$prefixFilterKey.$colorPattenKey"
+const val sizeKey = "size"
+const val sizeFilterKey = "$prefixFilterKey.$sizeKey"
 
 fun CateFilterMetaobjectField.isMatchedColorKey(): Boolean {
-    return this.key == "color" || this.key == "color-pattern"
+    return this.key == colorDefaultKey || this.key == colorPattenKey
 }
 
 fun CateFilterMetaobjectField.isMatchedSizeKey(): Boolean {
-    return this.key == "size"
+    return this.key == sizeKey
 }
 
 fun List<CateFilterMetaobjectField>?.toColorFilterOptions(): List<FilterOption> {
@@ -20,14 +23,13 @@ fun List<CateFilterMetaobjectField>?.toColorFilterOptions(): List<FilterOption> 
     val data = this.flatMap { field ->
         field.references.nodes?.mapNotNull { node ->
             val labelField = node.fields?.find { it.key == "label" }
-            val colorField = node.fields?.find { it.key == "color" }
+            val colorField = node.fields?.find { it.key == colorDefaultKey }
             labelField?.value?.let { label ->
                 FilterOption(
                     label = label,
                     handle = node.handle,
                     code = colorField?.value,
-                    key = colorFilterKey
-                )
+                    key = colorFilterKey)
             }
         } ?: emptyList()
     }
@@ -43,8 +45,7 @@ fun List<CateFilterMetaobjectField>?.toFilterOptions(): List<FilterOption> {
                 FilterOption(
                     label = label,
                     handle = node.handle,
-                    key = sizeFilterKey
-                )
+                    key = sizeFilterKey)
             }
         } ?: emptyList()
     }

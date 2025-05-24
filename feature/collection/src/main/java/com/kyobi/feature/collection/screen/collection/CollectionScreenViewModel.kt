@@ -60,8 +60,8 @@ class CollectionScreenViewModel @Inject constructor(
                         }
                         _uiState.value = _uiState.value.copy(collectionMenus = updatedCollectionMenus)
                     }
-                    is DomainNetworkResult.Error -> {}
-                    is DomainNetworkResult.Loading -> {}
+                    is DomainNetworkResult.Error -> return@collect
+                    is DomainNetworkResult.Loading -> return@collect
                 }
             }
         }
@@ -73,7 +73,10 @@ class CollectionScreenViewModel @Inject constructor(
      * */
     fun updateCollectionSelected(itemSelected: CollectionMenu) {
         if (itemSelected.id == _uiState.value.selectedCollectionId) return
-        _uiState.value = _uiState.value.copy(selectedCollectionId = itemSelected.id)
+        _uiState.value = _uiState.value.copy(
+            selectedCollectionId = itemSelected.id,
+            selectedFilterHandle = itemSelected.filterHandle
+        )
         viewModelScope.launchOnIO {
             eventBus.emitEvent(CollectionScreenEvent.CollectionSelected(itemSelected.filterHandle))
             Timber.tag(tag).d("Emitted CollectionSelected event with filterHandle: ${itemSelected.filterHandle}")
