@@ -31,10 +31,15 @@ import com.kyobi.feature.collection.model.FilterOption
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallSm
 import com.kyobi.theme.paragraphRegularXs
+import com.kyobi.theme.paragraphXs
 
 @Composable
 fun CollectionSizeFilterContent(
-    cateFilter: CateFilter? = null
+    cateFilter: CateFilter? = null,
+    selectedFilterOptions: List<FilterOption>,
+    toggleSizeFilterOption: (FilterOption) -> Unit,
+    onClearClick: () -> Unit,
+    onApplyClick: () -> Unit,
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
     val typographyTheme = MaterialTheme.kyobiTheme.typography
@@ -73,45 +78,48 @@ fun CollectionSizeFilterContent(
                     horizontalArrangement = Arrangement.spacedBy(spacing.dp12),
                     verticalArrangement = Arrangement.spacedBy(spacing.dp12),
                 ) {
-                    sizeFilters.forEach { filterOption ->
+                    sizeFilters.forEach { sizeFilter ->
+                        val isSelected = selectedFilterOptions.any { it.label == sizeFilter.label && it.key == sizeFilter.key }
                         SizeTile(
-                            data = filterOption,
-                            isSelected = true,
-                            onTileClick = {}
+                            data = sizeFilter,
+                            isSelected = isSelected,
+                            onTileClick = { toggleSizeFilterOption(sizeFilter) }
                         )
                     }
                 }
             }
         }
-        Row(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlineButton(
+        if (sizeFilters.isNotEmpty()) {
+            Row(
                 modifier = Modifier
-                    .wrapContentWidth(),
-                buttonHeight = height.dp36,
-                text = "Clear",
-                textStyle = typographyTheme.paragraphRegularXs,
-                borderColor = colorTheme.bg.stone200,
-                contentPadding = PaddingValues(horizontal = spacing.dp24),
-                roundedType = ButtonRoundedType.LARGE,
-                onClick = {}
-            )
-            XsSpaceX()
-            OutlineButton(
-                modifier = Modifier
-                    .wrapContentWidth(),
-                buttonHeight = height.dp36,
-                text = "Apply",
-                textStyle = typographyTheme.paragraphRegularXs,
-                borderColor = colorTheme.bg.stone200,
-                contentPadding = PaddingValues(horizontal = spacing.dp24),
-                roundedType = ButtonRoundedType.LARGE,
-                onClick = {}
-            )
+                    .fillMaxSize(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlineButton(
+                    modifier = Modifier
+                        .wrapContentWidth(),
+                    buttonHeight = height.dp36,
+                    text = "Clear",
+                    textStyle = typographyTheme.paragraphRegularXs,
+                    borderColor = colorTheme.bg.stone200,
+                    contentPadding = PaddingValues(horizontal = spacing.dp24),
+                    roundedType = ButtonRoundedType.LARGE,
+                    onClick = { onClearClick() }
+                )
+                XsSpaceX()
+                OutlineButton(
+                    modifier = Modifier
+                        .wrapContentWidth(),
+                    buttonHeight = height.dp36,
+                    text = "Apply",
+                    textStyle = typographyTheme.paragraphRegularXs,
+                    borderColor = colorTheme.bg.stone200,
+                    contentPadding = PaddingValues(horizontal = spacing.dp24),
+                    roundedType = ButtonRoundedType.LARGE,
+                    onClick = { onApplyClick() }
+                )
+            }
         }
     }
 }
@@ -129,6 +137,8 @@ private fun SizeTile(
     val height = MaterialTheme.kyobiTheme.height
 
     val finalBorderColor = if (isSelected) colorTheme.bg.stone950 else colorTheme.bg.stone200
+    val textColor = if (isSelected) colorTheme.text.neutral950 else colorTheme.text.neutral700
+    val textStyle = if (isSelected) typographyTheme.paragraphXs else typographyTheme.paragraphRegularXs
 
     OutlineButton(
         modifier = Modifier
@@ -136,7 +146,9 @@ private fun SizeTile(
         enabled = enabled,
         buttonHeight = height.dp32,
         text = data.label,
-        textStyle = typographyTheme.paragraphRegularXs,
+        textStyle = textStyle.copy(
+            color = textColor
+        ),
         borderColor = finalBorderColor,
         buttonColor = ButtonDefaults.outlinedButtonColors(
             containerColor = colorTheme.outline,

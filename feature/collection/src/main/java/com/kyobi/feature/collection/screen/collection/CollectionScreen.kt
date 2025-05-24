@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.kyobi.feature.collection.extension.colorFilterKey
+import com.kyobi.feature.collection.extension.sizeFilterKey
 import com.kyobi.feature.collection.extension.toCollectionMenu
 import com.kyobi.feature.collection.extension.toCollectionMenus
 import com.kyobi.feature.collection.screen.tab.CollectionTabViewModel
@@ -68,8 +70,10 @@ fun CollectionScreen(
     val eventBus = remember { CollectionScreenEventBus() }
     val viewModel: CollectionScreenViewModel = hiltViewModel()
     val productListViewModel: CollectionScreenProductListViewModel = hiltViewModel()
+    val sortFilterViewModel: CollectionSortFilterViewModel = hiltViewModel()
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val sortFilterUiState by sortFilterViewModel.uiState.collectAsStateWithLifecycle()
     val imageLoader = viewModel.getImageLoader()
     val lazyListState = rememberLazyListState()
     val productLazyGridState = rememberLazyGridState()
@@ -88,10 +92,12 @@ fun CollectionScreen(
     val selectedCollectionId = uiState.selectedCollectionId
     val collectionMenus = uiState.collectionMenus
     val cateFilter = uiState.cateFilter
+    val selectedFilterOptions = sortFilterUiState.selectedFilterOptions
 
     LaunchedEffect(eventBus) {
         viewModel.initWithEventBus(eventBus)
         productListViewModel.initWithEventBus(eventBus)
+        sortFilterViewModel.initWithEventBus(eventBus)
     }
 
     LaunchedEffect(Unit) {
@@ -233,21 +239,7 @@ fun CollectionScreen(
             }
             stickyHeader {
                 CollectionSectionSortFilter(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .drawBehind {
-                            val strokeWidth = Dimension.dp1.toPx()
-                            val borderColor = Colors().stone100
-                            drawLine(
-                                color = borderColor,
-                                start = Offset(0f, 0f),
-                                end = Offset(size.width, 0f),
-                                strokeWidth = strokeWidth
-                            )
-                        }
-                        .padding(
-                            vertical = spacing.dp12,
-                            horizontal = spacing.dp12),
+                    selectedFilterOptions = selectedFilterOptions,
                     cateFilter = cateFilter,
                     showDropdown = showDropdown,
                     updateShowDropdown = { newType ->
@@ -262,11 +254,25 @@ fun CollectionScreen(
                     onSizeFilterClick = {
                         Timber.tag(tag).d("onSizeFilterClick")
                     },
+                    toggleColorFilterOption = { selectedOption ->
+                        sortFilterViewModel.toggleFilterOption(selectedOption)
+                    },
+                    onColorClearClick = {
+                        sortFilterViewModel.clearFilterOptions(colorFilterKey)
+                    },
+                    onColorApplyClick = { showDropdown = null },
+                    toggleSizeFilterOption = { selectedOption ->
+                        sortFilterViewModel.toggleFilterOption(selectedOption)
+                    },
+                    onSizeClearClick = {
+                        sortFilterViewModel.clearFilterOptions(sizeFilterKey)
+                    },
+                    onSizeApplyClick = { showDropdown = null },
                     viewMode = gridViewMode,
-                    onFilterAllClick = {},
                     onViewModeClick = { viewMode ->
                         gridViewMode = viewMode
-                    }
+                    },
+                    onFilterAllClick = {},
                 )
             }
             item {

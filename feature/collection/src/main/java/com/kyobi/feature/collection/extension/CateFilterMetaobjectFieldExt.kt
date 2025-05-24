@@ -3,6 +3,10 @@ package com.kyobi.feature.collection.extension
 import com.kyobi.domain.model.CateFilterMetaobjectField
 import com.kyobi.feature.collection.model.FilterOption
 
+const val prefixFilterKey = "filter_set"
+const val colorFilterKey = "$prefixFilterKey.color-pattern"
+const val sizeFilterKey = "$prefixFilterKey.size"
+
 fun CateFilterMetaobjectField.isMatchedColorKey(): Boolean {
     return this.key == "color" || this.key == "color-pattern"
 }
@@ -21,7 +25,8 @@ fun List<CateFilterMetaobjectField>?.toColorFilterOptions(): List<FilterOption> 
                 FilterOption(
                     label = label,
                     handle = node.handle,
-                    code = colorField?.value
+                    code = colorField?.value,
+                    key = colorFilterKey
                 )
             }
         } ?: emptyList()
@@ -38,6 +43,7 @@ fun List<CateFilterMetaobjectField>?.toFilterOptions(): List<FilterOption> {
                 FilterOption(
                     label = label,
                     handle = node.handle,
+                    key = sizeFilterKey
                 )
             }
         } ?: emptyList()

@@ -39,7 +39,11 @@ import androidx.core.graphics.toColorInt
 
 @Composable
 fun CollectionColorFilterContent(
-    cateFilter: CateFilter? = null
+    cateFilter: CateFilter? = null,
+    selectedFilterOptions: List<FilterOption>,
+    toggleColorFilterOption: (FilterOption) -> Unit,
+    onClearClick: () -> Unit,
+    onApplyClick: () -> Unit,
 ) {
     val spacing = MaterialTheme.kyobiTheme.spacing
     val typographyTheme = MaterialTheme.kyobiTheme.typography
@@ -75,13 +79,14 @@ fun CollectionColorFilterContent(
                 rows.forEach { rowItems ->
                     Row(modifier = Modifier.fillMaxWidth()) {
                         rowItems.forEach { colorFilter ->
+                            val isSelected = selectedFilterOptions.any { it.label == colorFilter.label && it.key == colorFilter.key }
                             ColorFilterTile(
                                 modifier = Modifier
                                     .weight(1f)
                                     .padding(bottom = spacing.dp8),
                                 data = colorFilter,
-                                isSelected = false,
-                                onTileClick = {}
+                                isSelected = isSelected,
+                                onTileClick = { toggleColorFilterOption(colorFilter) }
                             )
                         }
                         repeat(itemsPerRow - rowItems.size) {
@@ -95,35 +100,37 @@ fun CollectionColorFilterContent(
                 }
             }
         }
-        Row(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlineButton(
+        if (colorFilters.isNotEmpty()) {
+            Row(
                 modifier = Modifier
-                    .wrapContentWidth(),
-                buttonHeight = height.dp36,
-                text = "Clear",
-                textStyle = typographyTheme.paragraphRegularXs,
-                borderColor = colorTheme.bg.stone200,
-                contentPadding = PaddingValues(horizontal = spacing.dp24),
-                roundedType = ButtonRoundedType.LARGE,
-                onClick = {}
-            )
-            XsSpaceX()
-            OutlineButton(
-                modifier = Modifier
-                    .wrapContentWidth(),
-                buttonHeight = height.dp36,
-                text = "Apply",
-                textStyle = typographyTheme.paragraphRegularXs,
-                borderColor = colorTheme.bg.stone200,
-                contentPadding = PaddingValues(horizontal = spacing.dp24),
-                roundedType = ButtonRoundedType.LARGE,
-                onClick = {}
-            )
+                    .fillMaxSize(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlineButton(
+                    modifier = Modifier
+                        .wrapContentWidth(),
+                    buttonHeight = height.dp36,
+                    text = "Clear",
+                    textStyle = typographyTheme.paragraphRegularXs,
+                    borderColor = colorTheme.bg.stone200,
+                    contentPadding = PaddingValues(horizontal = spacing.dp24),
+                    roundedType = ButtonRoundedType.LARGE,
+                    onClick = { onClearClick() }
+                )
+                XsSpaceX()
+                OutlineButton(
+                    modifier = Modifier
+                        .wrapContentWidth(),
+                    buttonHeight = height.dp36,
+                    text = "Apply",
+                    textStyle = typographyTheme.paragraphRegularXs,
+                    borderColor = colorTheme.bg.stone200,
+                    contentPadding = PaddingValues(horizontal = spacing.dp24),
+                    roundedType = ButtonRoundedType.LARGE,
+                    onClick = { onApplyClick() }
+                )
+            }
         }
     }
 }
@@ -143,6 +150,7 @@ private fun ColorFilterTile(
 
     val colorValue = data.code?.let { hexColor -> Color(hexColor.toColorInt()) } ?: Colors().black
     val textStyle = if (isSelected) typographyTheme.paragraphXs else typographyTheme.paragraphRegularXs
+    val textColor = if (isSelected) colorTheme.text.neutral950 else colorTheme.text.neutral700
 
     Row(
         modifier = modifier
@@ -162,7 +170,7 @@ private fun ColorFilterTile(
         Text(
             text = data.label,
             style = textStyle,
-            color = colorTheme.text.neutral700
+            color = textColor
         )
     }
 }
