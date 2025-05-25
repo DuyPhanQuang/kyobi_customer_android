@@ -10,10 +10,17 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.*
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.zIndex
@@ -43,6 +50,7 @@ data class LookbookItem(
     val hashtag: String, // Hashtag của video
 )
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HomeTab(
     navController: NavHostController,
@@ -89,6 +97,17 @@ fun HomeTab(
         is DomainNetworkResult.Error -> emptyList()
     }
 
+    var isRefreshing by remember { mutableStateOf(false) }
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            viewModel.onRefreshTriggered {
+                isRefreshing = false
+            }
+        }
+    )
+
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val height = MaterialTheme.kyobiTheme.height
     val spacing = MaterialTheme.kyobiTheme.spacing
@@ -99,6 +118,7 @@ fun HomeTab(
     ) {
         Box(
             modifier = Modifier
+                .pullRefresh(pullRefreshState)
                 .fillMaxWidth()
                 .wrapContentHeight()
         ) {
@@ -235,6 +255,13 @@ fun HomeTab(
                     )
                 }
             }
+            PullRefreshIndicator(
+                refreshing = isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .zIndex(1f)
+            )
             HomeSectionHeader(
                 modifier = Modifier
                     .statusBarsPadding()

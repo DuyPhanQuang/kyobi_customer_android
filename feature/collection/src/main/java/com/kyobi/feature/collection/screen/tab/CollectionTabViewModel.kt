@@ -29,6 +29,20 @@ class CollectionTabViewModel @Inject constructor(
         fetchSubMenus()
     }
 
+    fun onRefreshTriggered(onCompleted: () -> Unit) {
+        fetchSubMenus()
+        val currentSubCategory = _uiState.value.selectedSubCategory
+        val currentCategory = _uiState.value.selectedCategory
+        var finalHandle: String? = null
+        if (currentSubCategory != null) {
+            finalHandle = currentSubCategory.filterHandle
+        } else if (currentCategory != null) {
+            finalHandle = currentCategory.filterHandle
+        }
+        requestAfterRefreshTriggered(finalHandle)
+        onCompleted()
+    }
+
     fun getCollectionTabEventBus(): CollectionTabEventBus = collectionTabEventBus
 
     fun getImageLoader(): ImageLoader = imageLoader
@@ -112,6 +126,13 @@ class CollectionTabViewModel @Inject constructor(
         viewModelScope.launch {
             collectionTabEventBus.emitEvent(CollectionTabEvent.SubCategorySelected(subCategory.filterHandle))
             Timber.tag(tag).d("Emitted SubCategorySelected event with filterHandle: ${subCategory.filterHandle}")
+        }
+    }
+
+    private fun requestAfterRefreshTriggered(filterHandle: String?) {
+        viewModelScope.launch {
+            collectionTabEventBus.emitEvent(CollectionTabEvent.RefreshTriggered(filterHandle))
+            Timber.tag(tag).d("Emitted RefreshTriggered event with filterHandle: $filterHandle")
         }
     }
 }

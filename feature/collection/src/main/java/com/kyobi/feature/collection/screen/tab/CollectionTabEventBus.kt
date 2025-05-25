@@ -8,6 +8,7 @@ import javax.inject.Inject
 sealed class CollectionTabEvent {
     data class CategorySelected(val filterHandle: String?): CollectionTabEvent()
     data class SubCategorySelected(val filterHandle: String?): CollectionTabEvent()
+    data class RefreshTriggered(val filterHandle: String?): CollectionTabEvent()
 }
 
 @ViewModelScoped

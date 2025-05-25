@@ -14,6 +14,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
+const val collectionDefault = "women"
+
 @HiltViewModel
 class CollectionTabProductListViewModel @Inject constructor(
     private val getProductsUseCase: GetProductsUseCase,
@@ -27,7 +29,7 @@ class CollectionTabProductListViewModel @Inject constructor(
     private lateinit var eventBus: CollectionTabEventBus
 
     init {
-        fetchAllProducts()
+        fetchProductsByCollection(collectionDefault)
     }
 
     fun initWithEventBus(initEventBus: CollectionTabEventBus) {
@@ -44,32 +46,37 @@ class CollectionTabProductListViewModel @Inject constructor(
                         processingRequestSubCategorySelected(event)
                         return@collect
                     }
+                    is CollectionTabEvent.RefreshTriggered -> {
+                        processingRequestRefreshTriggered(event)
+                        return@collect
+                    }
                 }
             }
         }
     }
 
     private fun processingRequestCategorySelected(event: CollectionTabEvent.CategorySelected) {
-        val filterHandle = event.filterHandle
-        Timber.tag(tag).d("Received CategorySelected event with filterHandle: $filterHandle")
+        Timber.tag(tag).d("Received CategorySelected event with filterHandle: ${event.filterHandle}")
+        val filterHandle = event.filterHandle ?: return
         fetchProductsByCollection(filterHandle)
     }
 
     private fun processingRequestSubCategorySelected(event: CollectionTabEvent.SubCategorySelected) {
-        val filterHandle = event.filterHandle
-        Timber.tag(tag).d("Received SubCategorySelected event with filterHandle: $filterHandle")
+        Timber.tag(tag).d("Received SubCategorySelected event with filterHandle: ${event.filterHandle}")
+        val filterHandle = event.filterHandle ?: return
         fetchProductsByCollection(filterHandle)
     }
 
-    private fun fetchAllProducts() {
-        fetchProductsByCollection(null)
+    private fun processingRequestRefreshTriggered(event: CollectionTabEvent.RefreshTriggered) {
+        Timber.tag(tag).d("Received RefreshTriggered event with filterHandle: ${event.filterHandle}")
+        val handle = event.filterHandle ?: collectionDefault
+        fetchProductsByCollection(handle)
     }
 
-    private fun fetchProductsByCollection(filterHandle: String?) {
+    private fun fetchProductsByCollection(filterHandle: String) {
         viewModelScope.launchOnIO {
-            val queryTag = filterHandle ?: "women"
             getProductsUseCase.invoke(
-                query = queryTag.toQueryBySingleTag(),
+                query = filterHandle.toQueryBySingleTag(),
                 reverse = null,
                 sortKey = null,
                 identifiers = null,

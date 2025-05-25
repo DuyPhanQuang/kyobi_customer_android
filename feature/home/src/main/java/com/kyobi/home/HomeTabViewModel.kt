@@ -16,6 +16,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -50,6 +51,19 @@ class HomeTabViewModel @Inject constructor(
     }
 
     fun getImageLoader(): ImageLoader = imageLoader
+
+    fun onRefreshTriggered(onCompleted: () -> Unit) {
+        try {
+            fetchBanners()
+            fetchRecommendedReels()
+            fetchTopCatalog()
+            fetchProductDeals()
+            fetchSaleProducts()
+            fetchTrendingResearchs()
+        } finally {
+            onCompleted()
+        }
+    }
 
     private fun fetchBanners() {
         viewModelScope.launchOnIO {

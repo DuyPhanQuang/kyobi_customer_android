@@ -9,7 +9,6 @@ import com.kyobi.customer.global.worker.WorkManagerSetup
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -61,15 +60,12 @@ class RootApplication : Application() {
         // Global Crash Handler
         CoroutineScope(Dispatchers.IO).launch {
             CrashReporter.initGlobalHandler()
+            Timber.tag(tag).d("Initialized global crash handler")
         }
-        Timber.tag(tag).d("Initiated global crash handler")
 
-        // Init Imgly Engine after 5s
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(5000)
-            Engine.init(this@RootApplication)
-            Timber.tag(tag).d("Initialized Imgly Engine")
-        }
+        // Init Imgly Engine
+        Engine.init(this)
+        Timber.tag(tag).d("Initialized Imgly Engine")
 
         // Schedule cleanup
         workManagerSetup.scheduleCleanupWork()

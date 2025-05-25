@@ -15,9 +15,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -33,10 +38,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -52,7 +59,7 @@ import com.kyobi.theme.Colors
 import com.kyobi.theme.Dimension
 import com.kyobi.theme.kyobiTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun CollectionTab(
     navController: NavController,
@@ -127,9 +134,19 @@ fun CollectionTab(
         }
     }
 
+    var isRefreshing by remember { mutableStateOf(false) }
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            viewModel.onRefreshTriggered {
+                isRefreshing = false
+            }
+        }
+    )
+
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val spacing = MaterialTheme.kyobiTheme.spacing
-    val width = MaterialTheme.kyobiTheme.width
     val height = MaterialTheme.kyobiTheme.height
 
     Scaffold(
@@ -168,92 +185,106 @@ fun CollectionTab(
             )
         },
     ) { paddingValues ->
-        LazyColumn(
-            state = lazyListState,
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(colorTheme.background),
-            contentPadding = paddingValues
+                .pullRefresh(pullRefreshState)
+                .fillMaxWidth()
+                .wrapContentHeight()
         ) {
-            item {
-                AnimatedVisibility(
-                    visible = showCategorySection,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut()
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .drawBehind {
-                            val strokeWidth = Dimension.dp1.toPx()
-                            val borderColor = Colors().stone100
-                            drawLine(
-                                color = borderColor,
-                                start = Offset(0f, 0f),
-                                end = Offset(size.width, 0f),
-                                strokeWidth = strokeWidth
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colorTheme.background),
+                state = lazyListState,
+                contentPadding = paddingValues
+            ) {
+                item {
+                    AnimatedVisibility(
+                        visible = showCategorySection,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .drawBehind {
+                                    val strokeWidth = Dimension.dp1.toPx()
+                                    val borderColor = Colors().stone100
+                                    drawLine(
+                                        color = borderColor,
+                                        start = Offset(0f, 0f),
+                                        end = Offset(size.width, 0f),
+                                        strokeWidth = strokeWidth
+                                    )
+                                }
+                        ) {
+                            CollectionTabSectionCategory(
+                                categories = categoryMenus,
+                                imageLoader = imageLoader,
+                                expanded = expandedCategorySection,
+                                onAllClick = { expandedCategorySection = true },
+                                onCollapseClick = { expandedCategorySection = false },
+                                selectedCategoryId = selectedCategoryId,
+                                onCategoryClick = { category ->
+                                    viewModel.updateCategorySelected(category)
+                                }
                             )
                         }
+                    }
+                }
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillParentMaxHeight() // important
+                            .drawBehind {
+                                val strokeWidth = Dimension.dp1.toPx()
+                                val borderColor = Colors().stone100
+                                drawLine(
+                                    color = borderColor,
+                                    start = Offset(0f, 0f),
+                                    end = Offset(size.width, 0f),
+                                    strokeWidth = strokeWidth
+                                )
+                            }
                     ) {
-                        CollectionTabSectionCategory(
-                            categories = categoryMenus,
+                        CollectionTabSectionSubCategory(
+                            modifier = Modifier
+                                .fillMaxWidth(0.25f)
+                                .fillMaxHeight(),
+                            bottomPadding = bottomPadding,
+                            subCategories = subCategoryMenus,
+                            selectedSubCategoryId = selectedSubCategoryId,
+                            onItemClick = { subCategory ->
+                                viewModel.updateSubCategorySelected(subCategory, categoryMenus)
+                            }
+                        )
+                        CollectionTabSectionProductsGridView(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
                             imageLoader = imageLoader,
-                            expanded = expandedCategorySection,
-                            onAllClick = { expandedCategorySection = true },
-                            onCollapseClick = { expandedCategorySection = false },
-                            selectedCategoryId = selectedCategoryId,
-                            onCategoryClick = { category ->
-                                viewModel.updateCategorySelected(category)
+                            lazyGridState = productLazyGridState,
+                            productListViewModel = productListViewModel,
+                            bottomPadding = bottomPadding,
+                            onSortClick = {},
+                            onFilterClick = {
+                                val route = Routes.Collection.getRoute(
+                                    "categoryId" to selectedCategoryId,
+                                    "subCategoryId" to selectedSubCategoryId
+                                )
+                                navController.navigate(route)
                             }
                         )
                     }
                 }
             }
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillParentMaxHeight() // important
-                        .drawBehind {
-                            val strokeWidth = Dimension.dp1.toPx()
-                            val borderColor = Colors().stone100
-                            drawLine(
-                                color = borderColor,
-                                start = Offset(0f, 0f),
-                                end = Offset(size.width, 0f),
-                                strokeWidth = strokeWidth
-                            )
-                        }
-                ) {
-                    CollectionTabSectionSubCategory(
-                        modifier = Modifier
-                            .fillMaxWidth(0.25f)
-                            .fillMaxHeight(),
-                        bottomPadding = bottomPadding,
-                        subCategories = subCategoryMenus,
-                        selectedSubCategoryId = selectedSubCategoryId,
-                        onItemClick = { subCategory ->
-                            viewModel.updateSubCategorySelected(subCategory, categoryMenus)
-                        }
-                    )
-                    CollectionTabSectionProductsGridView(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        imageLoader = imageLoader,
-                        lazyGridState = productLazyGridState,
-                        productListViewModel = productListViewModel,
-                        bottomPadding = bottomPadding,
-                        onSortClick = {},
-                        onFilterClick = {
-                            val route = Routes.Collection.getRoute(
-                                "categoryId" to selectedCategoryId,
-                                "subCategoryId" to selectedSubCategoryId
-                            )
-                            navController.navigate(route)
-                        }
-                    )
-                }
-            }
+            PullRefreshIndicator(
+                refreshing = isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .zIndex(1f)
+            )
         }
     }
 }
