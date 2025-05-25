@@ -30,16 +30,8 @@ class CollectionTabViewModel @Inject constructor(
     }
 
     fun onRefreshTriggered(onCompleted: () -> Unit) {
-        fetchSubMenus()
-        val currentSubCategory = _uiState.value.selectedSubCategory
-        val currentCategory = _uiState.value.selectedCategory
-        var finalHandle: String? = null
-        if (currentSubCategory != null) {
-            finalHandle = currentSubCategory.filterHandle
-        } else if (currentCategory != null) {
-            finalHandle = currentCategory.filterHandle
-        }
-        requestAfterRefreshTriggered(finalHandle)
+        processingRefreshSubMenusIfNeeded()
+        processingRefreshProducts()
         onCompleted()
     }
 
@@ -68,6 +60,35 @@ class CollectionTabViewModel @Inject constructor(
             is DomainNetworkResult.Error -> null
         }
         return data
+    }
+
+    private fun processingRefreshSubMenusIfNeeded() {
+        var shouldRefreshSubMenus = false
+        when (val result = _uiState.value.subMenusResult) {
+            is DomainNetworkResult.Error -> shouldRefreshSubMenus = true
+            is DomainNetworkResult.Loading -> shouldRefreshSubMenus = true
+            is DomainNetworkResult.Success -> {
+                val menus = result.data
+                if (menus.isEmpty()) {
+                    shouldRefreshSubMenus = true
+                }
+            }
+        }
+        if (shouldRefreshSubMenus) {
+            fetchSubMenus()
+        }
+    }
+
+    private fun processingRefreshProducts() {
+        val currentSubCategory = _uiState.value.selectedSubCategory
+        val currentCategory = _uiState.value.selectedCategory
+        var finalHandle: String? = null
+        if (currentSubCategory != null) {
+            finalHandle = currentSubCategory.filterHandle
+        } else if (currentCategory != null) {
+            finalHandle = currentCategory.filterHandle
+        }
+        requestAfterRefreshTriggered(finalHandle)
     }
 
     private fun fetchSubMenus() {
