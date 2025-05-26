@@ -26,6 +26,7 @@ fun SkeletonSaleProductGridView(
     val spacing = MaterialTheme.kyobiTheme.spacing
     val shapeTheme = MaterialTheme.kyobiTheme.shapes
     val height = MaterialTheme.kyobiTheme.height
+    val colorTheme = MaterialTheme.kyobiTheme.colors
 
     val horizontalPadding = spacing.dp12
     val imageAspectRatio = 0.8324f
@@ -48,7 +49,7 @@ fun SkeletonSaleProductGridView(
                                 .weight(1f)
                                 .padding(spacing.dp8)
                                 .clip(shapeTheme.small)
-                                .background(MaterialTheme.kyobiTheme.colors.bg.stone100)
+                                .background(colorTheme.bg.stone100)
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),

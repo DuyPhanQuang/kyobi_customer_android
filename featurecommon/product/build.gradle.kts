@@ -8,6 +8,7 @@ dependencies {
     COMMON_THEME
     DATA
     DOMAIN
+    FEATURECOMMON_AUTH
 }
 android {
     namespace = "com.kyobi.featurecommon.product"

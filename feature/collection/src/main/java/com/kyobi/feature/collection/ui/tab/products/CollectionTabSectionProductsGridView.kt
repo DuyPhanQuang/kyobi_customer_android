@@ -19,9 +19,10 @@ import coil.ImageLoader
 import com.kyobi.composable.skeleton.SkeletonProductCard
 import com.kyobi.composable.space.SpaceY
 import com.kyobi.domain.model.DomainNetworkResult
+import com.kyobi.domain.model.Product
 import com.kyobi.feature.collection.screen.tab.CollectionTabProductListViewModel
 import com.kyobi.feature.collection.ui.tab.sort_filter.CollectionTabSectionSortFilter
-import com.kyobi.featurecommon.product.ProductCard
+import com.kyobi.featurecommon.product.ui.ProductCard
 import com.kyobi.featurecommon.product.ProductUiState
 import com.kyobi.theme.kyobiTheme
 
@@ -33,7 +34,8 @@ fun CollectionTabSectionProductsGridView(
     lazyGridState: LazyGridState,
     bottomPadding: Dp,
     onSortClick: () -> Unit,
-    onFilterClick: () -> Unit
+    onFilterClick: () -> Unit,
+    onProductClick: (Product) -> Unit
 ) {
     val productsResult by productListViewModel.products.collectAsStateWithLifecycle()
     val itemStates by productListViewModel.itemStates.collectAsStateWithLifecycle()
@@ -70,18 +72,18 @@ fun CollectionTabSectionProductsGridView(
                 }
             }
             is DomainNetworkResult.Success -> {
-                val products = (productsResult as DomainNetworkResult.Success<List<ProductUiState>>).data
+                val productsUiStates = (productsResult as DomainNetworkResult.Success<List<ProductUiState>>).data
                 items(
-                    products,
+                    productsUiStates,
                     key = { "product_${it.id}" }
-                ) { product ->
+                ) { productUiState ->
                     ProductCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = spacing.dp12),
-                        productUiState = itemStates[product.id] ?: product,
+                        productUiState = itemStates[productUiState.id] ?: productUiState,
                         imageLoader = imageLoader,
-                        onClick = {}
+                        onClick = { onProductClick(productUiState.product) }
                     )
                 }
             }

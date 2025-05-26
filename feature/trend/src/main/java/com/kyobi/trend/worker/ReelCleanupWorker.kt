@@ -35,6 +35,7 @@ class ReelCleanupWorker(
                     okHttpClient
                 )
                 preloadManager.cleanupOldRecords(maxAgeDays = 1)
+                mediaCache.release()
             }
             Timber.tag(tag).d("Reel cleanup worker completed in $timeTaken ms")
             Result.success()

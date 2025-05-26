@@ -12,7 +12,7 @@ abstract class BaseProductListViewModel(
     protected val addToCartUseCase: AddToCartUseCase,
     protected val addRemoveProductToFavoriteUseCase: AddRemoveProductToFavoriteUseCase
 ): ViewModel() {
-    protected val productsResult = MutableStateFlow<DomainNetworkResult<List<ProductUiState>>>(DomainNetworkResult.Loading)
+    protected val productsResult = MutableStateFlow<DomainNetworkResult<List<ProductUiState>>>(DomainNetworkResult.Success(emptyList()))
     val products = productsResult.asStateFlow()
 
     private val itemStatesResult = MutableStateFlow<Map<String, ProductUiState>>(emptyMap())

@@ -1,7 +1,6 @@
-package com.kyobi.featurecommon.product
+package com.kyobi.featurecommon.product.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,8 +10,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +28,7 @@ import com.kyobi.composable.utils.ColorUtils
 import com.kyobi.domain.extension.toColorsOption
 import com.kyobi.domain.extension.toFormattedOriginalPrice
 import com.kyobi.domain.extension.toFormattedSalePrice
+import com.kyobi.featurecommon.product.ProductUiState
 import com.kyobi.theme.kyobiTheme
 import com.kyobi.theme.labelSmallXs
 import com.kyobi.theme.paragraphXs

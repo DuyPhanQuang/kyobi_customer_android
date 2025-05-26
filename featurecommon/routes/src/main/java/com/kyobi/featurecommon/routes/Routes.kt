@@ -27,38 +27,40 @@ sealed class Routes(
     }
 
     // bottom tab
-    data object HomeTab : Routes(
-        routeScheme = "home-tab",
+    data object HomeTab: Routes(
+        routeScheme = RouteConstant.HOME_TAB,
         arguments = emptyList(),
     )
 
     // bottom tab
-    data object CollectionTab : Routes(
-        routeScheme = "collection-tab",
+    data object CollectionTab: Routes(
+        routeScheme = RouteConstant.COLLECTION_TAB,
         arguments = emptyList(),
     )
 
     // bottom tab
-    data object TrendTab : Routes(
-        routeScheme = "trend-tab",
+    data object TrendTab: Routes(
+        routeScheme = RouteConstant.TREND_TAB,
         arguments = emptyList(),
     )
 
     // bottom tab
-    data object ProfileTab : Routes(
-        routeScheme = "profile-tab",
+    data object ProfileTab: Routes(
+        routeScheme = RouteConstant.PROFILE_TAB,
         arguments = emptyList(),
     )
 
-    data object Collection : Routes(
-        routeScheme = "collection?categoryId={categoryId}&subCategoryId={subCategoryId}",
+    data object Collection: Routes(
+        routeScheme = "${RouteConstant.COLLECTION}?" +
+                "${RouteKey.Collection.CATEGORY_ID}={${RouteKey.Collection.CATEGORY_ID}}&" +
+                "${RouteKey.Collection.SUB_CATEGORY_ID}={${RouteKey.Collection.SUB_CATEGORY_ID}}",
         arguments = listOf(
-            navArgument("categoryId") {
+            navArgument(RouteKey.Collection.CATEGORY_ID) {
                 nullable = true
                 defaultValue = null
                 type = NavType.StringType
             },
-            navArgument("subCategoryId") {
+            navArgument(RouteKey.Collection.SUB_CATEGORY_ID) {
                 nullable = true
                 defaultValue = null
                 type = NavType.StringType
@@ -66,19 +68,51 @@ sealed class Routes(
         ),
     )
 
-    data object EditorVideo : Routes(
-        routeScheme = "editor-video?selectType={selectType}&uri={uri}&userId={userId}",
+    data object Product: Routes(
+        routeScheme = "${RouteConstant.PRODUCT}?" +
+                "${RouteKey.Product.ID}={${RouteKey.Product.ID}}&" +
+                "${RouteKey.Product.SKU}={${RouteKey.Product.SKU}}&" +
+                "${RouteKey.Product.COLOR_OPTION}={${RouteKey.Product.COLOR_OPTION}}&" +
+                "${RouteKey.Product.SIZE_OPTION}={${RouteKey.Product.SIZE_OPTION}}",
         arguments = listOf(
-            navArgument("selectType") {
+            navArgument(RouteKey.Product.ID) {
                 nullable = false
                 type = NavType.StringType
             },
-            navArgument("uri") {
+            navArgument(RouteKey.Product.SKU) {
                 nullable = true
                 defaultValue = null
                 type = NavType.StringType
             },
-            navArgument("userId") {
+            navArgument(RouteKey.Product.COLOR_OPTION) {
+                nullable = true
+                defaultValue = null
+                type = NavType.StringType
+            },
+            navArgument(RouteKey.Product.SIZE_OPTION) {
+                nullable = true
+                defaultValue = null
+                type = NavType.StringType
+            },
+        )
+    )
+
+    data object EditorVideo: Routes(
+        routeScheme = "${RouteConstant.EDITOR_VIDEO}?" +
+                "${RouteKey.EditorVideo.SELECT_TYPE}={${RouteKey.EditorVideo.SELECT_TYPE}}&" +
+                "${RouteKey.EditorVideo.URI}={${RouteKey.EditorVideo.URI}}&" +
+                "${RouteKey.EditorVideo.USER_ID}={${RouteKey.EditorVideo.USER_ID}}",
+        arguments = listOf(
+            navArgument(RouteKey.EditorVideo.SELECT_TYPE) {
+                nullable = false
+                type = NavType.StringType
+            },
+            navArgument(RouteKey.EditorVideo.URI) {
+                nullable = true
+                defaultValue = null
+                type = NavType.StringType
+            },
+            navArgument(RouteKey.EditorVideo.USER_ID) {
                 nullable = true
                 defaultValue = null
                 type = NavType.StringType

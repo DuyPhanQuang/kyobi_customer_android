@@ -10,14 +10,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.kyobi.composable.skeleton.SkeletonProductGridView
 import com.kyobi.composable.space.SpaceY
 import com.kyobi.composable.space.XsSpaceY
 import com.kyobi.domain.model.DomainNetworkResult
-import com.kyobi.featurecommon.product.ProductCard
+import com.kyobi.featurecommon.product.ui.ProductCard
 import com.kyobi.featurecommon.product.ProductUiState
 import com.kyobi.home.HomeRecommendedProductListViewModel
 import com.kyobi.theme.kyobiTheme

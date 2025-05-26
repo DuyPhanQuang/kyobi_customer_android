@@ -23,7 +23,7 @@ object ReelCacheModule {
     @Singleton
     fun provideReelPreloadManager(
         @ApplicationContext context: Context,
-        mediaCache: ReelMediaCache,
+        @Named("KyobiMediaCache") mediaCache: ReelMediaCache,
         preloadedMediaDao: PreloadedMediaDao,
         @Named("KyobiOkHttpClient") okHttpClient: OkHttpClient
     ): ReelPreloadManager {
@@ -37,6 +37,7 @@ object ReelCacheModule {
     @OptIn(UnstableApi::class)
     @Provides
     @Singleton
+    @Named("KyobiMediaCache")
     fun provideMediaCache(
         @ApplicationContext context: Context
     ): ReelMediaCache {

@@ -54,6 +54,7 @@ import com.kyobi.feature.collection.ui.common.CollectionCommonSectionHeader
 import com.kyobi.feature.collection.ui.tab.products.CollectionTabSectionProductsGridView
 import com.kyobi.feature.collection.ui.tab.sub_category.CollectionTabSectionSubCategory
 import com.kyobi.featurecommon.auth.AuthViewModel
+import com.kyobi.featurecommon.routes.RouteKey
 import com.kyobi.featurecommon.routes.Routes
 import com.kyobi.theme.Colors
 import com.kyobi.theme.Dimension
@@ -269,10 +270,19 @@ fun CollectionTab(
                             onSortClick = {},
                             onFilterClick = {
                                 val route = Routes.Collection.getRoute(
-                                    "categoryId" to selectedCategoryId,
-                                    "subCategoryId" to selectedSubCategoryId
+                                    RouteKey.Collection.CATEGORY_ID to selectedCategoryId,
+                                    RouteKey.Collection.SUB_CATEGORY_ID to selectedSubCategoryId
                                 )
                                 navController.navigate(route)
+                            },
+                            onProductClick = { product ->
+                                val productId = product.id
+                                if (productId.isNotEmpty()) {
+                                    val route = Routes.Product.getRoute(
+                                        RouteKey.Product.ID to product.id
+                                    )
+                                    navController.navigate(route)
+                                }
                             }
                         )
                     }

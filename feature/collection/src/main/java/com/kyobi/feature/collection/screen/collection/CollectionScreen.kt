@@ -154,6 +154,7 @@ fun CollectionScreen(
 
     val colorTheme = MaterialTheme.kyobiTheme.colors
     val spacing = MaterialTheme.kyobiTheme.spacing
+    val height = MaterialTheme.kyobiTheme.height
 
     Scaffold(
         modifier = Modifier.statusBarsPadding(),
@@ -162,24 +163,22 @@ fun CollectionScreen(
                 modifier = Modifier
                     .fillMaxWidth(),
                 scrollBehavior = scrollBehavior,
-                windowInsets = WindowInsets(MaterialTheme.kyobiTheme.width.dp0),
+                windowInsets = WindowInsets(spacing.dp0),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = colorTheme.background,
                     titleContentColor = colorTheme.background,
-                    scrolledContainerColor = colorTheme.background,
-                ),
+                    scrolledContainerColor = colorTheme.background),
                 title = {
                     CollectionCommonSectionHeader(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(MaterialTheme.kyobiTheme.height.dp88)
+                            .height(height.dp88)
                             .background(colorTheme.background)
                             .padding(
                                 start = spacing.dp0,
                                 end = spacing.dp14,
                                 top = spacing.dp8,
-                                bottom = spacing.dp8
-                            ),
+                                bottom = spacing.dp8),
                         showBackIcon = true,
                         onBackClick = {
                             navController.popBackStack()

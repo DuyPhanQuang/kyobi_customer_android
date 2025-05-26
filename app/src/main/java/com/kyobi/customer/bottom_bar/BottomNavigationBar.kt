@@ -44,6 +44,8 @@ import com.kyobi.createreel.Secrets
 import com.kyobi.createreel.editor_video.SelectMediaType
 import com.kyobi.customer.R
 import com.kyobi.featurecommon.auth.AuthViewModel
+import com.kyobi.featurecommon.routes.RouteConstant
+import com.kyobi.featurecommon.routes.RouteKey
 import com.kyobi.featurecommon.routes.Routes
 import com.kyobi.theme.Colors
 import com.kyobi.theme.kyobiTheme
@@ -73,27 +75,27 @@ data class BottomNavItem(
 
 val bottomNavItems = listOf(
     BottomNavItem(
-        route = "home-tab",
+        route = RouteConstant.HOME_TAB,
         iconResId = R.drawable.ic_home_tab,
         label = "Shop"
     ),
     BottomNavItem(
-        route = "collection-tab",
+        route = RouteConstant.COLLECTION_TAB,
         iconResId = R.drawable.ic_category_tab,
         label = "Collection"
     ),
     BottomNavItem(
-        route = "create-reel",
+        route = "",
         iconResId = R.drawable.ic_category_tab,
         label = "Lookbook"
     ),
     BottomNavItem(
-        route = "trend-tab",
+        route = RouteConstant.TREND_TAB,
         iconResId = R.drawable.ic_category_tab,
         label = "Trend"
     ),
     BottomNavItem(
-        route = "profile-tab",
+        route = RouteConstant.PROFILE_TAB,
         iconResId = R.drawable.ic_profile_tab,
         label = "Profile",
         badgeCount = 3
@@ -126,9 +128,9 @@ fun BottomNavigationBar(
             result.data?.data?.let { uri ->
                 Timber.tag(tag).d("video URI (original): $uri")
                 val route = Routes.EditorVideo.getRoute(
-                    "selectType" to SelectMediaType.VIDEO.toString(),
-                    "uri" to uri.toString(),
-                    "userId" to userId
+                    RouteKey.EditorVideo.SELECT_TYPE to SelectMediaType.VIDEO.toString(),
+                    RouteKey.EditorVideo.URI to uri.toString(),
+                    RouteKey.EditorVideo.USER_ID to userId
                 )
                 navController.navigate(route)
             }
@@ -140,10 +142,10 @@ fun BottomNavigationBar(
         when (result) {
             is CameraResult.Record -> {
                 Timber.tag(tag).d("cameraResult (original): $result")
-                navController.currentBackStackEntry?.savedStateHandle?.set("recording", result)
+                navController.currentBackStackEntry?.savedStateHandle?.set(RouteKey.EditorVideo.RECORDING, result)
                 val route = Routes.EditorVideo.getRoute(
-                    "selectType" to SelectMediaType.CAMERA_RECORD.toString(),
-                    "userId" to userId
+                    RouteKey.EditorVideo.SELECT_TYPE to SelectMediaType.CAMERA_RECORD.toString(),
+                    RouteKey.EditorVideo.USER_ID to userId
                 )
                 navController.navigate(route)
             }
@@ -151,10 +153,14 @@ fun BottomNavigationBar(
         }
     }
 
+    val colorTheme = MaterialTheme.kyobiTheme.colors
+    val iconTheme = MaterialTheme.kyobiTheme.icon
+    val typographyTheme = MaterialTheme.kyobiTheme.typography
+
     NavigationBar(
-        modifier = modifier.background(MaterialTheme.kyobiTheme.colors.surface),
-        containerColor = MaterialTheme.kyobiTheme.colors.surface,
-        contentColor = MaterialTheme.kyobiTheme.colors.onSurface
+        modifier = modifier.background(colorTheme.surface),
+        containerColor = colorTheme.surface,
+        contentColor = colorTheme.onSurface
     ) {
         // Danh sách các bottom tab item theo thứ tự: Home, Collection, Lookbook, Trend, Profile
         listOf(
@@ -175,21 +181,21 @@ fun BottomNavigationBar(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_category_tab),
                                 contentDescription = "Lookbook",
-                                modifier = Modifier.size(MaterialTheme.kyobiTheme.icon.lg),
+                                modifier = Modifier.size(iconTheme.lg),
                             )
                         },
                         label = {
                             Text(
                                 text = "Lookbook",
-                                style = MaterialTheme.kyobiTheme.typography.paragraphXs,
+                                style = typographyTheme.paragraphXs,
                             )
                         },
                         alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.kyobiTheme.colors.bg.stone950,
-                            unselectedIconColor = MaterialTheme.kyobiTheme.colors.bg.stone400,
-                            selectedTextColor = MaterialTheme.kyobiTheme.colors.bg.stone950,
-                            unselectedTextColor = MaterialTheme.kyobiTheme.colors.bg.stone400,
+                            selectedIconColor = colorTheme.bg.stone950,
+                            unselectedIconColor = colorTheme.bg.stone400,
+                            selectedTextColor = colorTheme.bg.stone950,
+                            unselectedTextColor = colorTheme.bg.stone400,
                         )
                     )
                 }
@@ -230,7 +236,7 @@ fun BottomNavigationBar(
                                         Badge {
                                             Text(
                                                 text = item.badgeCount.toString(),
-                                                color = MaterialTheme.kyobiTheme.colors.text.neutral50
+                                                color = colorTheme.text.neutral50
                                             )
                                         }
                                     }
@@ -239,8 +245,7 @@ fun BottomNavigationBar(
                                         painter = painterResource(id = item.iconResId),
                                         contentDescription = item.label,
                                         modifier = Modifier.size(
-                                            if (selected) MaterialTheme.kyobiTheme.icon.lg
-                                            else MaterialTheme.kyobiTheme.icon.lg
+                                            if (selected) iconTheme.lg else iconTheme.lg
                                         ),
                                     )
                                 }
@@ -249,15 +254,15 @@ fun BottomNavigationBar(
                         label = {
                             Text(
                                 text = item.label,
-                                style = MaterialTheme.kyobiTheme.typography.paragraphXs,
+                                style = typographyTheme.paragraphXs,
                             )
                         },
                         alwaysShowLabel = true,
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = MaterialTheme.kyobiTheme.colors.bg.stone950,
-                            unselectedIconColor = MaterialTheme.kyobiTheme.colors.bg.stone400,
-                            selectedTextColor = MaterialTheme.kyobiTheme.colors.bg.stone950,
-                            unselectedTextColor = MaterialTheme.kyobiTheme.colors.bg.stone400,
+                            selectedIconColor = colorTheme.bg.stone950,
+                            unselectedIconColor = colorTheme.bg.stone400,
+                            selectedTextColor = colorTheme.bg.stone950,
+                            unselectedTextColor = colorTheme.bg.stone400,
                         )
                     )
                 }
@@ -265,7 +270,6 @@ fun BottomNavigationBar(
         }
     }
 
-    // Hiển thị bottom sheet với 2 lựa chọn
     if (showBottomSheet) {
         ModalBottomSheet(
             onDismissRequest = {
@@ -276,7 +280,6 @@ fun BottomNavigationBar(
             Text(
                 text = "Tạo Reel mới",
                 modifier = Modifier.padding(16.dp),
-                style = androidx.compose.material3.Typography().titleLarge
             )
 
             Button(

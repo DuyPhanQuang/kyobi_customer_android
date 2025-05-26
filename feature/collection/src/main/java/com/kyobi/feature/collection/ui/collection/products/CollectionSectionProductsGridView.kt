@@ -19,7 +19,8 @@ import com.kyobi.composable.skeleton.SkeletonProductCard
 import com.kyobi.composable.space.SpaceY
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.feature.collection.screen.collection.CollectionScreenProductListViewModel
-import com.kyobi.featurecommon.product.ProductCard
+import com.kyobi.featurecommon.product.ProductUiState
+import com.kyobi.featurecommon.product.ui.ProductCard
 import com.kyobi.theme.kyobiTheme
 
 @Composable
@@ -57,7 +58,7 @@ fun CollectionSectionProductsGridView(
                 }
             }
             is DomainNetworkResult.Success -> {
-                val productUiStates = (productsResult as DomainNetworkResult.Success).data
+                val productUiStates = (productsResult as DomainNetworkResult.Success<List<ProductUiState>>).data
                 items(
                     productUiStates,
                     key = { "product_${it.id}" }

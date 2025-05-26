@@ -32,6 +32,9 @@ import com.kyobi.customer.extension.composable
 import com.kyobi.feature.collection.screen.collection.CollectionScreen
 import com.kyobi.feature.collection.screen.tab.CollectionTab
 import com.kyobi.feature.collection.screen.tab.CollectionTabViewModel
+import com.kyobi.featurecommon.product.screen.ProductDetailScreen
+import com.kyobi.featurecommon.routes.RouteConstant
+import com.kyobi.featurecommon.routes.RouteKey
 import com.kyobi.featurecommon.routes.Routes
 import com.kyobi.featurecommon.routes.getDecodedByKey
 import com.kyobi.featurecommon.routes.getDecodedUserId
@@ -158,7 +161,7 @@ fun RootApp(
 
                 NavHost(
                     navController = navController,
-                    startDestination = "home-tab",
+                    startDestination = RouteConstant.HOME_TAB,
                 ) {
                     composable(routes = Routes.HomeTab) {
                         HomeTab(
@@ -191,8 +194,8 @@ fun RootApp(
                         ProfileTab(navController = navController)
                     }
                     composable(routes = Routes.Collection) {
-                        val categoryIdFromNav = it.getDecodedByKey("categoryId")
-                        val subCategoryIdFromNav = it.getDecodedByKey("subCategoryId")
+                        val categoryIdFromNav = it.getDecodedByKey(RouteKey.Collection.CATEGORY_ID)
+                        val subCategoryIdFromNav = it.getDecodedByKey(RouteKey.Collection.SUB_CATEGORY_ID)
                         CollectionScreen(
                             navController = navController,
                             authViewModel = LocalAuthViewModel.current,
@@ -202,11 +205,21 @@ fun RootApp(
                             bottomPadding = innerPadding.calculateBottomPadding()
                         )
                     }
+                    composable(routes = Routes.Product) {
+                        val productIdFromNav = it.getDecodedByKey(RouteKey.Product.ID)!!
+                        ProductDetailScreen(
+                            navController = navController,
+                            authViewModel = LocalAuthViewModel.current,
+                            productId = productIdFromNav,
+                            topPadding = innerPadding.calculateTopPadding(),
+                            bottomPadding = innerPadding.calculateBottomPadding(),
+                        )
+                    }
                     composable(routes = Routes.EditorVideo) {
-                        val selectTypeString = it.getDecodedByKey("selectType")
+                        val selectTypeString = it.getDecodedByKey(RouteKey.EditorVideo.SELECT_TYPE)
                         val selectType = enumValueOf<SelectMediaType>(selectTypeString!!)
-                        val uri = it.getDecodedByKey("uri")?.toUri()
-                        val recording = navController.getParcelable<CameraResult.Record>("recording")
+                        val uri = it.getDecodedByKey(RouteKey.EditorVideo.URI)?.toUri()
+                        val recording = navController.getParcelable<CameraResult.Record>(RouteKey.EditorVideo.RECORDING)
                         val userId = it.getDecodedUserId()
                         val isExporting by editorVideoViewModel.isExporting.collectAsStateWithLifecycle()
                         val exportProgress by editorVideoViewModel.exportProgress.collectAsStateWithLifecycle()
