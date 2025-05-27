@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -65,72 +64,64 @@ fun HomeSectionBanner(
     val spacing = MaterialTheme.kyobiTheme.spacing
     val colorTheme = MaterialTheme.kyobiTheme.colors
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(height.dp356)
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize()
+        HorizontalPager(
+            modifier = Modifier
+                .zIndex(0f)
+                .fillMaxSize(),
+            state = pagerState,
+        ) { page ->
+            val imageData = banners[page].image?.image
+            if (imageData != null) {
+                AppImage(
+                    modifier = Modifier.fillMaxSize(),
+                    imageUrl = imageData.url,
+                    contentDescription = imageData.altText,
+                    imageLoader = imageLoader
+                )
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(bottom = spacing.dp36 + spacing.dp8),
+            horizontalArrangement = Arrangement.Center
         ) {
-            HorizontalPager(
-                modifier = Modifier
-                    .zIndex(0f)
-                    .fillMaxSize(),
-                state = pagerState,
-            ) { page ->
-                val imageData = banners[page].image?.image
-                if (imageData != null) {
-                    AppImage(
-                        modifier = Modifier.fillMaxSize(),
-                        imageUrl = imageData.url,
-                        contentDescription = imageData.altText,
-                        imageLoader = imageLoader
-                    )
-                } else {
-                    Box {
-                        Spacer(modifier = Modifier)
-                    }
-                }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = spacing.dp36 + spacing.dp8),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                banners.forEachIndexed { index, _ ->
-                    val isSelected = index == pagerState.currentPage
-                    val targetWidth by animateDpAsState(
-                        targetValue = if (isSelected) width.dp24 else width.dp8,
-                        animationSpec = tween(durationMillis = 300),
-                        label = "DotWidthAnimation"
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(width = targetWidth, height = width.dp8)
-                            .clip(CircleShape)
-                            .background(colorTheme.bg.stone100)
-                            .clickable {
-                                isUserInteracting = true
-                                coroutineScope.launch {
-                                    val isLast = pagerState.currentPage == banners.size - 1 && index == 0
-                                    val targetPage = if (isLast) 0 else index
-                                    pagerState.animateScrollToPage(targetPage)
-                                    isUserInteracting = false
-                                }
+            banners.forEachIndexed { index, _ ->
+                val isSelected = index == pagerState.currentPage
+                val targetWidth by animateDpAsState(
+                    targetValue = if (isSelected) width.dp24 else width.dp8,
+                    animationSpec = tween(durationMillis = 300),
+                    label = "DotWidthAnimation"
+                )
+                Box(
+                    modifier = Modifier
+                        .size(width = targetWidth, height = width.dp8)
+                        .clip(CircleShape)
+                        .background(colorTheme.bg.stone100)
+                        .clickable {
+                            isUserInteracting = true
+                            coroutineScope.launch {
+                                val isLast = pagerState.currentPage == banners.size - 1 && index == 0
+                                val targetPage = if (isLast) 0 else index
+                                pagerState.animateScrollToPage(targetPage)
+                                isUserInteracting = false
                             }
-                    )
-                    XsSpaceX()
-                }
+                        }
+                )
+                XsSpaceX()
             }
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-            ) {
-                HomeSectionVoucher()
-            }
+        }
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+        ) {
+            HomeSectionVoucher()
         }
     }
 }

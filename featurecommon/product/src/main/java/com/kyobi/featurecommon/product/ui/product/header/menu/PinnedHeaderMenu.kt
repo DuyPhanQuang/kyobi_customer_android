@@ -29,7 +29,7 @@ fun ProductSectionPinnedHeaderMenuBarItem(
         selected = isSelected,
         onClick = onClick,
         selectedContentColor = colorTheme.primary,
-        unselectedContentColor = colorTheme.text.stone400
+        unselectedContentColor = colorTheme.text.neutral400
     ) {
         Text(
             modifier = Modifier

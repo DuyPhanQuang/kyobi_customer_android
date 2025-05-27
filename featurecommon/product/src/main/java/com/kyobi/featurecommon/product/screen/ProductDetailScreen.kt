@@ -22,8 +22,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -62,11 +62,6 @@ fun ProductDetailScreen(
 
     val imageAspectRatio = 0.7090f
     val imageHeightInDp = getImageHeightByAspectRatio(imageAspectRatio)
-    val parallaxOffset by remember {
-        derivedStateOf {
-            (lazyListState.firstVisibleItemScrollOffset * 0.5f).coerceAtMost(imageHeightInDp.value)
-        }
-    }
 
     val normalHeaderHeight = heightTheme.dp48 + topPadding
     val pinnedHeaderHeight = heightTheme.dp96 + topPadding
@@ -122,17 +117,15 @@ fun ProductDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(imageHeightInDp)
-                        .graphicsLayer {
-                            translationY = -parallaxOffset
-                        }
+                        .clipToBounds()
                         .background(colorTheme.background)
                 ) {
                     if (productImages.isNotEmpty()) {
                         Box(
-                            Modifier
+                            modifier = Modifier
                                 .zIndex(0f)
                                 .fillMaxWidth()
-                                .height(imageHeightInDp),
+                                .height(imageHeightInDp)
                         ) {
                             ProductSectionImages(
                                 imageLoader = imageLoader,

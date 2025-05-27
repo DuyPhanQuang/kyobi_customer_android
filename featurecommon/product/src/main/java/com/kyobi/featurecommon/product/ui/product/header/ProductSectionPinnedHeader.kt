@@ -159,7 +159,7 @@ private fun SearchForm(
                 modifier = Modifier.weight(1f),
                 text = "Find everything",
                 style = typographyTheme.paragraphXs,
-                color = colorTheme.text.stone400,
+                color = colorTheme.bg.stone400,
             )
             Icon(
                 painter = painterResource(id = R.drawable.ic_scan_similar),
