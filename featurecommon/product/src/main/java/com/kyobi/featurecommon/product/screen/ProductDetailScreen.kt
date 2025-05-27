@@ -22,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -81,7 +80,7 @@ fun ProductDetailScreen(
         }
     }
     val maxScrollForEffect = imageHeightInDp.value
-    val alphaValue = (scrollOffset.toFloat() / maxScrollForEffect).coerceIn(0f, 1f)
+    val alphaValue = (scrollOffset / maxScrollForEffect).coerceIn(0f, 1f)
     val pinnedHeaderBgColor by animateColorAsState(
         targetValue = colorTheme.background.copy(alpha = alphaValue),
         animationSpec = tween(durationMillis = 300)
@@ -117,7 +116,6 @@ fun ProductDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(imageHeightInDp)
-                        .clipToBounds()
                         .background(colorTheme.background)
                 ) {
                     if (productImages.isNotEmpty()) {
