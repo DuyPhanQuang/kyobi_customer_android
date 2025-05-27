@@ -1,4 +1,4 @@
-package com.kyobi.featurecommon.product.ui
+package com.kyobi.featurecommon.product.ui.card
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

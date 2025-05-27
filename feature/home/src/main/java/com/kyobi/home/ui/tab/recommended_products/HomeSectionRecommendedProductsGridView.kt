@@ -16,7 +16,7 @@ import com.kyobi.composable.skeleton.SkeletonProductGridView
 import com.kyobi.composable.space.SpaceY
 import com.kyobi.composable.space.XsSpaceY
 import com.kyobi.domain.model.DomainNetworkResult
-import com.kyobi.featurecommon.product.ui.ProductCard
+import com.kyobi.featurecommon.product.ui.card.ProductCard
 import com.kyobi.featurecommon.product.ProductUiState
 import com.kyobi.home.HomeRecommendedProductListViewModel
 import com.kyobi.theme.kyobiTheme

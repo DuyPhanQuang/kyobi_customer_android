@@ -8,6 +8,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.painter.Painter
@@ -19,6 +20,7 @@ import com.kyobi.theme.kyobiTheme
 fun AppIconButton(
     modifier: Modifier = Modifier,
     icon: Painter,
+    iconDesc: String? = null,
     onClick: () -> Unit,
     borderWidth: Dp = Dimension.dp0,
     borderColor: Color? = null,
@@ -35,19 +37,21 @@ fun AppIconButton(
     val finalIconColor = iconColor ?: colorTheme.icon.white
 
     IconButton(
-        onClick = onClick,
         modifier = modifier
             .size(size)
             .border(
                 width = borderWidth,
                 color = finalBorderColor,
-                shape = shape),
+                shape = shape)
+            .clip(shape),
+        onClick = onClick,
         enabled = enabled,
     ) {
         Icon(
+            modifier = Modifier
+                .size(finalIconSize),
             painter = icon,
-            contentDescription = null,
-            modifier = Modifier.size(finalIconSize),
+            contentDescription = iconDesc,
             tint = finalIconColor
         )
     }

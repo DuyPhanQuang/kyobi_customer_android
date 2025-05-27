@@ -1,6 +1,7 @@
 package com.kyobi.domain.extension
 
 import com.kyobi.domain.model.Product
+import com.kyobi.domain.model.ShopifyImage
 import java.util.Locale
 
 const val colorKey = "color"
@@ -17,3 +18,9 @@ val Product.toFormattedSalePrice: String
 
 val Product.toFormattedOriginalPrice: String
     get() = "${compareAtPriceRange.minVariantPrice.currencyCode} ${compareAtPriceRange.minVariantPrice.amount}"
+
+fun Product.toUniqueAllProductImages(): List<ShopifyImage> {
+    val sumImages = listOfNotNull(this.featuredImage) + (this.images ?: emptyList())
+    val allImages = sumImages.distinctBy { it.url }
+    return allImages
+}

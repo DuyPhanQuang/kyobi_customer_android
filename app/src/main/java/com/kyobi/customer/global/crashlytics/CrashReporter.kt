@@ -1,8 +1,11 @@
 package com.kyobi.customer.global.crashlytics
 
+import android.os.Process.killProcess
+import android.os.Process.myPid
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.kyobi.customer.BuildConfig
 import timber.log.Timber
+import kotlin.system.exitProcess
 
 /**
  * CrashReporter - Wrapper cho FirebaseCrashlytics
@@ -10,15 +13,29 @@ import timber.log.Timber
  * e-commerce + reel + community
  */
 object CrashReporter {
-
+    private const val TAG = "CrashReporter"
     private val crashlytics: FirebaseCrashlytics = FirebaseCrashlytics.getInstance()
+
+    /** global crash handler - runZonedGuarded
+     */
+    fun initGlobalHandler() {
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            crashlytics.recordException(throwable)
+            crashlytics.log("UncaughtException in thread ${thread.name}")
+            // Production mới exit, Dev để dễ debug
+            if (!BuildConfig.DEBUG) {
+                killProcess(myPid())
+                exitProcess(1)
+            }
+        }
+    }
 
     /**
      * Ghi log custom
      */
     fun log(message: String) {
         crashlytics.log(message)
-        Timber.tag("CrashReporter").d("CrashReporter $message")
+        Timber.tag(TAG).d("CrashReporter $message")
     }
 
     /**
@@ -26,7 +43,7 @@ object CrashReporter {
      */
     fun setUserId(userId: String) {
         crashlytics.setUserId(userId)
-        Timber.tag("CrashReporter").d("Set userId = $userId")
+        Timber.tag(TAG).d("Set userId = $userId")
     }
 
     /**
@@ -34,7 +51,7 @@ object CrashReporter {
      */
     private fun setCustomKey(key: String, value: String) {
         crashlytics.setCustomKey(key, value)
-        Timber.tag("CrashReporter").d("CustomKey: $key = $value")
+        Timber.tag(TAG).d("CustomKey: $key = $value")
     }
 
     /**
@@ -42,7 +59,7 @@ object CrashReporter {
      */
     fun logException(e: Throwable) {
         crashlytics.recordException(e)
-        Timber.tag("CrashReporter").d("Logged exception $e")
+        Timber.tag(TAG).d("Logged exception $e")
     }
 
     /**
@@ -67,21 +84,5 @@ object CrashReporter {
         setCustomKey("community_event", event)
         setCustomKey("community_user_id", userId)
         postId?.let { setCustomKey("community_post_id", it) }
-    }
-
-    /**
-     * Cài đặt global crash handler - runZonedGuarded
-     */
-    fun initGlobalHandler() {
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            crashlytics.recordException(throwable)
-            crashlytics.log("UncaughtException in thread ${thread.name}")
-
-            // Production mới exit, Dev để dễ debug
-            if (!BuildConfig.DEBUG) {
-                android.os.Process.killProcess(android.os.Process.myPid())
-                kotlin.system.exitProcess(1)
-            }
-        }
     }
 }

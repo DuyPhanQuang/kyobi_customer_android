@@ -278,6 +278,7 @@ fun CollectionTab(
                             onProductClick = { product ->
                                 val productId = product.id
                                 if (productId.isNotEmpty()) {
+                                    navController.currentBackStackEntry?.savedStateHandle?.set(RouteKey.Product.DATA, product)
                                     val route = Routes.Product.getRoute(
                                         RouteKey.Product.ID to product.id
                                     )

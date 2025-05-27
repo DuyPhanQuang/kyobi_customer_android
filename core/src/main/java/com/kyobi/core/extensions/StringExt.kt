@@ -50,3 +50,7 @@ fun String.getCollectionNameFromHandle(): String {
         .split("-")
         .joinToString(" ") { word -> word[0].uppercaseChar() + word.substring(1) }
 }
+
+fun String.toUppercaseFirstChar(): String {
+    return this.lowercase().replaceFirstChar { it.uppercase() }
+}

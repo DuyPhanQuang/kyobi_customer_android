@@ -135,6 +135,4 @@ fun NavBackStackEntry.getDecodedByKey(key: String): String? {
 }
 
 @Composable
-fun <T> NavHostController.getParcelable(key: String): T? = previousBackStackEntry
-    ?.savedStateHandle
-    ?.get<T>(key)
+fun <T> NavHostController.getParcelable(key: String): T? = previousBackStackEntry?.savedStateHandle?.get<T>(key)

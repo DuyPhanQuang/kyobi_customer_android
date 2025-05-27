@@ -22,7 +22,7 @@ import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.domain.model.Product
 import com.kyobi.feature.collection.screen.tab.CollectionTabProductListViewModel
 import com.kyobi.feature.collection.ui.tab.sort_filter.CollectionTabSectionSortFilter
-import com.kyobi.featurecommon.product.ui.ProductCard
+import com.kyobi.featurecommon.product.ui.card.ProductCard
 import com.kyobi.featurecommon.product.ProductUiState
 import com.kyobi.theme.kyobiTheme
 

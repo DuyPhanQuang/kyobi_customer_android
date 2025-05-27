@@ -54,7 +54,7 @@ fun HomeSectionBanner(
                 coroutineScope.launch {
                     pagerState.animateScrollToPage(
                         nextPage,
-                        animationSpec = tween(durationMillis = 500))
+                        animationSpec = tween(durationMillis = 300))
                 }
             }
         }
@@ -74,9 +74,10 @@ fun HomeSectionBanner(
             modifier = Modifier.fillMaxSize()
         ) {
             HorizontalPager(
+                modifier = Modifier
+                    .zIndex(0f)
+                    .fillMaxSize(),
                 state = pagerState,
-                modifier = Modifier.fillMaxWidth().zIndex(0f),
-                beyondViewportPageCount = pagerState.pageCount - 1
             ) { page ->
                 val imageData = banners[page].image?.image
                 if (imageData != null) {

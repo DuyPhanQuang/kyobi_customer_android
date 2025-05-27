@@ -1,21 +1,28 @@
 package com.kyobi.domain.model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 data class ProductOption(
     val id: String,
     val name: String,
     val values: List<String>
-)
+): Parcelable
 
+@Parcelize
 data class ProductPriceRange(
     val maxVariantPrice: Money,
     val minVariantPrice: Money
-)
+): Parcelable
 
+@Parcelize
 data class Money(
     val amount: String,
     val currencyCode: String
-)
+): Parcelable
 
+@Parcelize
 data class ProductVariant(
     val id: String,
     val sku: String? = null,
@@ -29,19 +36,22 @@ data class ProductVariant(
     val quantityRule: QuantityRule,
     val taxable: Boolean,
     val compareAtPrice: Money? = null,
-)
+): Parcelable
 
+@Parcelize
 data class SelectedOption(
     val name: String,
     val value: String
-)
+): Parcelable
 
+@Parcelize
 data class QuantityRule(
     val increment: Int,
     val minimum: Int,
     val maximum: Int? = null
-)
+): Parcelable
 
+@Parcelize
 data class Product(
     val id: String,
     val handle: String,
@@ -59,7 +69,7 @@ data class Product(
     val seo: SEO,
     val tags: List<String>,
     val updatedAt: String
-) {
+) : Parcelable {
     companion object {
         fun empty(id: String): Product {
             return Product(

@@ -8,7 +8,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import com.kyobi.composable.R
 import com.kyobi.composable.button.AppIconButton
-import com.kyobi.composable.space.MdSpaceX
 import com.kyobi.composable.space.XsSpaceX
 import com.kyobi.theme.kyobiTheme
 
@@ -30,11 +29,10 @@ fun CollectionCommonSectionHeader(
         if (showBackIcon) {
             AppIconButton(
                 icon = painterResource(id = R.drawable.ic_arrow_left),
-                size = MaterialTheme.kyobiTheme.icon.lg,
                 onClick = onBackClick,
                 iconColor = colorTheme.onBackground,
             )
-            MdSpaceX()
+            XsSpaceX()
         }
         CollectionCommonSearchForm(
             modifier = Modifier.weight(1f),

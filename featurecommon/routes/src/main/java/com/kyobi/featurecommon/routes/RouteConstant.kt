@@ -26,5 +26,6 @@ object RouteKey {
         const val SKU = "sku"
         const val COLOR_OPTION = "color"
         const val SIZE_OPTION = "size"
+        const val DATA = "data"
     }
 }

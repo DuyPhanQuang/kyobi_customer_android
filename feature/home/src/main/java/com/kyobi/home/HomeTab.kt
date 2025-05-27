@@ -29,7 +29,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.kyobi.composable.skeleton.SkeletonContainer
 import com.kyobi.composable.space.SpaceY
+import com.kyobi.domain.model.Banner
 import com.kyobi.domain.model.DomainNetworkResult
+import com.kyobi.domain.model.FlashSale
+import com.kyobi.domain.model.SaleGroupProduct
+import com.kyobi.domain.model.TopCatalog
+import com.kyobi.domain.model.TrendingResearch
 import com.kyobi.featurecommon.auth.AuthViewModel
 import com.kyobi.home.ui.tab.reels.HomeRecommendedReel
 import com.kyobi.home.ui.tab.banners.HomeSectionBanner
@@ -66,36 +71,6 @@ fun HomeTab(
     val imageLoader = viewModel.getImageLoader()
 
     val mockReels = viewModel.getRecommendedReels()
-
-    val banners = when (val result = uiState.bannersResult) {
-        is DomainNetworkResult.Success -> result.data
-        is DomainNetworkResult.Loading -> emptyList()
-        is DomainNetworkResult.Error -> emptyList()
-    }
-
-    val topCatalogs = when (val result = uiState.topCatalogsResult) {
-        is DomainNetworkResult.Success -> result.data
-        is DomainNetworkResult.Loading -> emptyList()
-        is DomainNetworkResult.Error -> emptyList()
-    }
-
-    val flashSaleData = when (val result = uiState.flashSaleResult) {
-        is DomainNetworkResult.Success -> result.data
-        is DomainNetworkResult.Loading -> null
-        is DomainNetworkResult.Error -> null
-    }
-
-    val saleProducts = when (val result = uiState.saleProductsResult) {
-        is DomainNetworkResult.Success -> result.data
-        is DomainNetworkResult.Loading -> emptyList()
-        is DomainNetworkResult.Error -> emptyList()
-    }
-
-    val trendingResearchs = when (val result = uiState.trendingResearchResult) {
-        is DomainNetworkResult.Success -> result.data
-        is DomainNetworkResult.Loading -> emptyList()
-        is DomainNetworkResult.Error -> emptyList()
-    }
 
     var isRefreshing by remember { mutableStateOf(false) }
     val pullRefreshState = rememberPullRefreshState(
@@ -139,9 +114,10 @@ fun HomeTab(
                             )
                         }
                         is DomainNetworkResult.Success -> {
-                            if (banners.isNotEmpty()) {
+                            val bannersData = (uiState.bannersResult as DomainNetworkResult.Success<List<Banner>>).data
+                            if (bannersData.isNotEmpty()) {
                                 HomeSectionBanner(
-                                    banners = banners,
+                                    banners = bannersData,
                                     imageLoader = imageLoader
                                 )
                             } else {
@@ -170,6 +146,7 @@ fun HomeTab(
                             SkeletonTopCatalogGridView(modifier = Modifier.fillMaxWidth())
                         }
                         is DomainNetworkResult.Success -> {
+                            val topCatalogs = (uiState.topCatalogsResult as DomainNetworkResult.Success<List<TopCatalog>>).data
                             if (topCatalogs.isNotEmpty()) {
                                 Box(
                                     modifier = Modifier
@@ -190,18 +167,29 @@ fun HomeTab(
                     }
                 }
                 item {
-                    if (flashSaleData != null) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                        ) {
-                            HomeSectionDeals(
-                                flashSaleData = flashSaleData,
-                                imageLoader = imageLoader
-                            )
+                    when (uiState.flashSaleResult) {
+                        is DomainNetworkResult.Loading -> {
+                            spacing.dp0.SpaceY()
                         }
-                    } else {
-                        spacing.dp0.SpaceY()
+                        is DomainNetworkResult.Success -> {
+                            val flashSaleData = (uiState.flashSaleResult as DomainNetworkResult.Success<FlashSale?>).data
+                            if (flashSaleData != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                ) {
+                                    HomeSectionDeals(
+                                        flashSaleData = flashSaleData,
+                                        imageLoader = imageLoader
+                                    )
+                                }
+                            } else {
+                                spacing.dp0.SpaceY()
+                            }
+                        }
+                        is DomainNetworkResult.Error -> {
+                            spacing.dp0.SpaceY()
+                        }
                     }
                 }
                 item {
@@ -210,6 +198,7 @@ fun HomeTab(
                             SkeletonSaleProductGridView(modifier = Modifier.fillMaxWidth())
                         }
                         is DomainNetworkResult.Success -> {
+                            val saleProducts = (uiState.saleProductsResult as DomainNetworkResult.Success<List<SaleGroupProduct>>).data
                             if (saleProducts.isNotEmpty()) {
                                 HomeSectionSaleProducts(
                                     modifier = Modifier
@@ -232,6 +221,7 @@ fun HomeTab(
                             SkeletonSpotlightGridView(modifier = Modifier.fillMaxWidth())
                         }
                         is DomainNetworkResult.Success -> {
+                            val trendingResearchs = (uiState.trendingResearchResult as DomainNetworkResult.Success<List<TrendingResearch>>).data
                             if (trendingResearchs.isNotEmpty()) {
                                 HomeSectionSpotlights(
                                     items = trendingResearchs,

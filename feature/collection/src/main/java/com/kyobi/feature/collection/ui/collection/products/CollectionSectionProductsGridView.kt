@@ -20,7 +20,7 @@ import com.kyobi.composable.space.SpaceY
 import com.kyobi.domain.model.DomainNetworkResult
 import com.kyobi.feature.collection.screen.collection.CollectionScreenProductListViewModel
 import com.kyobi.featurecommon.product.ProductUiState
-import com.kyobi.featurecommon.product.ui.ProductCard
+import com.kyobi.featurecommon.product.ui.card.ProductCard
 import com.kyobi.theme.kyobiTheme
 
 @Composable

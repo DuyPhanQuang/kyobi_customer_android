@@ -29,6 +29,7 @@ import com.kyobi.createreel.editor_video.EditorVideoScreen
 import com.kyobi.createreel.editor_video.EditorVideoViewModel
 import com.kyobi.createreel.editor_video.SelectMediaType
 import com.kyobi.customer.extension.composable
+import com.kyobi.domain.model.Product
 import com.kyobi.feature.collection.screen.collection.CollectionScreen
 import com.kyobi.feature.collection.screen.tab.CollectionTab
 import com.kyobi.feature.collection.screen.tab.CollectionTabViewModel
@@ -93,7 +94,7 @@ fun RootApp(
                             launchSingleTop = true
                         }
                     }
-                    "/home-tab" -> {
+                    "/${RouteConstant.HOME_TAB}" -> {
                         navController.navigate(Routes.HomeTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
@@ -101,7 +102,7 @@ fun RootApp(
                             launchSingleTop = true
                         }
                     }
-                    "/collection-tab" -> {
+                    "/${RouteConstant.COLLECTION_TAB}" -> {
                         navController.navigate(Routes.CollectionTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
@@ -109,7 +110,7 @@ fun RootApp(
                             launchSingleTop = true
                         }
                     }
-                    "/trend-tab" -> {
+                    "/${RouteConstant.TREND_TAB}" -> {
                         navController.navigate(Routes.TrendTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
@@ -117,7 +118,7 @@ fun RootApp(
                             launchSingleTop = true
                         }
                     }
-                    "/profile-tab" -> {
+                    "/${RouteConstant.PROFILE_TAB}" -> {
                         navController.navigate(Routes.ProfileTab.routeScheme) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
@@ -207,10 +208,15 @@ fun RootApp(
                     }
                     composable(routes = Routes.Product) {
                         val productIdFromNav = it.getDecodedByKey(RouteKey.Product.ID)!!
+                        val colorOptionFromNav = it.getDecodedByKey(RouteKey.Product.COLOR_OPTION)
+                        val sizeOptionFromNav = it.getDecodedByKey(RouteKey.Product.SIZE_OPTION)
+                        val skuFromNav = it.getDecodedByKey(RouteKey.Product.SKU)
+                        val productDataFromNav = navController.getParcelable<Product>(RouteKey.Product.DATA)
                         ProductDetailScreen(
                             navController = navController,
                             authViewModel = LocalAuthViewModel.current,
                             productId = productIdFromNav,
+                            initProduct = productDataFromNav,
                             topPadding = innerPadding.calculateTopPadding(),
                             bottomPadding = innerPadding.calculateBottomPadding(),
                         )
