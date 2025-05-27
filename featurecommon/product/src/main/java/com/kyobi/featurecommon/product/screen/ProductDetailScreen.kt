@@ -5,6 +5,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -61,10 +64,15 @@ fun ProductDetailScreen(
 
     val imageAspectRatio = 0.7090f
     val imageHeightInDp = getImageHeightByAspectRatio(imageAspectRatio)
+    val parallaxOffset by remember {
+        derivedStateOf {
+            (lazyListState.firstVisibleItemScrollOffset * 0.5f).coerceAtMost(imageHeightInDp.value)
+        }
+    }
 
     val normalHeaderHeight = heightTheme.dp48 + topPadding
     val pinnedHeaderHeight = heightTheme.dp96 + topPadding
-    val thresholdHeaderVisible = imageHeightInDp / 10
+    val thresholdHeaderVisible = imageHeightInDp / 10 // ngưỡng attached pinned header 10% image height
     val showScrolledHeader by remember {
         derivedStateOf {
             lazyListState.firstVisibleItemIndex > 0 ||
@@ -79,7 +87,7 @@ fun ProductDetailScreen(
             if (index == 0) offset.toFloat() else (imageHeightInDp.value + offset)
         }
     }
-    val maxScrollForEffect = imageHeightInDp.value
+    val maxScrollForEffect = imageHeightInDp.value / 2 // 50% image height
     val alphaValue = (scrollOffset / maxScrollForEffect).coerceIn(0f, 1f)
     val pinnedHeaderBgColor by animateColorAsState(
         targetValue = colorTheme.background.copy(alpha = alphaValue),
@@ -115,8 +123,6 @@ fun ProductDetailScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(imageHeightInDp)
-                        .background(colorTheme.background)
                 ) {
                     if (productImages.isNotEmpty()) {
                         Box(
@@ -124,6 +130,10 @@ fun ProductDetailScreen(
                                 .zIndex(0f)
                                 .fillMaxWidth()
                                 .height(imageHeightInDp)
+                                .graphicsLayer {
+                                    translationY = parallaxOffset
+                                },
+                            contentAlignment = Alignment.Center
                         ) {
                             ProductSectionImages(
                                 imageLoader = imageLoader,
@@ -132,13 +142,15 @@ fun ProductDetailScreen(
                             )
                         }
                     }
-                    Box(
+                    AnimatedVisibility(
                         modifier = Modifier
                             .zIndex(1f)
                             .fillMaxWidth()
                             .height(normalHeaderHeight)
                             .padding(top = topPadding),
-                        contentAlignment = Alignment.TopStart
+                        visible = !showScrolledHeader,
+                        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                        exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
                     ) {
                         ProductSectionHeader(
                             modifier = Modifier.fillMaxSize(),

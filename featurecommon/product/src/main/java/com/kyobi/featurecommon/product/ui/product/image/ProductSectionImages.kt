@@ -59,6 +59,7 @@ fun ProductSectionImages(
         }
         Row(
             modifier = Modifier
+                .zIndex(1f)
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
                 .padding(
