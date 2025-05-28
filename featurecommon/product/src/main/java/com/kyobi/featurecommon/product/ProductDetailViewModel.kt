@@ -46,6 +46,14 @@ class ProductDetailViewModel @Inject constructor(
         }
     }
 
+    fun onRefreshTriggered(onCompleted: () -> Unit) {
+        try {
+
+        } finally {
+            onCompleted()
+        }
+    }
+
     private suspend fun processingPreloadImage(imageUrl: String) {
         try {
             val request = ImageRequest.Builder(context)

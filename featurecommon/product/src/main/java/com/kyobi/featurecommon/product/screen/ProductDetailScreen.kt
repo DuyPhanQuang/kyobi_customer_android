@@ -16,12 +16,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,6 +50,7 @@ import com.kyobi.featurecommon.product.ui.product.header.ProductSectionPinnedHea
 import com.kyobi.featurecommon.product.ui.product.image.ProductSectionImages
 import com.kyobi.theme.kyobiTheme
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ProductDetailScreen(
     navController: NavController,
@@ -94,6 +101,17 @@ fun ProductDetailScreen(
         animationSpec = tween(durationMillis = 300)
     )
 
+    var isRefreshing by remember { mutableStateOf(false) }
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing,
+        onRefresh = {
+            isRefreshing = true
+            viewModel.onRefreshTriggered {
+                isRefreshing = false
+            }
+        }
+    )
+
     val productData = when (val result = uiState.productResult) {
         is DomainNetworkResult.Success -> result.data
         is DomainNetworkResult.Loading -> null
@@ -110,7 +128,9 @@ fun ProductDetailScreen(
     val spacing = MaterialTheme.kyobiTheme.spacing
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .pullRefresh(pullRefreshState)
+            .fillMaxSize()
     ) {
         LazyColumn(
             modifier = Modifier
@@ -125,6 +145,7 @@ fun ProductDetailScreen(
                         .fillMaxWidth()
                 ) {
                     if (productImages.isNotEmpty()) {
+                        val imageScale = 1f + (pullRefreshState.progress * 0.1f) // 110%
                         Box(
                             modifier = Modifier
                                 .zIndex(0f)
@@ -132,6 +153,8 @@ fun ProductDetailScreen(
                                 .height(imageHeightInDp)
                                 .graphicsLayer {
                                     translationY = parallaxOffset
+                                    scaleX = imageScale
+                                    scaleY = imageScale
                                 },
                             contentAlignment = Alignment.Center
                         ) {
@@ -201,5 +224,12 @@ fun ProductDetailScreen(
                 onMenuBarClick = {}
             )
         }
+        PullRefreshIndicator(
+            refreshing = isRefreshing,
+            state = pullRefreshState,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(1f)
+        )
     }
 }
