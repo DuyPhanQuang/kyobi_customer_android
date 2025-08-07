@@ -27,5 +27,4 @@ class LogoutUseCaseImpl @Inject constructor(
             emit(DomainNetworkResult.Error.Generic(throwable))
         }
     }
-
 }
